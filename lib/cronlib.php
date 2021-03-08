@@ -29,15 +29,6 @@
 function cron_run() {
     global $DB, $CFG, $OUTPUT;
 
-    // @PATCH IOC002: peformance
-    // allow only one cron process
-    $lock_handle = fopen($CFG->session_file_save_path . '/cron.lock', 'w');
-    if (!flock($lock_handle, LOCK_EX | LOCK_NB)) {
-        echo "Cron already running!\n";
-        die;
-    }
-    // Fi
-
     if (CLI_MAINTENANCE) {
         echo "CLI maintenance mode active, cron execution suspended.\n";
         exit(1);
@@ -62,10 +53,6 @@ function cron_run() {
 
     // Increase memory limit
     raise_memory_limit(MEMORY_EXTRA);
-
-    // @PATCH IOC002: peformance
-    $DB->raise_timeout();
-    // Fi
 
     // Emulate normal session - we use admin accoutn by default
     cron_setup_user();

@@ -3343,6 +3343,7 @@ function calendar_get_legacy_events($tstart, $tend, $users, $groups, $courses,
 
     // @PATCH IOC009: calendar improvement
     global $CFG;
+    $limitnum = $CFG->calendar_maxevents_returned;
     // fi
 
     // Normalise the users, groups and courses parameters so that they are compliant with \core_calendar\local\api::get_events().
