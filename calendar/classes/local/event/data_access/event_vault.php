@@ -103,7 +103,7 @@ class event_vault implements event_vault_interface {
 
         //@PATCH IOC009: calendar improvement
         if ($limitnum < 1 || $limitnum > 480) { // original was 200, not 480.
-            throw new limit_invalid_parameter_exception("Limit must be between 1 and 480 (inclusive)");
+            throw new limit_invalid_parameter_exception("Limit must be between 1 and 480 (inclusive) $limitnum");
         }
         // Fi.
 

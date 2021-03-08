@@ -31,8 +31,8 @@ $id = required_param('id', PARAM_INT);
 $PAGE->set_url('/user/action_redir.php', array('formaction' => $formaction, 'id' => $id));
 list($formaction) = explode('?', $formaction, 2);
 
+// @PATCH IOC016: new action expert CSV
 // This page now only handles the bulk enrolment change actions, other actions are done with ajax.
-// @PATCH IOC
 $actions = array('bulkchange.php', 'exportcsv.php');
 // Original.
 /*
@@ -251,10 +251,20 @@ if ($formaction == 'bulkchange.php') {
         echo $OUTPUT->footer();
         exit();
     }
+}
 
-// @PATCH IOC
-} else if($formaction == 'exportcsv.php') {
+// @PATCH IOC016: new action expert CSV
+else if ('exportcsv.php' == $formaction) {
     require_once($formaction);
+} else {
+    throw new coding_exception('invalidaction');
+}
+// Original.
+/*
+else {
+    throw new coding_exception('invalidaction');
+}
+*/
 // Fi.
 
 } else {
