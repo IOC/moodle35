@@ -110,7 +110,7 @@ class core_calendar_export_form extends moodleform {
         $mform->disabledIf('coursestoexport', 'events[exportevents]', 'neq', 'selectedcourses');
         $mform->addElement($select);
         // fi
-
+        
         $buttons = array();
         $buttons[] = $mform->createElement('submit', 'generateurl', get_string('generateurlbutton', 'calendar'));
         $buttons[] = $mform->createElement('submit', 'export', get_string('exportbutton', 'calendar'));

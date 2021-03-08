@@ -1439,11 +1439,6 @@ class core_renderer extends renderer_base {
             }
         }
 
-        // @PATCH IOC siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
-        //Admin site performance
-        tool_siteperf::shutdown();
-        // Fi
-
         // We always want performance data when running a performance test, even if the user is redirected to another page.
         if (MDL_PERF_TEST && strpos($footer, $this->unique_performance_info_token) === false) {
             $footer = $this->unique_performance_info_token . $footer;

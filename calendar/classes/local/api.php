@@ -140,8 +140,7 @@ class api {
         if (is_null($timesortfrom) && is_null($timesortto)) {
             throw new \moodle_exception("Must provide a timesort to and/or from value");
         }
-
-        //@PATCH IOC009: calendar improvement (old limit 200, new 480)
+        //@PATCH IOC009: calendar improvement (old limit 50, new 480)
         if ($limitnum < 1 || $limitnum > 480) {
             throw new \moodle_exception("Limit must be between 1 and 480 (inclusive)");
         }
