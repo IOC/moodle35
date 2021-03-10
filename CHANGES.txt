@@ -1,4 +1,9 @@
 # Modificacions en els desplegaments del campus de l'IOC
+### IOC_CAMPUS_V4.0.2
+  * mod/assign/locallib.php : doc and fix PATCH IOC015
+
+### IOC_CAMPUS_V3.15.7 (10/03/2021)
+  * Add star.png in boostioc
 
 ### IOC_CAMPUS_V3.15.6 (22/12/2020)
   * MathType filter by WIRIS: New version 7.24.0
