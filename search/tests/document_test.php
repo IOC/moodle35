@@ -43,7 +43,7 @@ class search_document_testcase extends advanced_testcase {
      */
     protected $generator = null;
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
         set_config('enableglobalsearch', true);
 
@@ -103,7 +103,23 @@ class search_document_testcase extends advanced_testcase {
         $this->assertEquals('Course &amp; Title', $export['coursefullname']);
     }
 
-    public function tearDown() {
+    /**
+     * Test we can set and get document icon.
+     */
+    public function test_get_and_set_doc_icon() {
+        $document = $this->getMockBuilder('\core_search\document')
+            ->disableOriginalConstructor()
+            ->getMockForAbstractClass();
+
+        $this->assertNull($document->get_doc_icon());
+
+        $docicon = new \core_search\document_icon('test_name', 'test_component');
+        $document->set_doc_icon($docicon);
+
+        $this->assertEquals($docicon, $document->get_doc_icon());
+    }
+
+    public function tearDown(): void {
         // For unit tests before PHP 7, teardown is called even on skip. So only do our teardown if we did setup.
         if ($this->generator) {
             // Moodle DML freaks out if we don't teardown the temp table after each run.

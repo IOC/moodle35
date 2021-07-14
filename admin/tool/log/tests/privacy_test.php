@@ -51,7 +51,7 @@ require_once($CFG->dirroot . '/admin/tool/log/store/standard/tests/fixtures/even
  */
 class tool_log_privacy_testcase extends provider_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
         $this->preventResetByRollback(); // Logging waits till the transaction gets committed.
     }
@@ -66,7 +66,7 @@ class tool_log_privacy_testcase extends provider_testcase {
         $manager = get_log_manager(true);
 
         $this->setUser($u1);
-        $this->assertEmpty(provider::get_contexts_for_userid($u1->id)->get_contextids(), []);
+        $this->assertEmpty(provider::get_contexts_for_userid($u1->id)->get_contextids());
         $e = \logstore_standard\event\unittest_executed::create(['context' => $c1ctx]);
         $e->trigger();
         $this->assertEquals($c1ctx->id, provider::get_contexts_for_userid($u1->id)->get_contextids()[0]);

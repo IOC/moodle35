@@ -46,7 +46,7 @@ class tool_recyclebin_category_bin_tests extends advanced_testcase {
     /**
      * Setup for each test.
      */
-    protected function setUp() {
+    protected function setUp(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
 
@@ -96,7 +96,7 @@ class tool_recyclebin_category_bin_tests extends advanced_testcase {
         $this->assertEquals(1, $DB->count_records('tool_recyclebin_category'));
 
         // Now let's delete the course category.
-        $category = coursecat::get($this->course->category);
+        $category = core_course_category::get($this->course->category);
         $category->delete_full(false);
 
         // Check that the course was deleted from the category recycle bin.

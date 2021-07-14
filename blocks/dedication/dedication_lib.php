@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 // Default session time limit in seconds.
 define('BLOCK_DEDICATION_DEFAULT_SESSION_LIMIT', 60 * 60);
 // Ignore sessions with a duration less than defined value in seconds.
@@ -21,7 +23,9 @@ define('BLOCK_DEDICATION_IGNORE_SESSION_TIME', 59);
 // Default regeneration time in seconds.
 define('BLOCK_DEDICATION_DEFAULT_REGEN_TIME', 60 * 15);
 
-// Generate dedication reports based in passed params.
+/**
+ * Generate dedication reports based in passed params.
+ */
 class block_dedication_manager {
 
     protected $course;
@@ -38,8 +42,6 @@ class block_dedication_manager {
 
     public function get_students_dedication($students) {
         global $DB;
-
-        core_php_time_limit::raise();
 
         $rows = array();
 
@@ -90,7 +92,7 @@ class block_dedication_manager {
         return $rows;
     }
 
-    public function download_students_dedication($rows, $csv = false) {
+    public function download_students_dedication($rows) {
         $groups = groups_get_all_groups($this->course->id);
 
         $headers = array(
@@ -126,7 +128,7 @@ class block_dedication_manager {
 
         $rows = array_merge($headers, $rows);
 
-        block_dedication_utils::generate_download("{$this->course->shortname}_dedication", $rows, $csv);
+        return block_dedication_utils::generate_download("{$this->course->shortname}_dedication", $rows);
     }
 
     public function get_user_dedication($user, $simple = false) {
@@ -199,8 +201,12 @@ class block_dedication_manager {
         }
     }
 
-    // Downloads user dedication with passed data.
-    public function download_user_dedication($user, $csv = false) {
+    /**
+     * Downloads user dedication with passed data.
+     * @param $user
+     * @return MoodleExcelWorkbook
+     */
+    public function download_user_dedication($user) {
         $headers = array(
             array(
                 get_string('sincerow', 'block_dedication'),
@@ -235,17 +241,24 @@ class block_dedication_manager {
 
         $rows = array_merge($headers, $rows);
 
-        return block_dedication_utils::generate_download("{$this->course->shortname}_dedication", $rows, $csv);
+        return block_dedication_utils::generate_download("{$this->course->shortname}_dedication", $rows);
     }
 
 }
 
-// Utils functions used by block dedication.
+/**
+ * Utils functions used by block dedication.
+ */
 class block_dedication_utils {
 
     public static $logstores = array('logstore_standard', 'logstore_legacy');
 
-    // Return formatted events from logstores.
+    /**
+     * Return formatted events from logstores.
+     * @param string $selectwhere
+     * @param array $params
+     * @return array
+     */
     public static function get_events_select($selectwhere, array $params) {
         $return = array();
 
@@ -284,7 +297,11 @@ class block_dedication_utils {
         return $return;
     }
 
-    // Formats time based in Moodle function format_time($totalsecs).
+    /**
+     * Formats time based in Moodle function format_time($totalsecs).
+     * @param int $totalsecs
+     * @return string
+     */
     public static function format_dedication($totalsecs) {
         $totalsecs = abs($totalsecs);
 
@@ -331,24 +348,35 @@ class block_dedication_utils {
         return get_string('none');
     }
 
-    // Formats ips.
+    /**
+     * @param string[] $ips
+     * @return string
+     */
     public static function format_ips($ips) {
         return implode(', ', array_map('block_dedication_utils::link_ip', $ips));
     }
 
-    // Generates an linkable ip.
+    /**
+     * Generates a linkable ip.
+     * @param string $ip
+     * @return string
+     */
     public static function link_ip($ip) {
         return html_writer::link("http://en.utrace.de/?query=$ip", $ip, array('target' => '_blank'));
     }
 
-    // Table styles.
+    /**
+     * Return table styles based on current theme.
+     * @return array
+     */
     public static function get_table_styles() {
         global $PAGE;
 
         // Twitter Bootstrap styling.
-        if (in_array('bootstrapbase', $PAGE->theme->parents)) {
+        $is_bootstrap_theme = ($PAGE->theme->name === 'boost') || count(array_intersect(array('boost', 'bootstrapbase'), $PAGE->theme->parents)) > 0;
+        if ($is_bootstrap_theme) {
             $styles = array(
-                'table_class' => 'table table-striped table-bordered table-hover table-condensed table-dedication',
+                'table_class' => 'table table-bordered table-hover table-sm table-condensed table-dedication',
                 'header_style' => 'background-color: #333; color: #fff;'
             );
         } else {
@@ -361,34 +389,32 @@ class block_dedication_utils {
         return $styles;
     }
 
-    // Generates generic Excel file for download.
-    public static function generate_download($downloadname, $rows, $csv = false) {
+    /**
+     * Generates generic Excel file for download.
+     * @param string $downloadname
+     * @param array $rows
+     * @return MoodleExcelWorkbook
+     * @throws coding_exception
+     */
+    public static function generate_download($downloadname, $rows) {
         global $CFG;
 
-        if ($csv) {
-            $csvexport = new csv_export_writer();
-            $csvexport->set_filename(clean_filename($downloadname));
-            foreach ($rows as $row) {
-                $csvexport->add_data($row);
+        require_once($CFG->libdir . '/excellib.class.php');
+
+        $workbook = new MoodleExcelWorkbook(clean_filename($downloadname));
+
+        $myxls = $workbook->add_worksheet(get_string('pluginname', 'block_dedication'));
+
+        $rowcount = 0;
+        foreach ($rows as $row) {
+            foreach ($row as $index => $content) {
+                $myxls->write($rowcount, $index, $content);
             }
-            $csvexport->download_file();
-        } else {
-            require_once($CFG->libdir . '/excellib.class.php');
-
-            $workbook = new MoodleExcelWorkbook(clean_filename($downloadname));
-
-            $myxls = $workbook->add_worksheet(get_string('pluginname', 'block_dedication'));
-
-            $rowcount = 0;
-            foreach ($rows as $row) {
-                foreach ($row as $index => $content) {
-                    $myxls->write($rowcount, $index, $content);
-                }
-                $rowcount++;
-            }
-
-            $workbook->close();
+            $rowcount++;
         }
-    }
 
+        $workbook->close();
+
+        return $workbook;
+    }
 }

@@ -30,8 +30,6 @@ $string['access_info'] = 'Only for teachers:';
 // Block form.
 $string['show_dedication'] = 'Show dedication time to students';
 $string['show_dedication_help'] = 'By default, dedication time can only be viewed by teachers. This setting allow students to see their dedication time in the block.';
-$string['grouping_dedication'] = 'Available to';
-$string['grouping_dedication_help'] = 'Choose whether dedication time will be available to all participants or a grouping.';
 
 // Tool form.
 $string['form'] = 'Course dedication configuration';
@@ -76,4 +74,3 @@ $string['dedicationgroup'] = 'All group <em>{$a}</em> members dedication. Choose
 $string['userdedication'] = 'Detailed course dedication of <em>{$a}</em>.';
 $string['sessionstart'] = 'Session start';
 $string['sessionduration'] = 'Duration';
-$string['downloadcsv'] = 'Download in CSV format';

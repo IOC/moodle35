@@ -33,8 +33,6 @@ use core_calendar\local\event\factories\action_factory_interface;
 use core_calendar\local\event\factories\event_factory_interface;
 use core_calendar\local\event\strategies\raw_event_retrieval_strategy_interface;
 
-require_once($CFG->libdir . '/coursecatlib.php');
-
 /**
  * Event vault class.
  *
@@ -102,12 +100,13 @@ class event_vault implements event_vault_interface {
         $ignorehidden = true,
         callable $filter = null
     ) {
+        /*
         //@PATCH IOC009: calendar improvement
         if ($limitnum < 1 || $limitnum > 480) { // original was 200, not 480.
-            throw new limit_invalid_parameter_exception("Limit must be between 1 and 480 (inclusive)");
+            throw new limit_invalid_parameter_exception("Limit must be between 1 and 480 (inclusive) $limitnum");
         }
         // fi
-
+        */
         $fromquery = function($field, $timefrom, $lastseenmethod, $afterevent, $withduration) {
             if (!$timefrom) {
                 return false;
@@ -190,7 +189,11 @@ class event_vault implements event_vault_interface {
                 }
             }
 
-            $offset += $limitnum;
+            if (!$limitnum) {
+                break;
+            } else {
+                $offset += $limitnum;
+            }
         }
 
         return $events;
@@ -213,6 +216,9 @@ class event_vault implements event_vault_interface {
             // Grouping 0 is all groups.
             return array_merge($carry, $groupings[0]);
         }, []);
+
+        // Always include the site events.
+        $courseids = $courseids ? array_merge($courseids, [SITEID]) : $courseids;
 
         return $this->get_events(
             null,

@@ -29,10 +29,11 @@ defined('MOODLE_INTERNAL') || die();
 use context_helper;
 use moodle_database;
 use stdClass;
-use user_picture;
 use block_xp\local\logger\collection_logger_with_group_reset;
 use block_xp\local\logger\reason_collection_logger;
+use block_xp\local\observer\level_up_state_store_observer;
 use block_xp\local\reason\reason;
+use block_xp\local\utils\user_utils;
 
 /**
  * User state course store.
@@ -47,7 +48,7 @@ use block_xp\local\reason\reason;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_user_state_store implements course_state_store,
-        state_store_with_reason {
+        state_store_with_reason, state_store_with_delete {
 
     /** @var moodle_database The database. */
     protected $db;
@@ -66,13 +67,16 @@ class course_user_state_store implements course_state_store,
      * @param moodle_database $db The DB.
      * @param levels_info $levelsinfo The levels info.
      * @param int $courseid The course ID.
+     * @param logger $logger The reason logger.
+     * @param level_up_state_store_observer $observer The observer.
      */
     public function __construct(moodle_database $db, levels_info $levelsinfo, $courseid,
-            reason_collection_logger $logger) {
+            reason_collection_logger $logger, level_up_state_store_observer $observer = null) {
         $this->db = $db;
         $this->levelsinfo = $levelsinfo;
         $this->courseid = $courseid;
         $this->logger = $logger;
+        $this->observer = $observer;
     }
 
     /**
@@ -82,7 +86,7 @@ class course_user_state_store implements course_state_store,
      * @return state
      */
     public function get_state($id) {
-        $userfields = user_picture::fields('u', null, 'userid');
+        $userfields = user_utils::picture_fields('u', 'userid');
         $contextfields = context_helper::get_preload_record_columns_sql('ctx');
 
         $sql = "SELECT u.id, x.userid, x.xp, $userfields, $contextfields
@@ -105,6 +109,19 @@ class course_user_state_store implements course_state_store,
     }
 
     /**
+     * Delete a state.
+     *
+     * @param int $id The object ID.
+     * @return void
+     */
+    public function delete($id) {
+        $params = [];
+        $params['userid'] = $id;
+        $params['courseid'] = $this->courseid;
+        $this->db->delete_records($this->table, $params);
+    }
+
+    /**
      * Return whether the entry exists.
      *
      * @param int $id The receiver.
@@ -124,7 +141,13 @@ class course_user_state_store implements course_state_store,
      * @param int $amount The amount.
      */
     public function increase($id, $amount) {
+        $prexp = 0;
+        $postxp = $amount;
+
         if ($record = $this->exists($id)) {
+            $prexp = $record->xp;
+            $postxp = $prexp + $amount;
+
             $sql = "UPDATE {{$this->table}}
                        SET xp = xp + :xp
                      WHERE courseid = :courseid
@@ -145,6 +168,8 @@ class course_user_state_store implements course_state_store,
         } else {
             $this->insert($id, $amount);
         }
+
+        $this->observe_increase($id, $prexp, $postxp);
     }
 
     /**
@@ -182,10 +207,50 @@ class course_user_state_store implements course_state_store,
      * @return user_state
      */
     public function make_state_from_record(stdClass $record, $useridfield = 'userid') {
-        $user = user_picture::unalias($record, null, $useridfield);
+        $user = user_utils::unalias_picture_fields($record, $useridfield);
         context_helper::preload_from_record($record);
         $xp = !empty($record->xp) ? $record->xp : 0;
         return new user_state($user, $xp, $this->levelsinfo);
+    }
+
+    /**
+     * Observe when increased.
+     *
+     * @param int $id The recipient.
+     * @param int $beforexp The points before.
+     * @param int $afterxp The points after.
+     * @return void
+     */
+    protected function observe_increase($id, $beforexp, $afterxp) {
+        if (!$this->observer) {
+            return;
+        }
+
+        $beforelevel = $this->levelsinfo->get_level_from_xp($beforexp);
+        $afterlevel = $this->levelsinfo->get_level_from_xp($afterxp);
+        if ($beforelevel->get_level() < $afterlevel->get_level()) {
+            $this->observer->leveled_up($this, $id, $beforelevel, $afterlevel);
+        }
+    }
+
+    /**
+     * Observe when set.
+     *
+     * @param int $id The recipient.
+     * @param int $beforexp The points before.
+     * @param int $afterxp The points after.
+     * @return void
+     */
+    protected function observe_set($id, $beforexp, $afterxp) {
+        if (!$this->observer) {
+            return;
+        }
+
+        $beforelevel = $this->levelsinfo->get_level_from_xp($beforexp);
+        $afterlevel = $this->levelsinfo->get_level_from_xp($afterxp);
+        if ($beforelevel->get_level() < $afterlevel->get_level()) {
+            $this->observer->leveled_up($this, $id, $beforelevel, $afterlevel);
+        }
     }
 
     /**
@@ -251,7 +316,12 @@ class course_user_state_store implements course_state_store,
      * @param int $amount The amount.
      */
     public function set($id, $amount) {
-        if ($this->exists($id)) {
+        $prexp = 0;
+        $postxp = $amount;
+
+        if ($record = $this->exists($id)) {
+            $prexp = $record->xp;
+            $postxp = $prexp + $amount;
 
             $sql = "UPDATE {{$this->table}}
                        SET xp = :xp,
@@ -268,6 +338,8 @@ class course_user_state_store implements course_state_store,
         } else {
             $this->insert($id, $amount);
         }
+
+        $this->observe_set($id, $prexp, $postxp);
     }
 
     /**

@@ -88,6 +88,7 @@ define('OUBLOG_POSTS_PER_PAGE_EXPORT', 50);
  * Constant defining the max length of tags
  */
 define('OUBLOG_EXPORT_TAGS_LENGTH', 40);
+define('OUBLOG_TAGS_SHOW', 500);
 
 /**
  * Get a blog from a user id
@@ -406,12 +407,6 @@ function oublog_can_view_post($post, $user, $context, $cm, $oublog, $childcm = n
     $correctglobal = isset($childoublog->global) ? $childoublog->global : $oublog->global;
     $correctcm = $childcm ? $childcm : $cm;
 
-    if ($oublog->individual == OUBLOG_VISIBLE_INDIVIDUAL_BLOGS and
-        !$post->individualvisible and $post->userid != $user->id and
-        !has_capability('mod/oublog:viewindividual', $context, $user)) {
-        return false;
-    }
-
     // Otherwise this is set to course visibility.
     if ($correctglobal) {
         // Private posts - only same user or has capability viewprivate can see.
@@ -641,9 +636,9 @@ function oublog_edit_post($post, $cm) {
  * @return mixed all data to print a list of blog posts
  */
 function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $individualid = -1,
-        $userid = null, $tag = '', $canaudit = false, $ignoreprivate = null, $masterblog = null, $paginglimit = null, $sqlorder = '', $unread = false, $count = false) {
+        $userid = null, $tag = '', $canaudit = false, $ignoreprivate = null, $masterblog = null, $paginglimit = null, $sqlorder = '') {
     global $CFG, $USER, $DB;
-    $params = array($USER->id);
+    $params = array();
     // Check master blog.
     $postsoublog = !empty($masterblog) ? $masterblog : $oublog;
     $sqlwhere = "bi.oublogid = ?";
@@ -668,14 +663,17 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
     // Individual blog.
     if ($individualid > -1) {
         $capable = oublog_individual_has_permissions($cm, $oublog, $groupid, $individualid);
-        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'bi.userid', $postsoublog, $cm, $groupid, $individualid, $capable);
+        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'bi.userid', $postsoublog->id, $groupid, $individualid, $capable);
     } else {// No individual blog.
         if (isset($groupid) && $groupid) {
             $sqlwhere .= " AND p.groupid =  ? ";
             $params[] = $groupid;
         }
     }
-    $sqlwhere .= " AND p.deletedby IS NULL ";
+    if (!$canaudit) {
+        $sqlwhere .= " AND (p.deletedby IS NULL or bi.userid = ?)";
+        $params[] = $USER->id;
+    }
     if ($tag) {
         $sqlwhere .= " AND t.tag = ? ";
         $params[] = $tag;
@@ -710,24 +708,17 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
     $delusernamefields = get_all_user_name_fields(true, 'ud', null, 'del');
     $editusernamefields = get_all_user_name_fields(true, 'ue', null, 'ed');
 
-    // Unread
-    if ($unread) {
-        $sqlwhere .= " AND (rt.id IS NULL OR rt.status = 0)";
-    }
-
     // Get posts. The post has the field timeposted not timecreated,
     // which is tested in rating::user_can_rate().
     $fieldlist = "p.*, p.timeposted AS timecreated,  bi.oublogid, $usernamefields,
                   bi.userid, u.idnumber, u.picture, u.imagealt, u.email, u.username,
-                  $delusernamefields,
-                  $editusernamefields,
-                  rt.id AS readid, rt.status AS readstatus";
+                $delusernamefields,
+                $editusernamefields";
     $from = "FROM {oublog_posts} p
                 INNER JOIN {oublog_instances} bi ON p.oubloginstancesid = bi.id
                 INNER JOIN {user} u ON bi.userid = u.id
                 LEFT JOIN {user} ud ON p.deletedby = ud.id
                 LEFT JOIN {user} ue ON p.lasteditedby = ue.id
-                LEFT JOIN {oublog_read} rt ON rt.postid = p.id AND rt.userid = ?
                 $sqljoin";
     $sql = "SELECT $fieldlist
             $from
@@ -739,11 +730,7 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
     // Get paging info
     $recordcnt = $DB->count_records_sql($countsql, $params);
     if (!$rs->valid()) {
-        return $count ? $recordcnt : array(false, $recordcnt);
-    }
-
-    if ($count) {
-        return $recordcnt;
+        return array(false, $recordcnt);
     }
 
     $cnt        = 0;
@@ -804,14 +791,13 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
     $rs->close();
 
     // Get comments for post on the page
-    $sql = "SELECT c.id, c.postid, c.timeposted, c.authorname, c.authorip, c.timeapproved, c.userid, $usernamefields, u.picture, u.imagealt, u.email, u.idnumber, c.message, cr.id as commentread
+    $sql = "SELECT c.id, c.postid, c.timeposted, c.authorname, c.authorip, c.timeapproved, c.userid, $usernamefields, u.picture, u.imagealt, u.email, u.idnumber
             FROM {oublog_comments} c
             LEFT JOIN {user} u ON c.userid = u.id
-            LEFT JOIN {oublog_comments_read} cr ON cr.postid=c.postid AND cr.userid=? AND cr.commentid=c.id
             WHERE c.postid IN (".implode(",", $postids).") AND c.deletedby IS NULL
             ORDER BY c.timeposted ASC ";
 
-    $rs = $DB->get_recordset_sql($sql, array($USER->id));
+    $rs = $DB->get_recordset_sql($sql);
     foreach ($rs as $comment) {
         $posts[$comment->postid]->comments[$comment->id] = $comment;
     }
@@ -841,19 +827,6 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
         }
     }
 
-    if ($oublog->allowreblogs) {
-        // Get reblogs for all posts on page
-        $sql = 'SELECT u.id,r.postid,u.picture,u.imagealt,u.email,' . $usernamefields
-            . ' FROM {user} u'
-            . ' JOIN {oublog_reblogs} r ON u.id = r.userid'
-            . ' WHERE r.postid IN (' . implode(',', $postids) . ')'
-            . ' ORDER BY r.timereblogged DESC';
-        foreach ($DB->get_recordset_sql($sql) as $r) {
-            $posts[$r->postid]->reblogs[$r->id] = $r;
-        }
-        $rs->close();
-    }
-
     return(array($posts, $recordcnt));
 }
 
@@ -868,7 +841,7 @@ function oublog_get_posts($oublog, $context, $offset = 0, $cm, $groupid, $indivi
  * @return mixed all data to print a list of blog posts
  */
 function oublog_get_post($postid, $canaudit=false) {
-    global $DB, $USER;
+    global $DB;
     $usernamefields = get_all_user_name_fields(true, 'u');
     $delusernamefields = get_all_user_name_fields(true, 'ud', null, 'del');
     $editusernamefields = get_all_user_name_fields(true, 'ue', null, 'ed');
@@ -876,19 +849,17 @@ function oublog_get_post($postid, $canaudit=false) {
     // Get post
     $sql = "SELECT p.*, bi.oublogid, $usernamefields, u.picture, u.imagealt, bi.userid, u.idnumber, u.email, u.username, u.mailformat,
                     $delusernamefields,
-                    $editusernamefields,
-                    rt.id AS readid, rt.status AS readstatus
+                    $editusernamefields
             FROM {oublog_posts} p
                 INNER JOIN {oublog_instances} bi ON p.oubloginstancesid = bi.id
                 INNER JOIN {user} u ON bi.userid = u.id
                 LEFT JOIN {user} ud ON p.deletedby = ud.id
                 LEFT JOIN {user} ue ON p.lasteditedby = ue.id
-                LEFT JOIN {oublog_read} rt ON rt.postid = p.id AND rt.userid = ?
             WHERE p.id = ?
             ORDER BY p.timeposted DESC
             ";
 
-    if (!$post = $DB->get_record_sql($sql, array($USER->id, $postid))) {
+    if (!$post = $DB->get_record_sql($sql, array($postid))) {
         return(false);
     }
 
@@ -907,12 +878,10 @@ function oublog_get_post($postid, $canaudit=false) {
     // Get comments for post on the page
     if ($post->allowcomments) {
         $sql = "SELECT c.*, $usernamefields, u.picture, u.imagealt, u.email, u.idnumber,
-                    $delusernamefields, cr.id as commentread, cf.id as commentfavourite
+                    $delusernamefields
                 FROM {oublog_comments} c
                 LEFT JOIN {user} u ON c.userid = u.id
                 LEFT JOIN {user} ud ON c.deletedby = ud.id
-                LEFT JOIN {oublog_comments_read} cr ON cr.postid = c.postid AND cr.userid = ? AND cr.commentid = c.id
-                LEFT JOIN {oublog_comments_favourite} cf ON cf.postid = c.postid AND cf.userid = ? AND cf.commentid = c.id
                 WHERE c.postid = ? ";
 
         if (!$canaudit) {
@@ -921,7 +890,7 @@ function oublog_get_post($postid, $canaudit=false) {
 
         $sql .= "ORDER BY c.timeposted ASC ";
 
-        $rs = $DB->get_recordset_sql($sql, array($USER->id, $USER->id, $postid));
+        $rs = $DB->get_recordset_sql($sql, array($postid));
         foreach ($rs as $comment) {
             $post->comments[$comment->id] = $comment;
         }
@@ -1078,7 +1047,7 @@ function oublog_get_tags_csv($postid) {
  * @return array Tag data
  */
 function oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid=null, $individualid=-1, $tagorder = 'alpha',
-        $masterblog = null) {
+        $masterblog = null, $limit = null) {
     global $CFG, $DB, $USER;
     $tags = array();
     $params = array();
@@ -1090,7 +1059,7 @@ function oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid=null, $indivi
     // If individual blog.
     if ($individualid > -1) {
         $capable = oublog_individual_has_permissions($cm, $oublog, $groupid, $individualid);
-        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'bi.userid', $tagsoublog, $cm, $groupid,
+        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'bi.userid', $tagsoublog->id, $groupid,
                 $individualid, $capable);
     } else {
         // No individual blog.
@@ -1132,9 +1101,16 @@ function oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid=null, $indivi
                 INNER JOIN {oublog_posts} p ON ti.postid = p.id
                 INNER JOIN {user} u ON u.id = bi.userid
             WHERE $sqlwhere
-            GROUP BY t.id, t.tag
-            ORDER BY count DESC";
-
+            GROUP BY t.id, t.tag";
+    if ($tagorder == 'alpha') {
+        $sort = ' ORDER BY t.tag ASC';
+    } else {
+        $sort = ' ORDER BY count DESC';
+    }
+    $sql = $sql . $sort;
+    if ($limit > -1) {
+        $sql = $sql . ' LIMIT ' . $limit;
+    }
     if ($tags = $DB->get_records_sql($sql, $params)) {
         $first = array_shift($tags);
         $max = $first->count;
@@ -1148,11 +1124,6 @@ function oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid=null, $indivi
 
         foreach ($tags as $idx => $tag) {
             $tags[$idx]->weight = round(($tag->count-$min)/$delta*4);
-        }
-        if ($tagorder == 'alpha') {
-            uasort($tags, function($a, $b) {
-                return strcmp ($a->tag,  $b->tag);
-            });
         }
     }
     return($tags);
@@ -1172,7 +1143,7 @@ function oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid=null, $indivi
  * @return array Tag cloud HTML, current filter tag
  */
 function oublog_get_tag_cloud($baseurl, $oublog, $groupid, $cm, $oubloginstanceid=null, $individualid=-1, $tagorder,
-        $masterblog = null) {
+        $masterblog = null, $limit = null) {
     global $PAGE;
     $cloud = '';
     $currenttag = $PAGE->url->get_param('tag');
@@ -1180,18 +1151,36 @@ function oublog_get_tag_cloud($baseurl, $oublog, $groupid, $cm, $oubloginstancei
     $urlparts= array();
 
     $baseurl = oublog_replace_url_param($baseurl, 'tag');
-    if (!$tags = oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid, $individualid, $tagorder, $masterblog)) {
+    $baseurl = oublog_replace_url_param($baseurl, 'taglimit');
+
+    if (!$tags = oublog_get_tags($oublog, $groupid, $cm, $oubloginstanceid, $individualid, $tagorder, $masterblog, $limit)) {
         return [$cloud, $currentfiltertag];
     }
 
     $cloud .= html_writer::start_tag('div', array('class' => 'oublog-tag-items'));
     foreach ($tags as $tag) {
-        $cloud .= '<a href="'.$baseurl.'&amp;tag='.urlencode($tag->tag).'" class="oublog-tag-cloud-'.
-            $tag->weight.'"><span class="oublog-tagname">'.strtr(($tag->tag), array(' '=>'&nbsp;')).
-            '</span><span class="oublog-tagcount">('.$tag->count.')</span></a> ';
+        if ($limit == -1) {
+            $cloud .= '<a href="'.$baseurl.'&amp;tag='.urlencode($tag->tag).
+                    '&amp;taglimit='. urlencode($limit) . '" class="oublog-tag-cloud-'.
+                    $tag->weight.'"><span class="oublog-tagname">'.strtr(($tag->tag), array(' '=>'&nbsp;')).
+                    '</span><span class="oublog-tagcount">('.$tag->count.')</span></a> ';
+        } else {
+            $cloud .= '<a href="'.$baseurl.'&amp;tag='.urlencode($tag->tag).'" class="oublog-tag-cloud-'.
+                    $tag->weight.'"><span class="oublog-tagname">'.strtr(($tag->tag), array(' '=>'&nbsp;')).
+                    '</span><span class="oublog-tagcount">('.$tag->count.')</span></a> ';
+        }
+
         if (!is_null($currenttag) && $tag->tag == $currenttag) {
             $currentfiltertag = $tag;
         }
+    }
+    if (count($tags) >= OUBLOG_TAGS_SHOW && $limit != -1) {
+        $showmore = get_string('tagshowmore', 'oublog');
+        $cloud .= '<a href="'. $baseurl . '&amp;taglimit=-1" class="mod-oublog-tags-show-more">' . $showmore . '</a>';
+    }
+    if ($limit == -1) {
+        $showless = get_string('tagshowless', 'oublog');
+        $cloud .= '<a href="'. $baseurl . '&amp;taglimit=' . OUBLOG_TAGS_SHOW . '" class="mod-oublog-tags-show-less">' . $showless . '</a>';
     }
     $cloud .= html_writer::end_tag('div');
 
@@ -1666,7 +1655,7 @@ function oublog_get_feed_comments($blogid, $bloginstancesid, $postid, $user, $al
     }
     if ($individualid > 0 || $oublog->individual > OUBLOG_NO_INDIVIDUAL_BLOGS) {
         $capable = oublog_individual_has_permissions($cm, $oublog, $groupid, $individualid, $user->id);
-        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'i.userid', $oublog, $cm, $groupid, $individualid, $capable);
+        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'i.userid', $oublog->id, $groupid, $individualid, $capable);
     } else {
         if (isset($groupid) && $groupid) {
             $sqlwhere .= " AND p.groupid = ? ";
@@ -1766,7 +1755,7 @@ function oublog_get_feed_posts($blogid, $bloginstance, $user, $allowedvisibility
     // If individual blog.
     if ($individualid > 0 || $oublog->individual > OUBLOG_NO_INDIVIDUAL_BLOGS) {
         $capable = oublog_individual_has_permissions($cm, $oublog, $groupid, $individualid, $user->id);
-        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'i.userid', $oublog, $cm, $groupid, $individualid, $capable, $user);
+        oublog_individual_add_to_sqlwhere($sqlwhere, $params, 'i.userid', $oublog->id, $groupid, $individualid, $capable);
     } else {// No individual blog.
         if ($groupid) {
             $sqlwhere .= " AND p.groupid = ? ";
@@ -1903,61 +1892,6 @@ function oublog_get_feedurl($format, $oublog, $bloginstance, $groupid, $comments
     }
 
     return($url);
-}
-
-
-
-/**
- * Get a block containing links to the Atom and RSS feeds
- *
- * @param object $oublog
- * @param object $bloginstance
- * @param int $groupid
- * @param int $postid
- * @param object $context
- * @param object $masterblog
- * @return string HTML of block
- * @uses $CFG
- */
-function oublog_get_feedblock($oublog, $bloginstance, $groupid, $postid, $cm, $individualid=-1, $masterblog = null) {
-    global $CFG, $OUTPUT;
-
-    if (!$CFG->enablerssfeeds) {
-        return(false);
-    }
-    // Check master blog.
-    $feedoublog = !empty($masterblog) ? $masterblog : $oublog;
-    $childoublog = !empty($masterblog) ? $oublog : null;
-
-    $blogurlatom = oublog_get_feedurl('atom', $feedoublog, $bloginstance, $groupid, false, false, $cm, $individualid, $childoublog);
-    $blogurlrss = oublog_get_feedurl('rss', $feedoublog, $bloginstance, $groupid, false, false, $cm, $individualid, $childoublog);
-
-    if (!is_string($bloginstance)) {
-        $commentsurlatom = oublog_get_feedurl('atom', $feedoublog, $bloginstance, $groupid, true, $postid, $cm, $individualid, $childoublog);
-        $commentsurlrss = oublog_get_feedurl('rss', $feedoublog, $bloginstance, $groupid, true, $postid, $cm, $individualid, $childoublog);
-    }
-
-    $html  = '<div id="oublog-feedtext">' . get_string('subscribefeed', 'oublog', oublog_get_displayname($oublog));
-    $html .= $OUTPUT->help_icon('feedhelp', 'oublog');
-    $html .= '</div>';
-    $html .= '<div class="oublog-feedlinks">';
-    $html .= '<span class="oublog-feedlinks-feedtitle">' . get_string('blogfeed', 'oublog', oublog_get_displayname($oublog, true)) . ': </span>';
-    $html .= '<span class="oublog-feedlinks-feedtype">';
-    $html .= '<br/><a href="'.$blogurlatom.'">'.get_string('atom', 'oublog').'</a> ';
-    $html .= '<br/><a href="'.$blogurlrss.'">'.get_string('rss', 'oublog').'</a>';
-    $html .= '</span>';
-
-    if ($oublog->allowcomments) {
-        if (!is_string($bloginstance)) {
-            $html .= '<div class="oublog-links">';
-            $html .= '<span class="oublog-feedcommentlinks-feedtitle">'.get_string('commentsfeed', 'oublog') . ': </span>';
-            $html .= '<br/><a href="'.$commentsurlatom.'">'.get_string('comments', 'oublog').' '.get_string('atom', 'oublog').'</a> ';
-            $html .= '<br/><a href="'.$commentsurlrss.'">'.get_string('comments', 'oublog').' '.get_string('rss', 'oublog').'</a>';
-            $html .= '</div>';
-        }
-    }
-    $html .= '</div>';
-    return ($html);
 }
 
 
@@ -2179,7 +2113,7 @@ define('OUBLOG_VISIBLE_INDIVIDUAL_BLOGS', 2);
  * @return an object
  */
 function oublog_individual_get_activity_details($cm, $urlroot, $oublog, $currentgroup, $context, $cmmaster = null) {
-    global $CFG, $USER, $SESSION, $OUTPUT, $DB;
+    global $CFG, $USER, $SESSION, $OUTPUT;
     if (strpos($urlroot, 'http') !== 0) { // Will also work for https
         debugging('oublog_print_individual_activity_menu requires absolute URL for ' .
             '$urlroot, not <tt>' . s($urlroot) . '</tt>. Example: ' .
@@ -2236,55 +2170,8 @@ function oublog_individual_get_activity_details($cm, $urlroot, $oublog, $current
     }
 
     if ($allowedindividuals) {
-        // Get posts by user
-        list($userssql, $usersparams) = $DB->get_in_or_equal(array_keys($allowedindividuals), SQL_PARAMS_NAMED);
-        $sql = "SELECT p.id, u.id as userid
-                 FROM {user} u
-                 JOIN {oublog_instances} bi ON bi.userid = u.id
-                 JOIN {oublog_posts} p ON bi.id = p.oubloginstancesid
-                WHERE bi.oublogid = :oublogid
-                  AND u.id $userssql
-                  AND p.deletedby IS NULL";
-        $params = array(
-            'oublogid' => $oublog->id,
-        );
-        $params = array_merge($params, $usersparams);
-        $records = $DB->get_records_sql($sql, $params);
-
-        if ($records) {
-            list($unreads, ) = oublog_get_unread_comments($records);
-            list($favourites, ) = oublog_get_favourite_comments($records);
-        }
-        foreach ($records as $record) {
-            if (!isset($usersunread[$record->userid])) {
-                $usersunread[$record->userid] = 0;
-            }
-            $usersunread[$record->userid] += isset($unreads[$record->id]) ? $unreads[$record->id] : 0;
-
-            if (!isset($usersfavourite[$record->userid])) {
-                $usersfavourite[$record->userid] = 0;
-            }
-            $usersfavourite[$record->userid] += isset($favourites[$record->id]) ? $favourites[$record->id] : 0;
-        }
-
         foreach ($allowedindividuals as $user) {
-            $msgunread = '';
-            if (isset($usersunread[$user->id]) && $usersunread[$user->id]) {
-                if ($usersunread[$user->id] > 1) {
-                    $msgunread = ' (' . get_string('overviewcommentsunread', 'oublog', $usersunread[$user->id]) . ')';
-                } else {
-                    $msgunread = ' (' . get_string('overviewcommentsunread1', 'oublog', $usersunread[$user->id]) . ')';
-                }
-            }
-            $msgfavourite = '';
-            if (isset($usersfavourite[$user->id]) && $usersfavourite[$user->id]) {
-                if ($usersfavourite[$user->id] > 1) {
-                    $msgfavourite = ' (' . get_string('overviewcommentsfavourite', 'oublog', $usersfavourite[$user->id]) . ')';
-                } else {
-                    $msgfavourite = ' (' . get_string('overviewcommentsfavourite1', 'oublog', $usersfavourite[$user->id]) . ')';
-                }
-            }
-            $menu[$user->id] = format_string($user->firstname . ' ' . $user->lastname . $msgunread . $msgfavourite);
+            $menu[$user->id] = format_string($user->firstname . ' ' . $user->lastname);
         }
     }
 
@@ -2524,20 +2411,9 @@ function oublog_individual_has_permissions($cm, $oublog, $groupid, $individualid
 }
 
 
-function oublog_individual_add_to_sqlwhere(&$sqlwhere, &$params, $userfield, $oublog, $cm, $groupid=0, $individualid=0, $capable=true, $user=null) {
-    global $USER;
-
+function oublog_individual_add_to_sqlwhere(&$sqlwhere, &$params, $userfield, $oublogid, $groupid=0, $individualid=0, $capable=true) {
     // Has not capability.
     if (!$capable) {
-        return;
-    }
-
-    if ($individualid > 0 and $oublog->allowreblogs) {
-        $sqlwhere .= " AND ($userfield = ? OR p.id IN ("
-            . ' SELECT rb.postid FROM {oublog_reblogs} rb'
-            . ' WHERE rb.userid = ?))';
-        $params[] = $individualid;
-        $params[] = $individualid;
         return;
     }
 
@@ -2550,7 +2426,7 @@ function oublog_individual_add_to_sqlwhere(&$sqlwhere, &$params, $userfield, $ou
 
     // A list of user is chosen.
     $from = " FROM {oublog_instances} bi ";
-    $where = " WHERE bi.oublogid={$oublog->id} ";
+    $where = " WHERE bi.oublogid=$oublogid ";
 
     // Individuals within a group.
     if (isset($groupid) && $groupid > 0) {
@@ -2562,15 +2438,6 @@ function oublog_individual_add_to_sqlwhere(&$sqlwhere, &$params, $userfield, $ou
     }
     $subsql =  "SELECT bi.userid $from $where";
     $sqlwhere .= " AND $userfield IN ($subsql)";
-
-    if ($oublog->individual == OUBLOG_VISIBLE_INDIVIDUAL_BLOGS) {
-        $user = $user ?: $USER;
-        $context = context_module::instance($cm->id);
-        if (!has_capability('mod/oublog:viewindividual', $context, $user)) {
-            $sqlwhere .= ' AND (p.individualvisible = 1 OR u.id = ?)';
-            $params[] = $user->id;
-        }
-    }
 }
 
 /**
@@ -3353,17 +3220,6 @@ class oublog_portfolio_caller extends portfolio_module_caller_base {
         if ($usehtmls) {
             $output .= html_writer::end_tag('body') . html_writer::end_tag('html');
         }
-
-        if ($this->get('exporter')->get('instance')->get('plugin') == 'wordpress') {
-            $output = '<html>head><title>' . s($post->title) . '</title>';
-            $created = gmstrftime('%Y-%m-%dT%H:%M:%S+0000', $post->timeposted);
-            $output .= '<meta property="dc:created" content="' . $created . '"/>';
-            $message = portfolio_rewrite_pluginfile_urls(
-                $post->message, $context->id, 'mod_oublog', 'message', $post->id, $format);
-            $message = format_text($message, FORMAT_HTML);
-            $output .= "</head><body>$message</body></html>";
-        }
-
         return $output;
     }
     /**
@@ -5265,10 +5121,7 @@ class oublog_all_portfolio_caller extends oublog_portfolio_caller {
         list($this->posts, $recordcount) = oublog_get_posts($this->oublog,
             $context, $this->offset, $this->cm, $this->currentgroup, $this->currentindividual,
             $this->oubloguserid, $this->tag, $this->canaudit);
-        $this->posts = array_filter($this->posts, function($post) use ($context) {
-                global $USER;
-                return has_capability('mod/oublog:exportpost', $context) || $USER->id == $post->userid;
-        });
+
         $fs = get_file_storage();
         $this->multifiles = array();
         foreach ($this->posts as $post) {
@@ -5402,8 +5255,7 @@ class oublog_all_portfolio_caller extends oublog_portfolio_caller {
      */
     public function check_permissions() {
         $context = context_module::instance($this->cm->id);
-        return (has_capability('mod/oublog:exportpost', $context) ||
-                has_capability('mod/oublog:exportownpost', $context));
+        return (has_capability('mod/oublog:exportpost', $context));
     }
 }
 
@@ -5868,152 +5720,3 @@ class oublog_participation_timefilter_form extends moodleform {
 }
 
 class oublog_export_portfolio_caller extends \mod_oublog\portfolio_caller {};
-
-function oublog_mark_read($post, $status=null) {
-    global $DB, $USER;
-
-    if ($status === null) {
-        $status = $post->readid ? $post->readstatus : true;
-    }
-
-    if (!$post->readid) {
-        $record = new stdClass;
-        $record->postid = $post->id;
-        $record->userid = $USER->id;
-        $record->status = $status;
-        $DB->insert_record('oublog_read', $record);
-    } else if ($status != $post->readstatus) {
-        $DB->set_field('oublog_read', 'status', $status, array('id' => $post->readid));
-    }
-}
-
-function oublog_mark_comments_read($post, $limit=0) {
-    global $DB, $USER;
-
-    $sql = "SELECT c.id, p.id as postid
-            FROM {oublog_comments} c
-            JOIN {oublog_posts} p ON p.id=c.postid
-       LEFT JOIN {oublog_comments_read} cr ON cr.postid = c.postid AND cr.userid = :userid AND cr.commentid=c.id
-           WHERE c.postid = :postid
-             AND cr.id IS NULL
-             AND c.deletedby IS NULL";
-
-    if (isset($post->comments) && $limit) {
-        $getid = function($obj) {
-            return $obj->id;
-        };
-        $commentids = array_map($getid, array_slice(array_reverse($post->comments), 0, $limit));
-    } else {
-        $commentids = array();
-    }
-
-    $params = array(
-        'userid' => $USER->id,
-        'postid' => $post->id,
-    );
-
-    $rs = $DB->get_recordset_sql($sql, $params);
-
-    if ($rs->valid()) {
-        $records = array();
-        foreach ($rs as $comment) {
-            if (!$limit || ($limit && in_array($comment->id, $commentids))) {
-                $record = new stdClass();
-                $record->postid = $comment->postid;
-                $record->commentid = $comment->id;
-                $record->userid = $USER->id;
-                array_push($records, $record);
-            }
-        }
-        if (!empty($records)) {
-            $DB->insert_records('oublog_comments_read', $records);
-        }
-    }
-
-    $rs->close();
-}
-
-function oublog_mark_comment_favourite($postid, $commentid, $status = false) {
-    global $DB, $USER;
-
-    if (!$DB->record_exists('oublog_comments', array('id' => $commentid, 'postid' => $postid))) {
-        return false;
-    }
-
-    $record = $DB->record_exists('oublog_comments_favourite', array('commentid' => $commentid, 'userid' => $USER->id));
-    if (($status && $record) || (!$status && !$record)) {
-        return true;
-    }
-
-    if ($status) {
-        $record = new stdClass;
-        $record->postid = $postid;
-        $record->userid = $USER->id;
-        $record->commentid = $commentid;
-        $DB->insert_record('oublog_comments_favourite', $record);
-    } else {
-        $DB->delete_records('oublog_comments_favourite', array('commentid' => $commentid, 'userid' => $USER->id));
-    }
-}
-
-function oublog_get_unread_comments($posts) {
-    global $DB, $USER;
-
-    $getid = function($obj) {
-        return $obj->id;
-    };
-
-    $postsids = array_map($getid, $posts);
-    list($postssql, $postsparams) = $DB->get_in_or_equal($postsids, SQL_PARAMS_NAMED);
-    $sql = "SELECT p.id, COUNT(c.id) as unread
-            FROM {oublog_comments} c
-            JOIN {oublog_posts} p ON p.id=c.postid
-       LEFT JOIN {oublog_comments_read} cr ON cr.postid = c.postid AND cr.userid = :userid AND cr.commentid=c.id
-            WHERE c.postid $postssql
-            AND cr.id IS NULL
-            AND c.deletedby IS NULL
-            GROUP BY p.id";
-
-    $params = array(
-        'userid' => $USER->id,
-    );
-    $params = array_merge($params, $postsparams);
-
-    $records = $DB->get_records_sql_menu($sql, $params);
-    $total = 0;
-    foreach ($records as $unread) {
-        $total += $unread;
-    }
-    return array($records, $total);
-}
-
-function oublog_get_favourite_comments($posts) {
-    global $DB, $USER;
-
-    $getid = function($obj) {
-        return $obj->id;
-    };
-
-    $postsids = array_map($getid, $posts);
-    list($postssql, $postsparams) = $DB->get_in_or_equal($postsids, SQL_PARAMS_NAMED);
-    $sql = "SELECT p.id, COUNT(c.id) as favourite
-            FROM {oublog_comments} c
-            JOIN {oublog_posts} p ON p.id=c.postid
-       LEFT JOIN {oublog_comments_favourite} cf ON cf.postid = c.postid AND cf.userid = :userid AND cf.commentid=c.id
-            WHERE c.postid $postssql
-            AND cf.id IS NOT NULL
-            AND c.deletedby IS NULL
-            GROUP BY p.id";
-
-    $params = array(
-        'userid' => $USER->id,
-    );
-    $params = array_merge($params, $postsparams);
-
-    $records = $DB->get_records_sql_menu($sql, $params);
-    $total = 0;
-    foreach ($records as $favourite) {
-        $total += $favourite;
-    }
-    return array($records, $total);
-}

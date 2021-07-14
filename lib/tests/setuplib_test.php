@@ -25,7 +25,6 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-
 /**
  * Unit tests for setuplib.php
  *
@@ -44,7 +43,7 @@ class core_setuplib_testcase extends advanced_testcase {
         } else {
             $docroot = $CFG->docroot;
         }
-        $this->assertRegExp('~^' . preg_quote($docroot, '') . '/\d{2}/' . current_language() . '/course/editing$~',
+        $this->assertRegExp('~^' . preg_quote($docroot, '') . '/\d{2,3}/' . current_language() . '/course/editing$~',
                 get_docs_url('course/editing'));
     }
 
@@ -80,7 +79,7 @@ class core_setuplib_testcase extends advanced_testcase {
         global $CFG;
 
         // This doesn't test them all possible ones, but these are set for unit tests.
-        $cfgnames = array('dataroot', 'dirroot', 'tempdir', 'cachedir', 'localcachedir');
+        $cfgnames = array('dataroot', 'dirroot', 'tempdir', 'backuptempdir', 'cachedir', 'localcachedir');
 
         $fixture  = '';
         $expected = '';
@@ -93,8 +92,8 @@ class core_setuplib_testcase extends advanced_testcase {
         $exception     = new moodle_exception('generalexceptionmessage', 'error', '', $fixture, $fixture);
         $exceptioninfo = get_exception_info($exception);
 
-        $this->assertContains($expected, $exceptioninfo->message, 'Exception message does not contain system paths');
-        $this->assertContains($expected, $exceptioninfo->debuginfo, 'Exception debug info does not contain system paths');
+        $this->assertStringContainsString($expected, $exceptioninfo->message, 'Exception message does not contain system paths');
+        $this->assertStringContainsString($expected, $exceptioninfo->debuginfo, 'Exception debug info does not contain system paths');
     }
 
     public function test_localcachedir() {
@@ -205,6 +204,8 @@ class core_setuplib_testcase extends advanced_testcase {
     }
 
     public function test_get_request_storage_directory() {
+        $this->resetAfterTest(true);
+
         // Making a call to get_request_storage_directory should always give the same result.
         $firstdir = get_request_storage_directory();
         $seconddir = get_request_storage_directory();
@@ -231,6 +232,11 @@ class core_setuplib_testcase extends advanced_testcase {
         $fourthdir = get_request_storage_directory();
         $this->assertTrue(is_dir($fourthdir));
         $this->assertNotEquals($thirddir, $fourthdir);
+
+        $now = $this->setCurrentTimeStart();
+        set_config('localcachedirpurged', $now - 2);
+        purge_all_caches();
+        $this->assertTrue(is_dir($fourthdir));
     }
 
 
@@ -451,17 +457,23 @@ class core_setuplib_testcase extends advanced_testcase {
      */
     public function data_for_test_get_real_size() {
         return array(
-            array('8KB', 8192),
-            array('8Kb', 8192),
-            array('8K', 8192),
-            array('8k', 8192),
-            array('50MB', 52428800),
-            array('50Mb', 52428800),
-            array('50M', 52428800),
-            array('50m', 52428800),
-            array('8Gb', 8589934592),
-            array('8GB', 8589934592),
-            array('8G', 8589934592),
+            array('8KB',    8192),
+            array('8Kb',    8192),
+            array('8K',     8192),
+            array('8k',     8192),
+            array('50MB',   52428800),
+            array('50Mb',   52428800),
+            array('50M',    52428800),
+            array('50m',    52428800),
+            array('8GB',    8589934592),
+            array('8Gb',    8589934592),
+            array('8G',     8589934592),
+            array('7T',     7696581394432),
+            array('7TB',    7696581394432),
+            array('7Tb',    7696581394432),
+            array('6P',     6755399441055744),
+            array('6PB',    6755399441055744),
+            array('6Pb',    6755399441055744),
         );
     }
 
@@ -475,5 +487,66 @@ class core_setuplib_testcase extends advanced_testcase {
      */
     public function test_get_real_size($input, $expectedbytes) {
         $this->assertEquals($expectedbytes, get_real_size($input));
+    }
+
+    /**
+     * Validate the given V4 UUID.
+     *
+     * @param string $value The candidate V4 UUID
+     * @return bool True if valid; otherwise, false.
+     */
+    protected static function is_valid_uuid_v4($value) {
+        // Version 4 UUIDs have the form xxxxxxxx-xxxx-4xxx-Yxxx-xxxxxxxxxxxx
+        // where x is any hexadecimal digit and Y is one of 8, 9, aA, or bB.
+        // First, the size is 36 (32 + 4 dashes).
+        if (strlen($value) != 36) {
+            return false;
+        }
+        // Finally, check the format.
+        $uuidv4pattern = '/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i';
+        return (preg_match($uuidv4pattern, $value) === 1);
+    }
+
+    /**
+     * Test the \core\uuid::generate_uuid_via_pecl_uuid_extension() function.
+     */
+    public function test_core_uuid_generate_uuid_via_pecl_uuid_extension() {
+        if (!extension_loaded('uuid')) {
+            $this->markTestSkipped("PHP 'uuid' extension not loaded.");
+        }
+        if (!function_exists('uuid_time')) {
+            $this->markTestSkipped("PHP PECL 'uuid' extension not loaded.");
+        }
+
+        // The \core\uuid::generate_uuid_via_pecl_uuid_extension static method is protected. Use Reflection to call the method.
+        $method = new ReflectionMethod('\core\uuid', 'generate_uuid_via_pecl_uuid_extension');
+        $method->setAccessible(true);
+        $uuid = $method->invoke(null);
+        $this->assertTrue(self::is_valid_uuid_v4($uuid), "Invalid v4 uuid: '$uuid'");
+    }
+
+    /**
+     * Test the \core\uuid::generate_uuid_via_random_bytes() function.
+     */
+    public function test_core_uuid_generate_uuid_via_random_bytes() {
+        try {
+            random_bytes(1);
+        } catch (Exception $e) {
+            $this->markTestSkipped('No source of entropy for random_bytes. ' . $e->getMessage());
+        }
+
+        // The \core\uuid::generate_uuid_via_random_bytes static method is protected. Use Reflection to call the method.
+        $method = new ReflectionMethod('\core\uuid', 'generate_uuid_via_random_bytes');
+        $method->setAccessible(true);
+        $uuid = $method->invoke(null);
+        $this->assertTrue(self::is_valid_uuid_v4($uuid), "Invalid v4 uuid: '$uuid'");
+    }
+
+    /**
+     * Test the \core\uuid::generate() function.
+     */
+    public function test_core_uuid_generate() {
+        $uuid = \core\uuid::generate();
+        $this->assertTrue(self::is_valid_uuid_v4($uuid), "Invalid v4 UUID: '$uuid'");
     }
 }

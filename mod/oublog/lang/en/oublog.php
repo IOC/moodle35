@@ -274,13 +274,6 @@ $string['overviewnumentrylog1'] = 'entry since last log in';
 $string['overviewnumentrylog'] = 'entries since last log in';
 $string['overviewnumentryvw1'] = 'entry since last viewed';
 $string['overviewnumentryvw'] = 'entries since last viewed';
-$string['activityoverview'] = 'You have blogs that need attention';
-$string['overviewnumunread'] = ' unread messages';
-$string['overviewnumunread1'] = ' unread message';
-$string['overviewcommentsunread'] = '{$a} unread comments';
-$string['overviewcommentsunread1'] = '{$a} unread comment';
-$string['overviewcommentsfavourite'] = '{$a} favourite comments';
-$string['overviewcommentsfavourite1'] = '{$a} favourite comment';
 
 $string['individualblogs'] = 'Individual blogs';
 $string['no_blogtogetheroringroups'] = 'No (blog together or in groups)';
@@ -289,7 +282,6 @@ $string['visibleindividualblogs'] = 'Visible individual blogs';
 
 $string['separateindividual'] = 'Separate individuals';
 $string['visibleindividual'] = 'Visible individuals';
-$string['individualvisible'] = 'Visible';
 $string['viewallusers'] = 'View all users';
 $string['viewallusersingroup'] = 'View all users in group';
 
@@ -467,8 +459,7 @@ $string['posttitle'] = 'Post title';
 
 // Export.
 $string['exportedpost'] = 'Exported post';
-$string['exportpostscomments'] = ' all currently visible posts';
-$string['exportownpostscomments'] = ' currently visible own posts';
+$string['exportpostscomments'] = ' all currently visible posts and their comments.';
 $string['exportuntitledpost'] = 'An untitled post ';
 
 $string['configmaxattachments'] = 'Default maximum number of attachments allowed per blog post.';
@@ -746,30 +737,5 @@ $string['export:header_title'] = 'Title';
 $string['export:header_date_posted'] = 'Date posted';
 $string['export:header_tags'] = 'Tags';
 $string['export:header_author'] = 'Author';
-
-// Read tracking
-$string['readtracking'] = 'Read tracking';
-$string['markread'] = 'Mark read';
-$string['markunread'] = 'Mark unread';
-
-// Reblogs
-$string['allowreblogs'] = 'Allow reblogs (individual blogs only)';
-$string['maxreblogs'] = 'Maximum number of displayed reblogs';
-$string['numreblogs'] = '{$a} reblogs';
-$string['onereblog'] = '1 reblog';
-$string['reblog'] = 'Reblog';
-$string['reblogged'] = 'Reblogged';
-$string['undoreblog'] = 'Undo reblog';
-
-// Preview comments
-$string['previewcomments'] = 'Number of comments to preview';
-
-// Advanced grading
-$string['mygrade'] = 'My grade';
-
-// Export link
-$string['export'] = 'Export';
-
-// Favourite comments
-$string['markasfav'] = 'Mark as favourite';
-$string['markasnofav'] = 'Mark as no favourite';
+$string['tagshowmore'] = 'Show more ...';
+$string['tagshowless'] = 'Show less ...';

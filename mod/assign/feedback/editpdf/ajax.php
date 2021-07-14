@@ -82,9 +82,24 @@ if ($action === 'pollconversions') {
     $completestatuslist = [combined_document::STATUS_COMPLETE, combined_document::STATUS_FAILED];
 
     if (in_array($response->status, $readystatuslist)) {
+        // It seems that the files for this submission haven't been combined by the
+        // "\assignfeedback_editpdf\task\convert_submissions" scheduled task.
+        // Try to combine them in the user session.
         $combineddocument = document_services::get_combined_pdf_for_attempt($assignment, $userid, $attemptnumber);
-        $response->pagecount = $combineddocument->get_page_count();
-    } else if (in_array($response->status, $completestatuslist)) {
+        $response->status = $combineddocument->get_status();
+        $response->filecount = $combineddocument->get_document_count();
+
+        // Check status of the combined document and remove the submission
+        // from the task queue if combination completed.
+        if (in_array($response->status, $completestatuslist)) {
+            $submission = $assignment->get_user_submission($userid, false, $attemptnumber);
+            if ($submission) {
+                $DB->delete_records('assignfeedback_editpdf_queue', array('submissionid' => $submission->id));
+            }
+        }
+    }
+
+    if (in_array($response->status, $completestatuslist)) {
         $pages = document_services::get_page_images_for_attempt($assignment,
                                                                 $userid,
                                                                 $attemptnumber,
@@ -122,14 +137,14 @@ if ($action === 'pollconversions') {
             $annotations = page_editor::get_annotations($grade->id, $index, $draft);
             $page->annotations = $annotations;
             $response->pages[] = $page;
-
-            $component = 'assignfeedback_editpdf';
-            $filearea = document_services::PAGE_IMAGE_FILEAREA;
-            $filepath = '/';
-            $fs = get_file_storage();
-            $files = $fs->get_directory_files($context->id, $component, $filearea, $grade->id, $filepath);
-            $response->pageready = count($files);
         }
+
+        $component = 'assignfeedback_editpdf';
+        $filearea = document_services::PAGE_IMAGE_FILEAREA;
+        $filepath = '/';
+        $fs = get_file_storage();
+        $files = $fs->get_directory_files($context->id, $component, $filearea, $grade->id, $filepath);
+        $response->pageready = count($files);
     }
 
     echo json_encode($response);
@@ -224,6 +239,27 @@ if ($action === 'pollconversions') {
 
     $result = $result && page_editor::unrelease_drafts($grade->id);
     echo json_encode($result);
+    die();
+} else if ($action == 'rotatepage') {
+    require_capability('mod/assign:grade', $context);
+    $response = new stdClass();
+    $index = required_param('index', PARAM_INT);
+    $grade = $assignment->get_user_grade($userid, true, $attemptnumber);
+    $rotateleft = required_param('rotateleft', PARAM_BOOL);
+    $filearea = document_services::PAGE_IMAGE_FILEAREA;
+    $pagefile = document_services::rotate_page($assignment, $userid, $attemptnumber, $index, $rotateleft);
+    $page = new stdClass();
+    $page->url = moodle_url::make_pluginfile_url($context->id, document_services::COMPONENT, $filearea,
+        $grade->id, '/', $pagefile->get_filename())->out();
+    if ($imageinfo = $pagefile->get_imageinfo()) {
+        $page->width = $imageinfo['width'];
+        $page->height = $imageinfo['height'];
+    } else {
+        $page->width = 0;
+        $page->height = 0;
+    }
+    $response = (object)['page' => $page];
+    echo json_encode($response);
     die();
 }
 

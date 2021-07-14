@@ -36,9 +36,10 @@ use pix_icon;
 use renderer_base;
 use stdClass;
 use table_sql;
-use user_picture;
+use block_xp\di;
 use block_xp\local\course_world;
 use block_xp\local\xp\course_user_state_store;
+use block_xp\local\utils\user_utils;
 
 /**
  * Block XP report table class.
@@ -103,6 +104,7 @@ class report_table extends table_sql {
         $this->no_sorting('userpic');
         $this->no_sorting('progress');
         $this->collapsible(false);
+        $this->set_attribute('class', 'block_xp-report-table');
     }
 
     /**
@@ -147,7 +149,7 @@ class report_table extends table_sql {
 
         // Define SQL.
         $this->sql = new stdClass();
-        $this->sql->fields = user_picture::fields('u') . ', COALESCE(x.lvl, 1) AS lvl, x.xp, ' .
+        $this->sql->fields = user_utils::picture_fields('u') . ', COALESCE(x.lvl, 1) AS lvl, x.xp, ' .
             context_helper::get_preload_record_columns_sql('ctx');
         $this->sql->from = "{user} u
                        JOIN {context} ctx
@@ -221,12 +223,17 @@ class report_table extends table_sql {
      * @return string Output produced.
      */
     protected function col_actions($row) {
-        $url = new moodle_url($this->baseurl);
-        $url->params([
-            'action' => 'edit',
-            'userid' => $row->id
-        ]);
-        return $this->renderer->action_icon($url, new pix_icon('t/edit', get_string('edit')));
+        $actions = [];
+
+        $url = new moodle_url($this->baseurl, ['action' => 'edit', 'userid' => $row->id]);
+        $actions[] = $this->renderer->action_icon($url, new pix_icon('t/edit', get_string('edit')));
+
+        if (isset($row->xp)) {
+            $url = new moodle_url($this->baseurl, ['delete' => 1, 'userid' => $row->id]);
+            $actions[] = $this->renderer->action_icon($url, new pix_icon('t/delete', get_string('delete')));
+        }
+
+        return implode(' ', $actions);
     }
 
     /**
@@ -236,7 +243,7 @@ class report_table extends table_sql {
      * @return string Output produced.
      */
     protected function col_lvl($row) {
-        return isset($row->lvl) ? $row->lvl : 1;
+        return isset($row->xp) ? $row->lvl : '-';
     }
 
     /**
@@ -256,8 +263,7 @@ class report_table extends table_sql {
      * @return string Output produced.
      */
     protected function col_xp($row) {
-        $xp = isset($row->xp) ? $row->xp : 0;
-        return $this->renderer->xp($xp);
+        return isset($row->xp) ? $this->renderer->xp($row->xp) : '-';
     }
 
     /**
@@ -337,6 +343,42 @@ class report_table extends table_sql {
      */
     public function get_sql_sort() {
         return static::construct_order_by($this->get_sort_columns(), []);
+    }
+
+    /**
+     * Override to rephrase.
+     *
+     * @return void
+     */
+    public function print_nothing_to_display() {
+        $issite = di::get('config')->get('context') == CONTEXT_SYSTEM && $this->world->get_courseid() == SITEID;
+        $hasfilters = false;
+        $showfilters = false;
+
+        if ($this->can_be_reset()) {
+            $hasfilters = true;
+            $showfilters = true;
+        }
+
+        // Render button to allow user to reset table preferences, and the initial bars if some filters
+        // are used. If none of the filters are used and there is nothing to display it just means that
+        // the course is empty and thus we do not show anything but a message.
+        echo $this->render_reset_button();
+        if ($showfilters) {
+            $this->print_initials_bar();
+        }
+
+        $message = get_string($issite ? 'reportisempty' : 'reportisemptyenrolstudents', 'block_xp');
+        if ($hasfilters) {
+            $message = get_string('nothingtodisplay', 'core');
+        }
+
+        echo \html_writer::div(
+            \block_xp\di::get('renderer')->notification_without_close($message, 'info'),
+            '',
+            ['style' => 'margin: 1em 0']
+        );
+
     }
 
 }

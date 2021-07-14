@@ -169,6 +169,26 @@ class assign_submission_comments extends assign_submission_plugin {
     }
 
     /**
+     * Automatically enable or disable this plugin based on "$CFG->commentsenabled"
+     *
+     * @return bool
+     */
+    public function is_enabled() {
+        global $CFG;
+
+        return (!empty($CFG->usecomments));
+    }
+
+    /**
+     * Automatically hide the setting for the submission plugin.
+     *
+     * @return bool
+     */
+    public function is_configurable() {
+        return false;
+    }
+
+    /**
      * Return the plugin configs for external functions.
      *
      * @return array the list of settings

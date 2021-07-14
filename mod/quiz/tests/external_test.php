@@ -77,7 +77,7 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
     /**
      * Set up for every test
      */
-    public function setUp() {
+    public function setUp(): void {
         global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -95,6 +95,10 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         // Users enrolments.
         $this->studentrole = $DB->get_record('role', array('shortname' => 'student'));
         $this->teacherrole = $DB->get_record('role', array('shortname' => 'editingteacher'));
+        // Allow student to receive messages.
+        $coursecontext = context_course::instance($this->course->id);
+        assign_capability('mod/quiz:emailnotifysubmission', CAP_ALLOW, $this->teacherrole->id, $coursecontext, true);
+
         $this->getDataGenerator()->enrol_user($this->student->id, $this->course->id, $this->studentrole->id, 'manual');
         $this->getDataGenerator()->enrol_user($this->teacher->id, $this->course->id, $this->teacherrole->id, 'manual');
     }
@@ -105,9 +109,11 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
      * @param  boolean $startattempt whether to start a new attempt
      * @param  boolean $finishattempt whether to finish the new attempt
      * @param  string $behaviour the quiz preferredbehaviour, defaults to 'deferredfeedback'.
+     * @param  boolean $includeqattachments whether to include a question that supports attachments, defaults to false.
      * @return array array containing the quiz, context and the attempt
      */
-    private function create_quiz_with_questions($startattempt = false, $finishattempt = false, $behaviour = 'deferredfeedback') {
+    private function create_quiz_with_questions($startattempt = false, $finishattempt = false, $behaviour = 'deferredfeedback',
+            $includeqattachments = false) {
 
         // Create a new quiz with attempts.
         $quizgenerator = $this->getDataGenerator()->get_plugin_generator('mod_quiz');
@@ -125,6 +131,12 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         quiz_add_quiz_question($question->id, $quiz);
         $question = $questiongenerator->create_question('numerical', null, array('category' => $cat->id));
         quiz_add_quiz_question($question->id, $quiz);
+
+        if ($includeqattachments) {
+            $question = $questiongenerator->create_question('essay', null, array('category' => $cat->id, 'attachments' => 1,
+                'attachmentsrequired' => 1));
+            quiz_add_quiz_question($question->id, $quiz);
+        }
 
         $quizobj = quiz::create($quiz->id, $this->student->id);
 
@@ -172,6 +184,7 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         // Second quiz.
         $record = new stdClass();
         $record->course = $course2->id;
+        $record->intro = '<button>Test with HTML allowed.</button>';
         $quiz2 = self::getDataGenerator()->create_module('quiz', $record);
 
         // Execute real Moodle enrolment as we'll call unenrol() method on the instance later.
@@ -451,37 +464,101 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
      * Test get_user_best_grade
      */
     public function test_get_user_best_grade() {
-        global $DB;
+        $quizgenerator = $this->getDataGenerator()->get_plugin_generator('mod_quiz');
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $questioncat = $questiongenerator->create_question_category();
+
+        // Create a new quiz.
+        $quizapi1 = $quizgenerator->create_instance([
+                'name' => 'Test Quiz API 1',
+                'course' => $this->course->id,
+                'sumgrades' => 1
+        ]);
+        $quizapi2 = $quizgenerator->create_instance([
+                'name' => 'Test Quiz API 2',
+                'course' => $this->course->id,
+                'sumgrades' => 1,
+                'marksduring' => 0,
+                'marksimmediately' => 0,
+                'marksopen' => 0,
+                'marksclosed' => 0
+        ]);
+
+        // Create a question.
+        $question = $questiongenerator->create_question('numerical', null, ['category' => $questioncat->id]);
+
+        // Add question to the quizzes.
+        quiz_add_quiz_question($question->id, $quizapi1);
+        quiz_add_quiz_question($question->id, $quizapi2);
+
+        // Create quiz object.
+        $quizapiobj1 = quiz::create($quizapi1->id, $this->student->id);
+        $quizapiobj2 = quiz::create($quizapi2->id, $this->student->id);
+
+        // Set grade to pass.
+        $item = grade_item::fetch([
+                'courseid' => $this->course->id,
+                'itemtype' => 'mod',
+                'itemmodule' => 'quiz',
+                'iteminstance' => $quizapi1->id,
+                'outcomeid' => null
+        ]);
+        $item->gradepass = 80;
+        $item->update();
+
+        $item = grade_item::fetch([
+                'courseid' => $this->course->id,
+                'itemtype' => 'mod',
+                'itemmodule' => 'quiz',
+                'iteminstance' => $quizapi2->id,
+                'outcomeid' => null
+        ]);
+        $item->gradepass = 80;
+        $item->update();
+
+        // Start the passing attempt.
+        $quba1 = question_engine::make_questions_usage_by_activity('mod_quiz', $quizapiobj1->get_context());
+        $quba1->set_preferred_behaviour($quizapiobj1->get_quiz()->preferredbehaviour);
+
+        $quba2 = question_engine::make_questions_usage_by_activity('mod_quiz', $quizapiobj2->get_context());
+        $quba2->set_preferred_behaviour($quizapiobj2->get_quiz()->preferredbehaviour);
+
+        // Start the testing for quizapi1 that allow the student to view the grade.
 
         $this->setUser($this->student);
-
-        $result = mod_quiz_external::get_user_best_grade($this->quiz->id);
+        $result = mod_quiz_external::get_user_best_grade($quizapi1->id);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
 
         // No grades yet.
         $this->assertFalse($result['hasgrade']);
         $this->assertTrue(!isset($result['grade']));
 
-        $grade = new stdClass();
-        $grade->quiz = $this->quiz->id;
-        $grade->userid = $this->student->id;
-        $grade->grade = 8.9;
-        $grade->timemodified = time();
-        $grade->id = $DB->insert_record('quiz_grades', $grade);
+        // Start the attempt.
+        $timenow = time();
+        $attempt = quiz_create_attempt($quizapiobj1, 1, false, $timenow, false, $this->student->id);
+        quiz_start_new_attempt($quizapiobj1, $quba1, $attempt, 1, $timenow);
+        quiz_attempt_save_started($quizapiobj1, $quba1, $attempt);
 
-        $result = mod_quiz_external::get_user_best_grade($this->quiz->id);
+        // Process some responses from the student.
+        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
+
+        // Finish the attempt.
+        $attemptobj->process_finish($timenow, false);
+
+        $result = mod_quiz_external::get_user_best_grade($quizapi1->id);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
 
         // Now I have grades.
         $this->assertTrue($result['hasgrade']);
-        $this->assertEquals(8.9, $result['grade']);
+        $this->assertEquals(100.0, $result['grade']);
 
         // We should not see other users grades.
         $anotherstudent = self::getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($anotherstudent->id, $this->course->id, $this->studentrole->id, 'manual');
 
         try {
-            mod_quiz_external::get_user_best_grade($this->quiz->id, $anotherstudent->id);
+            mod_quiz_external::get_user_best_grade($quizapi1->id, $anotherstudent->id);
             $this->fail('Exception expected due to missing capability.');
         } catch (required_capability_exception $e) {
             $this->assertEquals('nopermissions', $e->errorcode);
@@ -490,11 +567,11 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         // Teacher must be able to see student grades.
         $this->setUser($this->teacher);
 
-        $result = mod_quiz_external::get_user_best_grade($this->quiz->id, $this->student->id);
+        $result = mod_quiz_external::get_user_best_grade($quizapi1->id, $this->student->id);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
 
         $this->assertTrue($result['hasgrade']);
-        $this->assertEquals(8.9, $result['grade']);
+        $this->assertEquals(100.0, $result['grade']);
 
         // Invalid user.
         try {
@@ -504,8 +581,48 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
             $this->assertEquals('invaliduser', $e->errorcode);
         }
 
-        // Remove the created data.
-        $DB->delete_records('quiz_grades', array('id' => $grade->id));
+        // End the testing for quizapi1 that allow the student to view the grade.
+
+        // Start the testing for quizapi2 that do not allow the student to view the grade.
+
+        $this->setUser($this->student);
+        $result = mod_quiz_external::get_user_best_grade($quizapi2->id);
+        $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
+
+        // No grades yet.
+        $this->assertFalse($result['hasgrade']);
+        $this->assertTrue(!isset($result['grade']));
+
+        // Start the attempt.
+        $timenow = time();
+        $attempt = quiz_create_attempt($quizapiobj2, 1, false, $timenow, false, $this->student->id);
+        quiz_start_new_attempt($quizapiobj2, $quba2, $attempt, 1, $timenow);
+        quiz_attempt_save_started($quizapiobj2, $quba2, $attempt);
+
+        // Process some responses from the student.
+        $attemptobj = quiz_attempt::create($attempt->id);
+        $attemptobj->process_submitted_actions($timenow, false, [1 => ['answer' => '3.14']]);
+
+        // Finish the attempt.
+        $attemptobj->process_finish($timenow, false);
+
+        $result = mod_quiz_external::get_user_best_grade($quizapi2->id);
+        $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
+
+        // Now I have grades but I will not be allowed to see it.
+        $this->assertFalse($result['hasgrade']);
+        $this->assertTrue(!isset($result['grade']));
+
+        // Teacher must be able to see student grades.
+        $this->setUser($this->teacher);
+
+        $result = mod_quiz_external::get_user_best_grade($quizapi2->id, $this->student->id);
+        $result = external_api::clean_returnvalue(mod_quiz_external::get_user_best_grade_returns(), $result);
+
+        $this->assertTrue($result['hasgrade']);
+        $this->assertEquals(100.0, $result['grade']);
+
+        // End the testing for quizapi2 that do not allow the student to view the grade.
 
     }
     /**
@@ -1021,6 +1138,11 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         $this->assertEquals(false, $result['questions'][0]['hasautosavedstep']);
         $this->assertEquals(false, $result['questions'][1]['hasautosavedstep']);
 
+        // Check question options.
+        $this->assertNotEmpty(5, $result['questions'][0]['settings']);
+        // Check at least some settings returned.
+        $this->assertCount(4, (array) json_decode($result['questions'][0]['settings']));
+
         // Submit a response for the first question.
         $tosubmit = array(1 => array('answer' => '3.14'));
         $attemptobj->process_submitted_actions(time(), false, $tosubmit);
@@ -1121,8 +1243,9 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         global $DB;
 
         $timenow = time();
-        // Create a new quiz with two questions and one attempt started.
-        list($quiz, $context, $quizobj, $attempt, $attemptobj, $quba) = $this->create_quiz_with_questions(true);
+        // Create a new quiz with three questions and one attempt started.
+        list($quiz, $context, $quizobj, $attempt, $attemptobj, $quba) = $this->create_quiz_with_questions(true, false,
+            'deferredfeedback', true);
 
         // Response for slot 1.
         $prefix = $quba->get_field_prefix(1);
@@ -1139,9 +1262,12 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         $result = external_api::clean_returnvalue(mod_quiz_external::process_attempt_returns(), $result);
         $this->assertEquals(quiz_attempt::IN_PROGRESS, $result['state']);
 
+        $result = mod_quiz_external::get_attempt_data($attempt->id, 2);
+
         // Now, get the summary.
         $result = mod_quiz_external::get_attempt_summary($attempt->id);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_attempt_summary_returns(), $result);
+        $this->assertDebuggingCalled(); // Expect $PAGE->set_url debugging.
 
         // Check it's marked as completed only the first one.
         $this->assertEquals('complete', $result['questions'][0]['state']);
@@ -1177,16 +1303,73 @@ class mod_quiz_external_testcase extends externallib_advanced_testcase {
         $result = mod_quiz_external::get_attempt_summary($attempt->id);
         $result = external_api::clean_returnvalue(mod_quiz_external::get_attempt_summary_returns(), $result);
 
-        // Check it's marked as completed only the first one.
+        // Check it's marked as completed the two first questions.
         $this->assertEquals('complete', $result['questions'][0]['state']);
         $this->assertEquals('complete', $result['questions'][1]['state']);
         $this->assertFalse($result['questions'][0]['flagged']);
         $this->assertTrue($result['questions'][1]['flagged']);
 
+        // Add files in the attachment response.
+        $draftitemid = file_get_unused_draft_itemid();
+        $filerecordinline = array(
+            'contextid' => context_user::instance($this->student->id)->id,
+            'component' => 'user',
+            'filearea'  => 'draft',
+            'itemid'    => $draftitemid,
+            'filepath'  => '/',
+            'filename'  => 'faketxt.txt',
+        );
+        $fs = get_file_storage();
+        $fs->create_file_from_string($filerecordinline, 'fake txt contents 1.');
+
+        // Last slot.
+        $prefix = $quba->get_field_prefix(3);
+        $data = array(
+            array('name' => 'slots', 'value' => 3),
+            array('name' => $prefix . ':sequencecheck',
+                    'value' => $attemptobj->get_question_attempt(1)->get_sequence_check_count()),
+            array('name' => $prefix . 'answer', 'value' => 'Some test'),
+            array('name' => $prefix . 'answerformat', 'value' => FORMAT_HTML),
+            array('name' => $prefix . 'attachments', 'value' => $draftitemid),
+        );
+
+        $result = mod_quiz_external::process_attempt($attempt->id, $data);
+        $result = external_api::clean_returnvalue(mod_quiz_external::process_attempt_returns(), $result);
+        $this->assertEquals(quiz_attempt::IN_PROGRESS, $result['state']);
+
+        // Now, get the summary.
+        $result = mod_quiz_external::get_attempt_summary($attempt->id);
+        $result = external_api::clean_returnvalue(mod_quiz_external::get_attempt_summary_returns(), $result);
+
+        $this->assertEquals('complete', $result['questions'][0]['state']);
+        $this->assertEquals('complete', $result['questions'][1]['state']);
+        $this->assertEquals('complete', $result['questions'][2]['state']);
+        $this->assertFalse($result['questions'][0]['flagged']);
+        $this->assertTrue($result['questions'][1]['flagged']);
+        $this->assertFalse($result['questions'][2]['flagged']);
+
+        // Check submitted files are there.
+        $this->assertCount(1, $result['questions'][2]['responsefileareas']);
+        $this->assertEquals('attachments', $result['questions'][2]['responsefileareas'][0]['area']);
+        $this->assertCount(1, $result['questions'][2]['responsefileareas'][0]['files']);
+        $this->assertEquals($filerecordinline['filename'], $result['questions'][2]['responsefileareas'][0]['files'][0]['filename']);
+
         // Finish the attempt.
+        $sink = $this->redirectMessages();
         $result = mod_quiz_external::process_attempt($attempt->id, array(), true);
         $result = external_api::clean_returnvalue(mod_quiz_external::process_attempt_returns(), $result);
         $this->assertEquals(quiz_attempt::FINISHED, $result['state']);
+        $messages = $sink->get_messages();
+        $message = reset($messages);
+        $sink->close();
+        // Test customdata.
+        if (!empty($message->customdata)) {
+            $customdata = json_decode($message->customdata);
+            $this->assertEquals($quizobj->get_quizid(), $customdata->instance);
+            $this->assertEquals($quizobj->get_cmid(), $customdata->cmid);
+            $this->assertEquals($attempt->id, $customdata->attemptid);
+            $this->assertObjectHasAttribute('notificationiconurl', $customdata);
+        }
 
         // Start new attempt.
         $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());

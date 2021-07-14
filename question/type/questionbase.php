@@ -106,6 +106,9 @@ abstract class question_definition {
     /** @var boolean whethre this question has been deleted/hidden in the question bank. */
     public $hidden = 0;
 
+    /** @var string question idnumber. */
+    public $idnumber;
+
     /** @var integer timestamp when this question was created. */
     public $timecreated;
 
@@ -424,6 +427,31 @@ abstract class question_definition {
             return false;
         }
     }
+
+    /**
+     * Return the question settings that define this question as structured data.
+     *
+     * This is used by external systems such as the Moodle mobile app, which want to display the question themselves,
+     * rather than using the renderer provided.
+     *
+     * This method should only return the data that the student is allowed to see or know, given the current state of
+     * the question. For example, do not include the 'General feedback' until the student has completed the question,
+     * and even then, only include it if the question_display_options say it should be visible.
+     *
+     * But, within those rules, it is recommended that you return all the settings for the question,
+     * to give maximum flexibility to the external system providing its own rendering of the question.
+     *
+     * @param question_attempt $qa the current attempt for which we are exporting the settings.
+     * @param question_display_options $options the question display options which say which aspects of the question
+     * should be visible.
+     * @return mixed structure representing the question settings. In web services, this will be JSON-encoded.
+     */
+    public function get_question_definition_for_external_rendering(question_attempt $qa, question_display_options $options) {
+
+        debugging('This question does not implement the get_question_definition_for_external_rendering() method yet.',
+            DEBUG_DEVELOPER);
+        return null;
+    }
 }
 
 
@@ -505,10 +533,20 @@ interface question_manually_gradable {
 
     /**
      * Produce a plain text summary of a response.
-     * @param $response a response, as might be passed to {@link grade_response()}.
+     * @param array $response a response, as might be passed to {@link grade_response()}.
      * @return string a plain text summary of that response, that could be used in reports.
      */
     public function summarise_response(array $response);
+
+    /**
+     * If possible, construct a response that could have lead to the given
+     * response summary. This is basically the opposite of {@link summarise_response()}
+     * but it is intended only to be used for testing.
+     *
+     * @param string $summary a string, which might have come from summarise_response
+     * @return array a response that could have lead to that.
+     */
+    public function un_summarise_response(string $summary);
 
     /**
      * Categorise the student's response according to the categories defined by
@@ -640,6 +678,11 @@ abstract class question_with_responses extends question_definition
 
     public function is_gradable_response(array $response) {
         return $this->is_complete_response($response);
+    }
+
+    public function un_summarise_response(string $summary) {
+        throw new coding_exception('This question type (' . get_class($this) .
+                ' does not implement the un_summarise_response testing method.');
     }
 }
 

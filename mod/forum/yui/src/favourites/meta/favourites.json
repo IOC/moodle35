@@ -1,8 +1,0 @@
-{
-    "moodle-mod_forum-favourites": {
-        "requires": [
-            "base-base",
-            "io-base"
-        ]
-    }
-}

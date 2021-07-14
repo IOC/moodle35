@@ -119,7 +119,7 @@ class qtype_wq extends question_type {
 
         // Load question xml into Wiris Quizzes API question object.
         if (empty($question->parent)) {
-            $builder = com_wiris_quizzes_api_QuizzesBuilder::getInstance();
+            $builder = com_wiris_quizzes_api_Quizzes::getInstance();
             $question->wirisquestion = $builder->readQuestion($questiondata->options->wirisquestion);
         }
     }
@@ -160,6 +160,13 @@ class qtype_wq extends question_type {
 
     public function extra_question_fields() {
         return $this->base->extra_question_fields();
+    }
+
+    public function response_file_areas() {
+        if ($this->base != null) {
+            return $this->base->response_file_areas();
+        }
+        return array();
     }
 
     public function wrsqz_mathml_decode($input) {

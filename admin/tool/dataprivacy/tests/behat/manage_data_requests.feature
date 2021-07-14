@@ -21,14 +21,14 @@ Feature: Manage data requests
     And I should see "Contact the privacy officer"
     And I click on "Contact the privacy officer" "link"
     And I set the field "Message" to "Hi PO! Can others access my information on your site?"
-    And I press "Send"
+    And I click on "Send" "button" in the "Contact the privacy officer" "dialogue"
     And I should see "Your request has been submitted to the privacy officer"
     And I log out
     And I log in as "student2"
     And I follow "Profile" in the user menu
     And I click on "Contact the privacy officer" "link"
     And I set the field "Message" to "Dear Mr. Privacy Officer, I'd like to know more about GDPR. Thanks!"
-    And I press "Send"
+    And I click on "Send" "button" in the "Contact the privacy officer" "dialogue"
     And I should see "Your request has been submitted to the privacy officer"
     And I log out
     When I log in as "admin"
@@ -46,7 +46,7 @@ Feature: Manage data requests
     And I open the action menu in "John Doe" "table_row"
     And I should see "View the request"
     But I should not see "Mark as complete"
-    And I press key "27" in ".moodle-actionmenu" "css_element"
+    And I press the escape key
     And I open the action menu in "Jane Doe" "table_row"
     And I choose "Mark as complete" in the open action menu
     And I should see "Do you really want to mark this user enquiry as complete?"

@@ -294,16 +294,14 @@ class mod_quiz_renderer extends plugin_renderer_base {
             $this->initialise_timer($timerstartvalue, $ispreview);
         }
 
-        return html_writer::tag('div', get_string('timeleft', 'quiz') . ' ' .
-                html_writer::tag('span', '', array('id' => 'quiz-time-left')),
-                array('id' => 'quiz-timer', 'role' => 'timer',
-                    'aria-atomic' => 'true', 'aria-relevant' => 'text'));
+
+        return $this->output->render_from_template('mod_quiz/timer', (object)[]);
     }
 
     /**
      * Create a preview link
      *
-     * @param $url contains a url to the given page
+     * @param moodle_url $url contains a url to the given page
      */
     public function restart_preview_button($url) {
         return $this->single_button($url, get_string('startnewpreview', 'quiz'));
@@ -351,7 +349,7 @@ class mod_quiz_renderer extends plugin_renderer_base {
      * @return string HTML fragment.
      */
     protected function render_quiz_nav_question_button(quiz_nav_question_button $button) {
-        $classes = array('qnbutton', $button->stateclass, $button->navmethod, 'btn', 'btn-secondary');
+        $classes = array('qnbutton', $button->stateclass, $button->navmethod, 'btn');
         $extrainfo = array();
 
         if ($button->currentpage) {
@@ -447,6 +445,7 @@ class mod_quiz_renderer extends plugin_renderer_base {
         $output = '';
         $output .= $this->header();
         $output .= $this->quiz_notices($messages);
+        $output .= $this->countdown_timer($attemptobj, time());
         $output .= $this->attempt_form($attemptobj, $page, $slots, $id, $nextpage);
         $output .= $this->footer();
         return $output;
@@ -537,7 +536,9 @@ class mod_quiz_renderer extends plugin_renderer_base {
         $output .= html_writer::start_tag('div', array('class' => 'submitbtns'));
         if ($page > 0 && $navmethod == 'free') {
             $output .= html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'previous',
-                    'value' => get_string('navigateprevious', 'quiz'), 'class' => 'mod_quiz-prev-nav btn btn-secondary'));
+                    'value' => get_string('navigateprevious', 'quiz'), 'class' => 'mod_quiz-prev-nav btn btn-secondary',
+                    'id' => 'mod_quiz-prev-nav'));
+            $this->page->requires->js_call_amd('core_form/submit', 'init', ['mod_quiz-prev-nav']);
         }
         if ($lastpage) {
             $nextlabel = get_string('endtest', 'quiz');
@@ -545,8 +546,9 @@ class mod_quiz_renderer extends plugin_renderer_base {
             $nextlabel = get_string('navigatenext', 'quiz');
         }
         $output .= html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'next',
-                'value' => $nextlabel, 'class' => 'mod_quiz-next-nav btn btn-primary'));
+                'value' => $nextlabel, 'class' => 'mod_quiz-next-nav btn btn-primary', 'id' => 'mod_quiz-next-nav'));
         $output .= html_writer::end_tag('div');
+        $this->page->requires->js_call_amd('core_form/submit', 'init', ['mod_quiz-next-nav']);
 
         return $output;
     }
@@ -560,7 +562,8 @@ class mod_quiz_renderer extends plugin_renderer_base {
      */
     public function redo_question_button($slot, $disabled) {
         $attributes = array('type' => 'submit',  'name' => 'redoslot' . $slot,
-                'value' => get_string('redoquestion', 'quiz'), 'class' => 'mod_quiz-redo_question_button');
+            'value' => get_string('redoquestion', 'quiz'),
+            'class' => 'mod_quiz-redo_question_button btn btn-secondary');
         if ($disabled) {
             $attributes['disabled'] = 'disabled';
         }
@@ -1246,10 +1249,12 @@ class mod_quiz_renderer extends plugin_renderer_base {
      *
      * @param \core\chart_base $chart The chart.
      * @param string $title The title to display above the graph.
+     * @param array $attrs extra container html attributes.
      * @return string HTML fragment for the graph.
      */
-    public function chart(\core\chart_base $chart, $title) {
-        return $this->heading($title, 3) . html_writer::tag('div', $this->render($chart), array('class' => 'graph'));
+    public function chart(\core\chart_base $chart, $title, $attrs = []) {
+        return $this->heading($title, 3) . html_writer::tag('div',
+            $this->render($chart), array_merge(['class' => 'graph'], $attrs));
     }
 
     /**

@@ -57,7 +57,7 @@ class search_base_activity_testcase extends advanced_testcase {
     /** @var stdClass[] Array of test forum objects */
     protected $forums;
 
-    public function setUp() {
+    public function setUp(): void {
         global $DB;
         $this->resetAfterTest();
         set_config('enableglobalsearch', true);
@@ -102,7 +102,7 @@ class search_base_activity_testcase extends advanced_testcase {
         }
     }
 
-    public function tearDown() {
+    public function tearDown(): void {
         // For unit tests before PHP 7, teardown is called even on skip. So only do our teardown if we did setup.
         if ($this->generator) {
             // Moodle DML freaks out if we don't teardown the temp table after each run.
@@ -372,5 +372,26 @@ class search_base_activity_testcase extends advanced_testcase {
         $glossaryarea = new \mod_glossary\search\activity();
         $contexts = iterator_to_array($glossaryarea->get_contexts_to_reindex(), false);
         $this->assertEquals([], $contexts);
+    }
+
+    /**
+     * Test document icon.
+     */
+    public function test_get_doc_icon() {
+        $baseactivity = $this->getMockBuilder('\core_search\base_activity')
+            ->disableOriginalConstructor()
+            ->setMethods(array('get_module_name'))
+            ->getMockForAbstractClass();
+
+        $baseactivity->method('get_module_name')->willReturn('test_activity');
+
+        $document = $this->getMockBuilder('\core_search\document')
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $result = $baseactivity->get_doc_icon($document);
+
+        $this->assertEquals('icon', $result->get_name());
+        $this->assertEquals('test_activity', $result->get_component());
     }
 }

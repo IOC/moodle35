@@ -36,8 +36,6 @@ define(['jquery', 'mod_assign/grading_events'], function($, GradingEvents) {
         this._region = $(selector);
 
         this.registerEventListeners();
-
-        this.collapseReviewPanel();
     };
 
     /** @type {String} Selector for the page region containing the user navigation. */

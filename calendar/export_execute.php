@@ -21,13 +21,13 @@ if (empty($CFG->enablecalendarexport)) {
 $checkuserid = !empty($userid) && $user = $DB->get_record('user', array('id' => $userid), 'id,password');
 //allowing for fallback check of old url - MDL-27542
 $checkusername = !empty($username) && $user = $DB->get_record('user', array('username' => $username), 'id,password');
-if (!$checkuserid && !$checkusername) {
+if ((!$checkuserid && !$checkusername) || !$user) {
     //No such user
     die('Invalid authentication');
 }
 
 //Check authentication token
-$authuserid = !empty($userid) && $authtoken == sha1($userid . $user->password . $CFG->calendar_exportsalt);
+$authuserid = !empty($userid) && $authtoken == calendar_get_export_token($user);
 //allowing for fallback check of old url - MDL-27542
 $authusername = !empty($username) && $authtoken == sha1($username . $user->password . $CFG->calendar_exportsalt);
 if (!$authuserid && !$authusername) {
@@ -49,7 +49,7 @@ $allowedwhat = ['all', 'user', 'groups', 'courses', 'categories', 'selectedcours
 $allowedtime = ['weeknow', 'weeknext', 'monthnow', 'monthnext', 'recentupcoming', 'custom'];
 
 if (!empty($generateurl)) {
-    $authtoken = sha1($user->id . $user->password . $CFG->calendar_exportsalt);
+    $authtoken = calendar_get_export_token($user);
     $params = array();
     $params['preset_what'] = $what;
     $params['preset_time'] = $time;
@@ -87,7 +87,7 @@ if(!empty($what) && !empty($time)) {
         if ($what == 'all') {
             $users = $user->id;
             $courses[SITEID] = new stdClass;
-            $courses[SITEID]->shortname = get_string('globalevents', 'calendar');
+            $courses[SITEID]->shortname = get_string('siteevents', 'calendar');
             $paramcourses[SITEID] = $courses[SITEID];
             $paramcategory = true;
         } else if ($what == 'groups') {
@@ -197,9 +197,9 @@ if(!empty($what) && !empty($time)) {
         die();
     }
 }
-
+$limitnum = 0;
 $events = calendar_get_legacy_events($timestart, $timeend, $users, $groups, array_keys($paramcourses), false, true,
-        $paramcategory);
+        $paramcategory, $limitnum);
 
 $ical = new iCalendar;
 $ical->add_property('method', 'PUBLISH');
@@ -230,6 +230,11 @@ foreach($events as $event) {
 
     $ev->add_property('class', 'PUBLIC'); // PUBLIC / PRIVATE / CONFIDENTIAL
     $ev->add_property('last-modified', Bennu::timestamp_to_datetime($event->timemodified));
+
+    if (!empty($event->location)) {
+        $ev->add_property('location', $event->location);
+    }
+
     $ev->add_property('dtstamp', Bennu::timestamp_to_datetime()); // now
     if ($event->timeduration > 0) {
         //dtend is better than duration, because it works in Microsoft Outlook and works better in Korganizer

@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/fixtures/testable_core_search.php');
+require_once(__DIR__ . '/fixtures/mock_search_area.php');
 
 /**
  * Search engine base unit tests.
@@ -37,7 +38,7 @@ require_once(__DIR__ . '/fixtures/testable_core_search.php');
  */
 class search_engine_testcase extends advanced_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest();
         set_config('enableglobalsearch', true);
 
@@ -128,5 +129,25 @@ class search_engine_testcase extends advanced_testcase {
         $orders = $engine->get_supported_orders(\context_system::instance());
         $this->assertCount(1, $orders);
         $this->assertArrayHasKey('relevance', $orders);
+    }
+
+    /**
+     * Test that search engine sets an icon before render a document.
+     */
+    public function test_engine_sets_doc_icon() {
+        $generator = self::getDataGenerator()->get_plugin_generator('core_search');
+        $generator->setup();
+
+        $area = new core_mocksearch\search\mock_search_area();
+        $engine = new \mock_search\engine();
+
+        $record = $generator->create_record();
+        $docdata = $area->get_document($record)->export_for_engine();
+
+        $doc = $engine->to_document($area, $docdata);
+
+        $this->assertNotNull($doc->get_doc_icon());
+
+        $generator->teardown();
     }
 }

@@ -44,7 +44,7 @@ class promo_controller extends route_controller {
     /** Seen flag. */
     const SEEN_FLAG = 'promo-page-seen';
     /** Page version. */
-    const VERSION = 20181122;
+    const VERSION = 20210428;
 
     /** @var string The normal route name. */
     protected $routename = 'promo';
@@ -121,8 +121,24 @@ class promo_controller extends route_controller {
     protected function content() {
         self::mark_as_seen();
 
+        $pluginman = \core_plugin_manager::instance();
+        $localxp = $pluginman->get_plugin_info('local_xp');
+        if ($localxp) {
+            $this->content_installed();
+            return;
+        }
+
+        $this->content_not_installed();
+    }
+
+    /**
+     * Content when not installed.
+     *
+     * @return void
+     */
+    protected function content_not_installed() {
         $output = \block_xp\di::get('renderer');
-        $siteurl = "http://levelup.branchup.tech?utm_source=blockxp&utm_medium=promopage&utm_campaign=xppromo";
+        $siteurl = "https://levelup.plus?ref=plugin_promopage";
 
         if (!$this->is_admin_page()) {
             echo $output->heading(get_string('levelupplus', 'block_xp'));
@@ -132,6 +148,8 @@ class promo_controller extends route_controller {
 
         echo $output->heading(get_string('discoverlevelupplus', 'block_xp'), 3);
         echo markdown_to_html(get_string('promointro', 'block_xp'));
+
+        $new = '🆕';
 
         echo <<<EOT
 <style>
@@ -159,22 +177,45 @@ class promo_controller extends route_controller {
     <tr>
         <td><img src="{$output->pix_url('noun/checklist', 'block_xp')}" alt=""></td>
         <td>
-            <h4>Additional rules <span class="label label-info">New</span></h4>
+            <h4>Additional rules $new</h4>
             <p>Reward your students for completing their tasks and courses.</p>
             <ul>
                 <li>Support for activity completion</li>
                 <li>Support for course completion</li>
-                <li>Support for targetting specific courses</li>
+                <li>Target specific courses</li>
+                <li>Target activities by name $new</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><img src="{$output->pix_url('noun/grade', 'block_xp')}" alt=""></td>
+        <td>
+            <h4>Grade-based rewards</h4>
+            <p>Reward students for their performance.</p>
+            <ul>
+                <li>Grades can directly contribute to students' points</li>
+                <li>Our powerful interface helps you define which grades count</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><img src="{$output->pix_url('noun/manual', 'block_xp')}" alt=""></td>
+        <td>
+            <h4>Issue individual rewards</h4>
+            <p>Manually award points to specific students.</p>
+            <ul>
+                <li>A great way to reward offline or punctual actions</li>
+                <li>Use our import feature to award points from a spreadsheet</li>
             </ul>
         </td>
     </tr>
     <tr>
         <td><img src="{$output->pix_url('noun/group', 'block_xp')}" alt=""></td>
         <td>
-            <h4>Group leaderboards <span class="label label-info">New</span></h4>
+            <h4>Team leaderboards</h4>
             <p>Rank groups of learners based on their combined points.</p>
             <ul>
-                <li>Compatible with course groups</li>
+                <li>Compatible with groups and cohorts</li>
                 <li>Collaboration and cohesion in a friendly competition</li>
             </ul>
         </td>
@@ -183,7 +224,7 @@ class promo_controller extends route_controller {
         <td><img src="{$output->pix_url('noun/favorite-mobile', 'block_xp')}" alt=""></td>
         <td>
             <h4>Mobile app support</h4>
-            <p>Level up! in the official Moodle Mobile app.</p>
+            <p>Access Level up! in the official Moodle Mobile app.</p>
             <ul>
                 <li>See current level and progress</li>
                 <li>Access the leaderboard</li>
@@ -194,10 +235,24 @@ class promo_controller extends route_controller {
         <td><img src="{$output->pix_url('noun/privacy', 'block_xp')}" alt=""></td>
         <td>
             <h4>Improved cheat guard</h4>
-            <p>Better control over your students' rewards.</p>
+            <p>Get better control of students' rewards.</p>
             <ul>
-                <li>Limit your students' rewards per day (or any other time window)</li>
-                <li>More resilient to students' trickeries</li>
+                <li>Limit your students' rewards per day (or any other time limit you want to set)</li>
+                <li>Get peace of mind with a more robust and resilient anti-cheat</li>
+                <li>Increase the time limits to greater values</li>
+            </ul>
+        </td>
+    </tr>
+    <tr>
+        <td><img src="{$output->pix_url('noun/export', 'block_xp')}" alt=""></td>
+        <td>
+            <h4>Import, export &amp; report $new</h4>
+            <p>Better control and information about your students' actions.</p>
+            <ul>
+                <li>Export the report to look at it in more details</li>
+                <li>Export the logs to look at them in more details $new</li>
+                <li>Allocate points in bulk from an imported CSV file</li>
+                <li>Track the events with logs containing human-friendly descriptions and originating locations</li>
             </ul>
         </td>
     </tr>
@@ -205,7 +260,7 @@ class promo_controller extends route_controller {
         <td><img src="{$output->pix_url('level', 'block_xp')}" alt=""></td>
         <td>
             <h4>Additional badges</h4>
-            <p>Make your learners feel at home with new looks.</p>
+            <p>Celebrate learners achievements with more badges.</p>
             <ul>
                 <li>Three new sets of level badges</li>
             </ul>
@@ -214,8 +269,8 @@ class promo_controller extends route_controller {
     <tr>
         <td><img src="{$output->pix_url('noun/carrots', 'block_xp')}" alt=""></td>
         <td>
-            <h4>Give them carrots!</h4>
-            <p>Reward your students with something other than experience points.</p>
+            <h4>Dangle a carrot!</h4>
+            <p>Motivate & reward your students with something other than experience points.</p>
             <ul>
                 <li>Carrots, gems, thumbs up, reputation points...</li>
                 <li>It's your call, use any symbol you want!</li>
@@ -223,22 +278,12 @@ class promo_controller extends route_controller {
         </td>
     </tr>
     <tr>
-        <td><img src="{$output->pix_url('noun/export', 'block_xp')}" alt=""></td>
-        <td>
-            <h4>Export the report</h4>
-            <p>Export the report to look at it in more detail.</p>
-            <ul>
-                <li>Various formats supported: Excel, CSV, OpenDocument, and more</li>
-            </ul>
-        </td>
-    </tr>
-    <tr>
         <td><img src="{$output->pix_url('noun/help', 'block_xp')}" alt=""></td>
         <td>
             <h4>Email support</h4>
-            <p>Get direct email support from our team.</p>
+            <p>Let us help if something goes wrong</p>
             <ul>
-                <li>Let us help if something goes wrong</li>
+                <li>Get direct email support from our team.</li>
             </ul>
         </td>
     </tr>
@@ -249,20 +294,60 @@ class promo_controller extends route_controller {
             <p>Purchasing the add-on directly contributes to the plugin's development.</p>
             <ul>
                 <li>Bugs will be fixed</li>
-                <li>Features will be added</li>
+                <li>Requested features will be added</li>
             </ul>
         </td>
     </tr>
 </table>
 
 <div style="text-align: center; margin-top: 2em">
-    <p>To find out more, order or contact us:</p>
     <p><a class="btn btn-success btn-large btn-lg" href="{$siteurl}">
-        Visit our website
+        Get Level up! Plus now!
     </a></p>
 </div>
 EOT;
 
+    }
+
+    protected function content_installed() {
+        $output = \block_xp\di::get('renderer');
+        $siteurl = new url('https://levelup.plus?ref=localxp_promopage');
+        $docsurl = new url('https://levelup.plus/docs?ref=localxp_promopage');
+        $recoverurl = new url('https://levelup.plus/recover?ref=localxp_promopage');
+        $releasenotesurl = new url('https://levelup.plus/docs/topic/release-notes?ref=localxp_promopage');
+        $upgradeurl = new url('https://levelup.plus/docs/article/upgrading-level-up?ref=localxp_promopage');
+        $outofsyncurl = new url('https://levelup.plus/docs/article/plugins-out-of-sync?ref=localxp_promopage');
+        $pluginman = \core_plugin_manager::instance();
+        $localxp = $pluginman->get_plugin_info('local_xp');
+
+        if (!$this->is_admin_page()) {
+            echo $output->heading(get_string('levelupplus', 'block_xp'));
+            echo $output->course_world_navigation($this->world, $this->routename);
+        }
+
+        if (!$localxp->is_installed_and_upgraded()) {
+            echo $output->notification_without_close(get_string('addoninstallationerror', 'block_xp'), 'error');
+            return;
+        }
+
+        if (self::versions_out_of_sync()) {
+            echo $output->notification_without_close(markdown_to_html(get_string('pluginsoutofsync', 'block_xp', [
+                'url' => $outofsyncurl->out(false)
+            ])), 'error');
+        }
+
+        echo $output->heading(get_string('thankyou', 'block_xp'), 3);
+        echo markdown_to_html(get_string('promointroinstalled', 'block_xp'));
+
+        echo html_writer::tag('p', get_string('version', 'core') . ' ' . $localxp->release);
+
+        echo $output->heading(get_string('additionalresources', 'block_xp'), 4);
+        echo html_writer::start_tag('ul');
+        echo html_writer::tag('li', html_writer::link($docsurl, get_string('documentation', 'block_xp')));
+        echo html_writer::tag('li', html_writer::link($releasenotesurl, get_string('releasenotes', 'block_xp')));
+        echo html_writer::tag('li', html_writer::link($upgradeurl, get_string('upgradingplugins', 'block_xp')));
+
+        echo html_writer::end_tag('ul');
     }
 
     /**
@@ -279,7 +364,7 @@ EOT;
         $indicator = \block_xp\di::get('user_generic_indicator');
         $value = $indicator->get_user_flag($USER->id, self::SEEN_FLAG);
 
-        return $value < self::VERSION;
+        return $value < self::VERSION || self::versions_out_of_sync();
     }
 
     /**
@@ -297,4 +382,30 @@ EOT;
         $value = $indicator->set_user_flag($USER->id, self::SEEN_FLAG, self::VERSION);
     }
 
+    /**
+     * Check whether the versions are out of sync.
+     *
+     * @return bool
+     */
+    protected static function versions_out_of_sync() {
+        global $USER;
+
+        if (!isloggedin() || isguestuser()) {
+            return false;
+        }
+
+        $pluginman = \core_plugin_manager::instance();
+        $blockxp = $pluginman->get_plugin_info('block_xp');
+        $localxp = $pluginman->get_plugin_info('local_xp');
+        if (!$localxp || !$localxp->is_installed_and_upgraded()) {
+            return false;
+        } else if (!$blockxp || !$blockxp->is_installed_and_upgraded()) {
+            return false;
+        }
+
+        // Versions should have the same date.
+        $blockxpversion = floor($blockxp->versiondb / 100);
+        $localxpversion = floor($localxp->versiondb / 100);
+        return $blockxpversion > $localxpversion;
+    }
 }

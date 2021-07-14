@@ -40,6 +40,7 @@
  *  - $CFG->tempdir  - Path to moodle's temp file directory on server's filesystem.
  *  - $CFG->cachedir - Path to moodle's cache directory on server's filesystem (shared by cluster nodes).
  *  - $CFG->localcachedir - Path to moodle's local cache directory (not shared by cluster nodes).
+ *  - $CFG->localrequestdir - Path to moodle's local temp request directory (not shared by cluster nodes).
  *
  * @global object $CFG
  * @name $CFG
@@ -206,6 +207,11 @@ if (!isset($CFG->cachedir)) {
 // Allow overriding of localcachedir.
 if (!isset($CFG->localcachedir)) {
     $CFG->localcachedir = "$CFG->dataroot/localcache";
+}
+
+// Allow overriding of localrequestdir.
+if (!isset($CFG->localrequestdir)) {
+    $CFG->localrequestdir = sys_get_temp_dir() . '/requestdir';
 }
 
 // Location of all languages except core English pack.
@@ -534,17 +540,10 @@ global $FULLSCRIPT;
  */
 global $SCRIPT;
 
-// Set httpswwwroot to $CFG->wwwroot for backwards compatibility
-// The loginhttps option is deprecated, so httpswwwroot is no longer necessary. See MDL-42834.
+// The httpswwwroot has been deprecated, we keep it as an alias for backwards compatibility with plugins only.
 $CFG->httpswwwroot = $CFG->wwwroot;
 
 require_once($CFG->libdir .'/setuplib.php');        // Functions that MUST be loaded first
-
-// @PATCH IOC siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
-// Admin site performance
-require_once($CFG->dirroot . '/admin/tool/siteperf/lib.php');
-tool_siteperf::init();
-// Fi
 
 if (NO_OUTPUT_BUFFERING) {
     // we have to call this always before starting session because it discards headers!
@@ -571,6 +570,11 @@ if (!PHPUNIT_TEST or PHPUNIT_UTIL) {
 if (defined('BEHAT_SITE_RUNNING') && !defined('BEHAT_TEST') && !defined('BEHAT_UTIL')) {
     require_once(__DIR__ . '/behat/lib.php');
     set_error_handler('behat_error_handler', E_ALL | E_STRICT);
+}
+
+if (defined('WS_SERVER') && WS_SERVER) {
+    require_once($CFG->dirroot . '/webservice/lib.php');
+    set_exception_handler('early_ws_exception_handler');
 }
 
 // If there are any errors in the standard libraries we want to know!
@@ -612,7 +616,6 @@ require_once($CFG->libdir .'/moodlelib.php');       // Other general-purpose fun
 require_once($CFG->libdir .'/enrollib.php');        // Enrolment related functions
 require_once($CFG->libdir .'/pagelib.php');         // Library that defines the moodle_page class, used for $PAGE
 require_once($CFG->libdir .'/blocklib.php');        // Library for controlling blocks
-require_once($CFG->libdir .'/eventslib.php');       // Events functions
 require_once($CFG->libdir .'/grouplib.php');        // Groups functions
 require_once($CFG->libdir .'/sessionlib.php');      // All session and cookie related stuff
 require_once($CFG->libdir .'/editorlib.php');       // All text editor related functions and classes
@@ -627,8 +630,12 @@ setup_validate_php_configuration();
 setup_DB();
 
 if (PHPUNIT_TEST and !PHPUNIT_UTIL) {
-    // make sure tests do not run in parallel
-    test_lock::acquire('phpunit');
+    // Make sure tests do not run in parallel.
+    $suffix = '';
+    if (phpunit_util::is_in_isolated_process()) {
+        $suffix = '.isolated';
+    }
+    test_lock::acquire('phpunit', $suffix);
     $dbhash = null;
     try {
         if ($dbhash = $DB->get_field('config', 'value', array('name'=>'phpunittest'))) {
@@ -792,7 +799,7 @@ if (CLI_SCRIPT) {
 
 // Start session and prepare global $SESSION, $USER.
 if (empty($CFG->sessiontimeout)) {
-    $CFG->sessiontimeout = 7200;
+    $CFG->sessiontimeout = 8 * 60 * 60;
 }
 \core\session\manager::start();
 
@@ -1004,12 +1011,6 @@ if (PHPUNIT_TEST) {
 
 }
 
-// @PATCH IOC002: optimitzacions de rendiment (possiblement innecessari)
-// Set PHP output compression
-if (!NO_OUTPUT_BUFFERING) {
-    @ini_set('zlib.output_compression', !empty($CFG->outputcompression) ? 'On' : 'Off');
-}
-
 // // try to detect IE6 and prevent gzip because it is extremely buggy browser
 if (!empty($_SERVER['HTTP_USER_AGENT']) and strpos($_SERVER['HTTP_USER_AGENT'], 'MSIE 6') !== false) {
     ini_set('zlib.output_compression', 'Off');
@@ -1049,4 +1050,16 @@ if (false) {
     $DB = new moodle_database();
     $OUTPUT = new core_renderer(null, null);
     $PAGE = new moodle_page();
+}
+
+// Allow plugins to callback as soon possible after setup.php is loaded.
+$pluginswithfunction = get_plugins_with_function('after_config', 'lib.php');
+foreach ($pluginswithfunction as $plugins) {
+    foreach ($plugins as $function) {
+        try {
+            $function();
+        } catch (Throwable $e) {
+            debugging("Exception calling '$function'", DEBUG_DEVELOPER, $e->getTrace());
+        }
+    }
 }

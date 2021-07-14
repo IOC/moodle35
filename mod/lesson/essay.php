@@ -27,7 +27,6 @@ require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/lesson/locallib.php');
 require_once($CFG->dirroot.'/mod/lesson/pagetypes/essay.php');
 require_once($CFG->dirroot.'/mod/lesson/essay_form.php');
-require_once($CFG->libdir.'/eventslib.php');
 
 $id   = required_param('id', PARAM_INT);             // Course Module ID
 $mode = optional_param('mode', 'display', PARAM_ALPHA);
@@ -132,9 +131,6 @@ switch ($mode) {
                 $attempt->correct = 0;
             }
 
-            if (!isset($form->essaygrading)) {
-                $essayinfo = file_postupdate_standard_editor($essayinfo, 'response', array('noclean'=>true, 'maxfiles'=>EDITOR_UNLIMITED_FILES, 'maxbytes'=>$PAGE->course->maxbytes), context_module::instance($PAGE->cm->id), 'mod_lesson', 'attempt', $attempt->id);
-            }
             $attempt->useranswer = serialize($essayinfo);
 
             $DB->update_record('lesson_attempts', $attempt);
@@ -228,6 +224,8 @@ switch ($mode) {
             print_error('cannotfindanswer', 'lesson');
         }
 
+        $userpicture = new user_picture($USER);
+        $userpicture->size = 1; // Use f1 size.
         foreach ($attempts as $attempt) {
             $essayinfo = lesson_page_type_essay::extract_useranswer($attempt->useranswer);
             if ($essayinfo->graded && !$essayinfo->sent) {
@@ -251,7 +249,9 @@ switch ($mode) {
                 // Set rest of the message values
                 $currentpage = $lesson->load_page($attempt->pageid);
                 $a->question = format_text($currentpage->contents, $currentpage->contentsformat, $formattextdefoptions);
-                $a->response = format_text($essayinfo->answer, $essayinfo->answerformat,
+                $answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $context->id,
+                    'mod_lesson', 'essay_answers', $attempt->id);
+                $a->response = format_text($answer, $essayinfo->answerformat,
                         array('context' => $context, 'para' => true));
                 $a->comment = $essayinfo->response;
                 $a->comment = file_rewrite_pluginfile_urls($a->comment, 'pluginfile.php', $context->id,
@@ -262,6 +262,9 @@ switch ($mode) {
                 // Fetch message HTML and plain text formats
                 $message  = get_string('essayemailmessage2', 'lesson', $a);
                 $plaintext = format_text_email($message, FORMAT_HTML);
+
+                $smallmessage = get_string('essayemailmessagesmall', 'lesson', $a);
+                $smallmessage = format_text_email($smallmessage, FORMAT_HTML);
 
                 // Subject
                 $subject = get_string('essayemailsubject', 'lesson');
@@ -278,8 +281,15 @@ switch ($mode) {
                 $eventdata->fullmessage      = $plaintext;
                 $eventdata->fullmessageformat = FORMAT_PLAIN;
                 $eventdata->fullmessagehtml  = $message;
-                $eventdata->smallmessage     = '';
-                $eventdata->contexturl       = $contexturl;
+                $eventdata->smallmessage     = $smallmessage;
+                $eventdata->contexturl       = $contexturl->out(false);
+                $userpicture->includetoken   = $attempt->userid; // Generate an out-of-session token for the destinatary.
+                $eventdata->customdata       = [
+                    'cmid' => $cm->id,
+                    'instance' => $lesson->id,
+                    'retake' => $lesson->id,
+                    'notificationiconurl' => $userpicture->get_url($PAGE)->out(false),
+                ];
 
                 // Required for messaging framework
                 $eventdata->component = 'mod_lesson';
@@ -396,12 +406,8 @@ switch ($mode) {
                     }
                     $count++;
 
-                    // Make sure they didn't answer it more than the max number of attmepts
-                    if (count($try) > $lesson->maxattempts) {
-                        $essay = $try[$lesson->maxattempts-1];
-                    } else {
-                        $essay = end($try);
-                    }
+                    // Make sure they didn't answer it more than the max number of attempts.
+                    $essay = $lesson->get_last_attempt($try);
 
                     // Start processing the attempt
                     $essayinfo = lesson_page_type_essay::extract_useranswer($essay->useranswer);
@@ -413,13 +419,13 @@ switch ($mode) {
 
                     // Different colors for all the states of an essay (graded, if sent, not graded)
                     if (!$essayinfo->graded) {
-                        $class = "label label-warning";
+                        $class = "badge badge-warning";
                         $status = get_string('notgraded', 'lesson');
                     } elseif (!$essayinfo->sent) {
-                        $class = "label label-success";
+                        $class = "badge badge-success";
                         $status = get_string('graded', 'lesson');
                     } else {
-                        $class = "label label-success";
+                        $class = "badge badge-success";
                         $status = get_string('sent', 'lesson');
                     }
                     $attributes = array('tabindex' => 0);
@@ -458,6 +464,8 @@ switch ($mode) {
         // Grading form
         // Expects the following to be set: $attemptid, $answer, $user, $page, $attempt
         $essayinfo = lesson_page_type_essay::extract_useranswer($attempt->useranswer);
+        $answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $context->id,
+            'mod_lesson', 'essay_answers', $attempt->id);
         $currentpage = $lesson->load_page($attempt->pageid);
 
         $mform = new essay_grading_form(null, array('scoreoptions'=>$scoreoptions, 'user'=>$user));
@@ -466,9 +474,7 @@ switch ($mode) {
         $data->attemptid = $attemptid;
         $data->score = $essayinfo->score;
         $data->question = format_text($currentpage->contents, $currentpage->contentsformat, $formattextdefoptions);
-        $essayinfo->answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $context->id, 'mod_lesson',
-                                                     'attempt', $attemptid);
-        $data->studentanswer = format_text($essayinfo->answer, $essayinfo->answerformat,
+        $data->studentanswer = format_text($answer, $essayinfo->answerformat,
                 array('context' => $context, 'para' => true));
         $data->response = $essayinfo->response;
         $data->responseformat = $essayinfo->responseformat;

@@ -117,7 +117,14 @@ class portfolio_add_button {
             debugging('Building portfolio add button while portfolios is disabled. This code can be optimised.', DEBUG_DEVELOPER);
         }
 
-        $this->instances = portfolio_instances();
+        $cache = cache::make('core', 'portfolio_add_button_portfolio_instances');
+        $instances = $cache->get('instances');
+        if ($instances === false) {
+            $instances = portfolio_instances();
+            $cache->set('instances', $instances);
+        }
+
+        $this->instances = $instances;
         if (empty($options)) {
             return true;
         }
@@ -259,7 +266,7 @@ class portfolio_add_button {
      *                    Optional, defaults to PORTFOLIO_ADD_FULL_FORM
      * @param string $addstr string to use for the button or icon alt text or link text.
      *                       This is whole string, not key.  optional, defaults to 'Add to portfolio';
-     * @return void|string
+     * @return void|string|moodle_url
      */
     public function to_html($format=null, $addstr=null) {
         global $CFG, $COURSE, $OUTPUT, $USER;
@@ -327,6 +334,11 @@ class portfolio_add_button {
                 return;
             }
         }
+        // If we just want a moodle_url to redirect to, do it now.
+        if ($format == PORTFOLIO_ADD_MOODLE_URL) {
+            return $url;
+        }
+
         // if we just want a url to redirect to, do it now
         if ($format == PORTFOLIO_ADD_FAKE_URL) {
             return $url->out(false);
@@ -931,40 +943,6 @@ function portfolio_report_insane($insane, $instances=false, $return=false) {
 }
 
 /**
- * Main portfolio cronjob.
- * Currently just cleans up expired transfer records.
- */
-function portfolio_cron() {
-    global $DB, $CFG;
-
-    require_once($CFG->libdir . '/portfolio/exporter.php');
-    if ($expired = $DB->get_records_select('portfolio_tempdata', 'expirytime < ?', array(time()), '', 'id')) {
-        foreach ($expired as $d) {
-            try {
-                $e = portfolio_exporter::rewaken_object($d->id);
-                $e->process_stage_cleanup(true);
-            } catch (Exception $e) {
-                mtrace('Exception thrown in portfolio cron while cleaning up ' . $d->id . ': ' . $e->getMessage());
-            }
-        }
-    }
-
-    $process = $DB->get_records('portfolio_tempdata', array('queued' => 1), 'id ASC', 'id');
-    foreach ($process as $d) {
-        try {
-            $exporter = portfolio_exporter::rewaken_object($d->id);
-            $exporter->process_stage_package();
-            $exporter->process_stage_send();
-            $exporter->save();
-            $exporter->process_stage_cleanup();
-        } catch (Exception $e) {
-            // This will get probably retried in the next cron until it is discarded by the code above.
-            mtrace('Exception thrown in portfolio cron while processing ' . $d->id . ': ' . $e->getMessage());
-        }
-    }
-}
-
-/**
  * Helper function to rethrow a caught portfolio_exception as an export exception.
  * Used because when a portfolio_export exception is thrown the export is cancelled
  * throws portfolio_export_exceptiog
@@ -1050,15 +1028,15 @@ function portfolio_filesize_info() {
 function portfolio_expected_time_db($recordcount) {
     global $CFG;
 
-    if (empty($CFG->portfolio_moderate_dbsize_threshold)) {
-        set_config('portfolio_moderate_dbsize_threshold', 10);
+    if (empty($CFG->portfolio_moderate_db_threshold)) {
+        set_config('portfolio_moderate_db_threshold', 20);
     }
-    if (empty($CFG->portfolio_high_dbsize_threshold)) {
-        set_config('portfolio_high_dbsize_threshold', 50);
+    if (empty($CFG->portfolio_high_db_threshold)) {
+        set_config('portfolio_high_db_threshold', 50);
     }
-    if ($recordcount < $CFG->portfolio_moderate_dbsize_threshold) {
+    if ($recordcount < $CFG->portfolio_moderate_db_threshold) {
         return PORTFOLIO_TIME_LOW;
-    } else if ($recordcount < $CFG->portfolio_high_dbsize_threshold) {
+    } else if ($recordcount < $CFG->portfolio_high_db_threshold) {
         return PORTFOLIO_TIME_MODERATE;
     }
     return PORTFOLIO_TIME_HIGH;

@@ -176,7 +176,7 @@ function label_reset_userdata($data) {
  */
 function label_supports($feature) {
     switch($feature) {
-        case FEATURE_IDNUMBER:                return false;
+        case FEATURE_IDNUMBER:                return true;
         case FEATURE_GROUPS:                  return false;
         case FEATURE_GROUPINGS:               return false;
         case FEATURE_MOD_INTRO:               return true;
@@ -323,6 +323,7 @@ function label_generate_resized_image(stored_file $file, $maxwidth, $maxheight) 
         $attrib['width'] = $maxwidth;
     }
 
+    $attrib['class'] = "img-fluid";
     $img = html_writer::empty_tag('img', $attrib);
     if ($link) {
         return html_writer::link($link, $img);

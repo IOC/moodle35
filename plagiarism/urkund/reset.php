@@ -28,9 +28,9 @@
 require_once(dirname(dirname(__FILE__)) . '/../config.php');
 require_once($CFG->dirroot.'/plagiarism/urkund/lib.php');
 
-$cmid = required_param('cmid', PARAM_INT);  // Course Module ID
-$pf   = optional_param('pf', 0, PARAM_INT);   // plagiarism file id.
-$resetall = optional_param('resetall', 0, PARAM_INT);   // plagiarism file id.
+$cmid = required_param('cmid', PARAM_INT);  // Course Module ID.
+$pf   = optional_param('pf', 0, PARAM_INT);   // Plagiarism file id.
+$resetall = optional_param('resetall', 0, PARAM_INT);   // Plagiarism file id.
 require_sesskey();
 $url = new moodle_url('/plagiarism/urkund/reset.php');
 $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
@@ -52,6 +52,8 @@ if (!empty($pf)) {
 
 if ($cm->modname == 'assign') {
     $redirect = new moodle_url('/mod/assign/view.php', array('id' => $cmid, 'action' => 'grading'));
+} else if ($cm->modname == 'quiz') {
+    $redirect = new moodle_url('/mod/quiz/report.php', array('id' => $cmid, 'mode' => 'overview'));
 } else {
     // TODO: add correct locations for workshop and forum.
     $redirect = $CFG->wwwroot;

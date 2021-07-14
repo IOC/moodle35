@@ -62,22 +62,46 @@ class qbehaviour_regexpadaptivewithhelp_renderer extends qbehaviour_adaptive_ren
         $output = $this->submit_button($qa, $options).'&nbsp;';
         $helpmode = $qa->get_question()->usehint;
 
-        if ($helpmode == 0 || $options->readonly || !$isimprovable) {
+        // JR DEC 2020 Do not display the Help button if it has just been clicked for help!
+        $helprequested = false;
+        $gradedstep = $this->get_graded_step($qa);
+        $response = $qa->get_last_qt_data();
+        $question = $qa->get_question(false);
+        $closest = $question->closest;
+
+        if ($gradedstep && $gradedstep->has_behaviour_var('_helps') ) {
+            $helprequested = true;
+        }
+
+        // Check if error consists of misplaced words ONLY, no wrong words.
+        $overflow = false;
+        if ($closest && $response) {
+            $t = true;
+            $guesserrors = $closest[5];
+            if ($guesserrors == 11) {
+                $t = false;
+            }
+            if (($response['answer'] > $closest[0]) && $t) {
+                $overflow = true;
+            }
+        }
+
+        // Do NOT display the Help (word or letter) button in those cases.
+        if ($helpmode == 0 || $options->readonly || !$isimprovable || $helprequested === true || $overflow) {
             return $output;
         }
         $helptext = $this->help_msg()[$helpmode];
+        // JR dec 2020 added btn-secondary class for button display similar to default question check button.
         $attributes = array(
             'type' => 'submit',
             'id' => $qa->get_behaviour_field_name('helpme'),
             'name' => $qa->get_behaviour_field_name('helpme'),
             'value' => $helptext,
-            'class' => 'submit btn',
+            'class' => 'submit btn btn-secondary',
         );
 
         $attributes['round'] = true;
         $output .= html_writer::empty_tag('input', $attributes);
-            $this->page->requires->js_init_call('M.core_question_engine.init_submit_button',
-                    array($attributes['id'], $qa->get_slot()));
         return $output;
     }
 
@@ -122,4 +146,5 @@ class qbehaviour_regexpadaptivewithhelp_renderer extends qbehaviour_adaptive_ren
 
         return $output;
     }
+
 }

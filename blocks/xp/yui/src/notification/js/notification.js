@@ -27,12 +27,12 @@
  * @module moodle-block_xp-notification
  */
 
-var NAME = 'moodle-block_xp-notification';
 var COMPONENT = 'block_xp';
 var CSS = {
     BADGE: 'level-badge',
     CONTENT: 'level-message-content',
     HEADLINE: 'level-headline',
+    NAME: 'level-name',
     PREFIX: 'block_xp-notification',
     WRAP: 'wrapper',
 };
@@ -60,6 +60,9 @@ Y.namespace('M.block_xp').Notification = Y.extend(NOTIFICATION, M.core.dialogue,
     display: function() {
         var footerTpl,
             content,
+            hasName,
+            headline,
+            name,
             tpl,
             html;
 
@@ -70,6 +73,11 @@ Y.namespace('M.block_xp').Notification = Y.extend(NOTIFICATION, M.core.dialogue,
         html += ' <div class="{{CSS.BADGE}}">';
         html += '  {{{badge}}}';
         html += ' </div>';
+        html += ' {{#if hasName}}';
+        html += ' <div class="{{CSS.NAME}}">';
+        html += '  {{name}}';
+        html += ' </div>';
+        html += ' {{/if}}';
         html += ' <div class="{{CSS.CONTENT}}">';
         html += '  {{{message}}}';
         html += ' </div>';
@@ -80,12 +88,20 @@ Y.namespace('M.block_xp').Notification = Y.extend(NOTIFICATION, M.core.dialogue,
         this.getStdModNode(Y.WidgetStdMod.HEADER).prepend(Y.Node.create('<h1>' + this.get('title') + '</h1>'));
 
         // Set the content.
+        name = this.get('name');
+        hasName = name && name.length;
+        headline = M.util.get_string('youreachedlevela', 'block_xp', this.get('level'));
+        if (hasName) {
+            headline = M.util.get_string('youreachedlevel', 'block_xp');
+        }
         content = Y.Node.create(
             tpl({
                 badge: this.get('badge'),
                 CSS: CSS,
-                headline: this.get('headline'),
-                message: this.get('message')
+                hasName: hasName,
+                headline: headline,
+                message: this.get('message'),
+                name: name,
             })
         );
         this.setStdModContent(Y.WidgetStdMod.BODY, content, Y.WidgetStdMod.REPLACE);
@@ -117,17 +133,17 @@ Y.namespace('M.block_xp').Notification = Y.extend(NOTIFICATION, M.core.dialogue,
             value: ''
         },
 
-        headline: {
-            validator: Y.Lang.isString,
-            value: ''
-        },
-
         level: {
             validator: Y.Lang.isNumber,
             value: 0
         },
 
         message: {
+            validator: Y.Lang.isString,
+            value: ''
+        },
+
+        name: {
             validator: Y.Lang.isString,
             value: ''
         }

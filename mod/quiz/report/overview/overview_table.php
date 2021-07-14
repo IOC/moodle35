@@ -70,23 +70,25 @@ class quiz_overview_table extends quiz_attempts_report_table {
         $this->add_separator();
 
         if (!empty($this->groupstudentsjoins->joins)) {
-            $sql = "SELECT DISTINCT u.id
+            $hasgroupstudents = $DB->record_exists_sql("
+                    SELECT 1
                       FROM {user} u
                     {$this->groupstudentsjoins->joins}
-                     WHERE {$this->groupstudentsjoins->wheres}";
-            $groupstudents = $DB->get_records_sql($sql, $this->groupstudentsjoins->params);
-            if ($groupstudents) {
+                     WHERE {$this->groupstudentsjoins->wheres}
+                    ", $this->groupstudentsjoins->params);
+            if ($hasgroupstudents) {
                 $this->add_average_row(get_string('groupavg', 'grades'), $this->groupstudentsjoins);
             }
         }
 
         if (!empty($this->studentsjoins->joins)) {
-            $sql = "SELECT DISTINCT u.id
+            $hasstudents = $DB->record_exists_sql("
+                    SELECT 1
                       FROM {user} u
                     {$this->studentsjoins->joins}
-                     WHERE {$this->studentsjoins->wheres}";
-            $students = $DB->get_records_sql($sql, $this->studentsjoins->params);
-            if ($students) {
+                     WHERE {$this->studentsjoins->wheres}
+                    " , $this->studentsjoins->params);
+            if ($hasstudents) {
                 $this->add_average_row(get_string('overallaverage', 'grades'), $this->studentsjoins);
             }
         }
@@ -213,8 +215,17 @@ class quiz_overview_table extends quiz_attempts_report_table {
 
     protected function submit_buttons() {
         if (has_capability('mod/quiz:regrade', $this->context)) {
-            echo '<input type="submit" class="btn btn-secondary m-r-1" name="regrade" value="' .
-                    get_string('regradeselected', 'quiz_overview') . '"/>';
+            $regradebuttonparams = [
+                'type'  => 'submit',
+                'class' => 'btn btn-secondary mr-1',
+                'name'  => 'regrade',
+                'value' => get_string('regradeselected', 'quiz_overview'),
+                'data-action' => 'toggle',
+                'data-togglegroup' => $this->togglegroup,
+                'data-toggle' => 'action',
+                'disabled' => true
+            ];
+            echo html_writer::empty_tag('input', $regradebuttonparams);
         }
         parent::submit_buttons();
     }
@@ -264,7 +275,7 @@ class quiz_overview_table extends quiz_attempts_report_table {
      */
     public function other_cols($colname, $attempt) {
         if (!preg_match('/^qsgrade(\d+)$/', $colname, $matches)) {
-            return null;
+            return parent::other_cols($colname, $attempt);
         }
         $slot = $matches[1];
 

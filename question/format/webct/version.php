@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'qformat_webct';
-$plugin->version   = 2018051400;
+$plugin->version   = 2020110900;
 
-$plugin->requires  = 2018050800;
+$plugin->requires  = 2020110300;
 
 $plugin->maturity  = MATURITY_STABLE;

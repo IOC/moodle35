@@ -283,9 +283,13 @@ function folder_pluginfile($course, $cm, $context, $filearea, $args, $forcedownl
         return false;
     }
 
-    // finally send the file
-    // for folder module, we force download file all the time
-    send_stored_file($file, 0, 0, true, $options);
+    // Set security posture for in-browser display.
+    if (!$forcedownload) {
+        header("Content-Security-Policy: default-src 'none'; img-src 'self'");
+    }
+
+    // Finally send the file.
+    send_stored_file($file, 0, 0, $forcedownload, $options);
 }
 
 /**
@@ -399,7 +403,7 @@ function folder_dndupload_handle($uploadinfo) {
 function folder_get_coursemodule_info($cm) {
     global $DB;
     if (!($folder = $DB->get_record('folder', array('id' => $cm->instance),
-            'id, name, display, showexpanded, showdownloadfolder, intro, introformat'))) {
+            'id, name, display, showexpanded, showdownloadfolder, forcedownload, intro, introformat'))) {
         return NULL;
     }
     $cminfo = new cached_cm_info();
@@ -409,6 +413,7 @@ function folder_get_coursemodule_info($cm) {
         $fdata = new stdClass();
         $fdata->showexpanded = $folder->showexpanded;
         $fdata->showdownloadfolder = $folder->showdownloadfolder;
+        $fdata->forcedownload = $folder->forcedownload;
         if ($cm->showdescription && strlen(trim($folder->intro))) {
             $fdata->intro = $folder->intro;
             if ($folder->introformat != FORMAT_MOODLE) {
@@ -739,7 +744,7 @@ function folder_print_recent_activity($course, $viewfullnames, $timestart) {
     }
 
     // Build list of files.
-    echo $OUTPUT->heading(get_string('newfoldercontent', 'folder').':', 3);
+    echo $OUTPUT->heading(get_string('newfoldercontent', 'folder') . ':', 6);
     $list = html_writer::start_tag('ul', ['class' => 'unlist']);
     foreach ($newfiles as $file) {
         $filename = $file->get_filename();
@@ -817,4 +822,28 @@ function mod_folder_core_calendar_provide_event_action(calendar_event $event,
         1,
         true
     );
+}
+
+/**
+ * Given an array with a file path, it returns the itemid and the filepath for the defined filearea.
+ *
+ * @param  string $filearea The filearea.
+ * @param  array  $args The path (the part after the filearea and before the filename).
+ * @return array The itemid and the filepath inside the $args path, for the defined filearea.
+ */
+function mod_folder_get_path_from_pluginfile(string $filearea, array $args) : array {
+    // Folder never has an itemid (the number represents the revision but it's not stored in database).
+    array_shift($args);
+
+    // Get the filepath.
+    if (empty($args)) {
+        $filepath = '/';
+    } else {
+        $filepath = '/' . implode('/', $args) . '/';
+    }
+
+    return [
+        'itemid' => 0,
+        'filepath' => $filepath,
+    ];
 }

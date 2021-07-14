@@ -44,6 +44,10 @@ class mod_choice_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'limitanswers', get_string('limitanswers', 'choice'));
         $mform->addHelpButton('limitanswers', 'limitanswers', 'choice');
 
+        $mform->addElement('selectyesno', 'showavailable', get_string('showavailable', 'choice'));
+        $mform->addHelpButton('showavailable', 'showavailable', 'choice');
+        $mform->hideIf('showavailable', 'limitanswers', 'eq', 0);
+
         $repeatarray = array();
         $repeatarray[] = $mform->createElement('text', 'option', get_string('optionno', 'choice'));
         $repeatarray[] = $mform->createElement('text', 'limit', get_string('limitno', 'choice'));
@@ -58,7 +62,7 @@ class mod_choice_mod_form extends moodleform_mod {
 
         $repeateloptions = array();
         $repeateloptions['limit']['default'] = 0;
-        $repeateloptions['limit']['disabledif'] = array('limitanswers', 'eq', 0);
+        $repeateloptions['limit']['hideif'] = array('limitanswers', 'eq', 0);
         $repeateloptions['limit']['rule'] = 'numeric';
         $repeateloptions['limit']['type'] = PARAM_INT;
 
@@ -93,7 +97,7 @@ class mod_choice_mod_form extends moodleform_mod {
         $mform->addElement('select', 'showresults', get_string("publish", "choice"), $CHOICE_SHOWRESULTS);
 
         $mform->addElement('select', 'publish', get_string("privacy", "choice"), $CHOICE_PUBLISH);
-        $mform->disabledIf('publish', 'showresults', 'eq', 0);
+        $mform->hideIf('publish', 'showresults', 'eq', 0);
 
         $mform->addElement('selectyesno', 'showunanswered', get_string("showunanswered", "choice"));
 

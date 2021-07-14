@@ -297,14 +297,6 @@ abstract class assign_plugin {
         return $this->visiblecache;
     }
 
-    /**
-     * Is this plugin convertible?
-     *
-     * @return bool
-     */
-    public function is_convertible() {
-        return false;
-    }
 
     /**
      * Has this plugin got a custom settings.php file?

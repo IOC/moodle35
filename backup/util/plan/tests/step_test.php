@@ -36,7 +36,7 @@ class backup_step_testcase extends advanced_testcase {
     protected $courseid;  // course id used for testing
     protected $userid;      // user record used for testing
 
-    protected function setUp() {
+    protected function setUp(): void {
         global $DB, $CFG;
         parent::setUp();
 
@@ -241,7 +241,7 @@ class backup_step_testcase extends advanced_testcase {
             $this->assertTrue(false, 'base_step_exception expected');
         } catch (exception $e) {
             $this->assertTrue($e instanceof backup_step_exception);
-            $this->assertEquals('plugin_missing_subplugins_php_file', $e->errorcode);
+            $this->assertEquals('plugin_missing_subplugins_configuration', $e->errorcode);
         }
         // Wrong BC (defaulting to mod and modulename) use not having subplugins.
         try {
@@ -250,7 +250,7 @@ class backup_step_testcase extends advanced_testcase {
             $this->assertTrue(false, 'base_step_exception expected');
         } catch (exception $e) {
             $this->assertTrue($e instanceof backup_step_exception);
-            $this->assertEquals('plugin_missing_subplugins_php_file', $e->errorcode);
+            $this->assertEquals('plugin_missing_subplugins_configuration', $e->errorcode);
         }
         // Wrong subplugin type.
         try {
@@ -362,7 +362,7 @@ class backup_step_testcase extends advanced_testcase {
             $this->assertTrue(false, 'base_step_exception expected');
         } catch (exception $e) {
             $this->assertTrue($e instanceof restore_step_exception);
-            $this->assertEquals('plugin_missing_subplugins_php_file', $e->errorcode);
+            $this->assertEquals('plugin_missing_subplugins_configuration', $e->errorcode);
         }
         // Wrong BC (defaulting to mod and modulename) use not having subplugins.
         try {
@@ -371,7 +371,7 @@ class backup_step_testcase extends advanced_testcase {
             $this->assertTrue(false, 'base_step_exception expected');
         } catch (exception $e) {
             $this->assertTrue($e instanceof restore_step_exception);
-            $this->assertEquals('plugin_missing_subplugins_php_file', $e->errorcode);
+            $this->assertEquals('plugin_missing_subplugins_configuration', $e->errorcode);
         }
         // Wrong subplugin type.
         try {

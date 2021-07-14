@@ -26,7 +26,6 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot.'/mod/oublog/locallib.php');
-require_once($CFG->dirroot.'/grade/grading/lib.php');
 
 $id         = required_param('id', PARAM_INT); // Course Module ID
 $groupid    = optional_param('group', 0, PARAM_INT);
@@ -195,11 +194,9 @@ if (empty($download)) {
     $timefilter->display();
 }
 
-
-$controller = get_grading_manager($context, 'mod_oublog', 'participation')->get_active_controller();
 $oublogoutput->render_participation_list($cm, $course, $oublog, $groupid,
     $download, $page, $participation, $coursecontext, $viewfullnames,
-    $groupname, $controller !== null);
+    $groupname);
 
 echo $oublogoutput->get_link_back_to_oublog($cm->name, $cm->id);
 

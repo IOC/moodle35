@@ -16,8 +16,7 @@
 /**
  * Grid Format - A topics based format that uses a grid of user selectable images to popup a light box of the section.
  *
- * @package    course/format
- * @subpackage grid
+ * @package    format_grid
  * @version    See the value of '$plugin->version' in version.php.
  * @copyright  &copy; 2012 onwards G J Barnard in respect to modifications of standard topics format.
  * @author     G J Barnard - {@link http://about.me/gjbarnard} and
@@ -76,7 +75,7 @@ M.format_grid.init = function(Y, the_editing_on, the_section_redirect, the_num_s
     if (this.num_sections > 0) {
         if (the_initial_section > -1) {
             M.format_grid.tab(the_initial_section);
-        } else {
+        } else if (!the_editing_on) {
             this.set_selected_section(this.num_sections, true, true);  // Section 0 can be in the grid.
         }
     } else {

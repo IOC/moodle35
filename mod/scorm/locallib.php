@@ -220,11 +220,6 @@ function scorm_get_forceattempt_array() {
  */
 function scorm_parse($scorm, $full) {
     global $CFG, $DB;
-
-    set_time_limit(3600);
-    raise_memory_limit(MEMORY_EXTRA);
-    $DB->raise_timeout();
-
     $cfgscorm = get_config('scorm');
 
     if (!isset($scorm->cmid)) {
@@ -1002,12 +997,12 @@ function scorm_print_launch ($user, $scorm, $action, $cm) {
         if ($scorm->hidebrowse == 0) {
             print_string('mode', 'scorm');
             echo ': '.html_writer::empty_tag('input', array('type' => 'radio', 'id' => 'b', 'name' => 'mode',
-                    'value' => 'browse', 'class' => 'm-r-1')).
+                    'value' => 'browse', 'class' => 'mr-1')).
                         html_writer::label(get_string('browse', 'scorm'), 'b');
             echo html_writer::empty_tag('input', array('type' => 'radio',
                                                         'id' => 'n', 'name' => 'mode',
                                                         'value' => 'normal', 'checked' => 'checked',
-                                                        'class' => 'm-x-1')).
+                                                        'class' => 'mx-1')).
                     html_writer::label(get_string('normal', 'scorm'), 'n');
 
         } else {
@@ -1587,10 +1582,18 @@ function scorm_get_toc_object($user, $scorm, $currentorg='', $scoid='', $mode='n
 
                     if (isset($usertracks[$sco->identifier])) {
                         $usertrack = $usertracks[$sco->identifier];
-                        $strstatus = get_string($usertrack->status, 'scorm');
+
+                        // Check we have a valid status string identifier.
+                        if ($statusstringexists = get_string_manager()->string_exists($usertrack->status, 'scorm')) {
+                            $strstatus = get_string($usertrack->status, 'scorm');
+                        } else {
+                            $strstatus = get_string('invalidstatus', 'scorm');
+                        }
 
                         if ($sco->scormtype == 'sco') {
-                            $statusicon = $OUTPUT->pix_icon($usertrack->status, $strstatus, 'scorm');
+                            // Assume if we didn't get a valid status string, we don't have an icon either.
+                            $statusicon = $OUTPUT->pix_icon($statusstringexists ? $usertrack->status : 'incomplete',
+                                $strstatus, 'scorm');
                         } else {
                             $statusicon = $OUTPUT->pix_icon('asset', get_string('assetlaunched', 'scorm'), 'scorm');
                         }
@@ -2373,12 +2376,13 @@ function scorm_eval_prerequisites($prerequisites, $usertracks) {
                     if (isset($statuses[$value])) {
                         $value = $statuses[$value];
                     }
+
+                    $elementprerequisitematch = (strcmp($usertracks[$element]->status, $value) == 0);
                     if ($matches[2] == '<>') {
-                        $oper = '!=';
+                        $element = $elementprerequisitematch ? 'false' : 'true';
                     } else {
-                        $oper = '==';
+                        $element = $elementprerequisitematch ? 'true' : 'false';
                     }
-                    $element = '(\''.$usertracks[$element]->status.'\' '.$oper.' \''.$value.'\')';
                 } else {
                     $element = 'false';
                 }
@@ -2420,7 +2424,8 @@ function scorm_update_calendar(stdClass $scorm, $cmid) {
         if ((!empty($scorm->timeopen)) && ($scorm->timeopen > 0)) {
             // Calendar event exists so update it.
             $event->name = get_string('calendarstart', 'scorm', $scorm->name);
-            $event->description = format_module_intro('scorm', $scorm, $cmid);
+            $event->description = format_module_intro('scorm', $scorm, $cmid, false);
+            $event->format = FORMAT_HTML;
             $event->timestart = $scorm->timeopen;
             $event->timesort = $scorm->timeopen;
             $event->visible = instance_is_visible('scorm', $scorm);
@@ -2437,7 +2442,8 @@ function scorm_update_calendar(stdClass $scorm, $cmid) {
         // Event doesn't exist so create one.
         if ((!empty($scorm->timeopen)) && ($scorm->timeopen > 0)) {
             $event->name = get_string('calendarstart', 'scorm', $scorm->name);
-            $event->description = format_module_intro('scorm', $scorm, $cmid);
+            $event->description = format_module_intro('scorm', $scorm, $cmid, false);
+            $event->format = FORMAT_HTML;
             $event->courseid = $scorm->course;
             $event->groupid = 0;
             $event->userid = 0;
@@ -2461,7 +2467,8 @@ function scorm_update_calendar(stdClass $scorm, $cmid) {
         if ((!empty($scorm->timeclose)) && ($scorm->timeclose > 0)) {
             // Calendar event exists so update it.
             $event->name = get_string('calendarend', 'scorm', $scorm->name);
-            $event->description = format_module_intro('scorm', $scorm, $cmid);
+            $event->description = format_module_intro('scorm', $scorm, $cmid, false);
+            $event->format = FORMAT_HTML;
             $event->timestart = $scorm->timeclose;
             $event->timesort = $scorm->timeclose;
             $event->visible = instance_is_visible('scorm', $scorm);
@@ -2478,7 +2485,8 @@ function scorm_update_calendar(stdClass $scorm, $cmid) {
         // Event doesn't exist so create one.
         if ((!empty($scorm->timeclose)) && ($scorm->timeclose > 0)) {
             $event->name = get_string('calendarend', 'scorm', $scorm->name);
-            $event->description = format_module_intro('scorm', $scorm, $cmid);
+            $event->description = format_module_intro('scorm', $scorm, $cmid, false);
+            $event->format = FORMAT_HTML;
             $event->courseid = $scorm->course;
             $event->groupid = 0;
             $event->userid = 0;

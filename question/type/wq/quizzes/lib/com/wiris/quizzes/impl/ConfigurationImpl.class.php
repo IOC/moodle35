@@ -34,6 +34,12 @@ class com_wiris_quizzes_impl_ConfigurationImpl implements com_wiris_quizzes_api_
 		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$RESOURCES_STATIC, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_RESOURCES_STATIC);
 		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$GRAPH_URL, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_GRAPH_URL);
 		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$VERSION, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_VERSION);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$DEPLOYMENT_ID, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_DEPLOYMENT_ID);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$LICENSE_ID, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_LICENSE_ID);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$TELEMETRY_URL, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_TELEMETRY_URL);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$TELEMETRY_TOKEN, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_TELEMETRY_TOKEN);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$QUIZZES_LOGGING_LEVEL, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_QUIZZES_LOGGING_LEVEL);
+		$this->set(com_wiris_quizzes_api_ConfigurationKeys::$QUIZZES_TRACKING_ENABLED, com_wiris_quizzes_impl_ConfigurationImpl::$DEF_QUIZZES_TRACKING_ENABLED);
 		if(!com_wiris_settings_PlatformSettings::$IS_JAVASCRIPT) {
 			try {
 				$s = com_wiris_system_Storage::newStorage(com_wiris_quizzes_impl_ConfigurationImpl::$DEF_DIST_CONFIG_FILE);
@@ -58,7 +64,7 @@ class com_wiris_quizzes_impl_ConfigurationImpl implements com_wiris_quizzes_api_
 			if(!($className === "")) {
 				try {
 					$config = Type::createInstance(Type::resolveClass($className), new _hx_array(array()));
-					$keys = new _hx_array(array(com_wiris_quizzes_api_ConfigurationKeys::$WIRIS_URL, com_wiris_quizzes_api_ConfigurationKeys::$WIRISLAUNCHER_URL, com_wiris_quizzes_api_ConfigurationKeys::$CALC_URL, com_wiris_quizzes_api_ConfigurationKeys::$EDITOR_URL, com_wiris_quizzes_api_ConfigurationKeys::$HAND_URL, com_wiris_quizzes_api_ConfigurationKeys::$SERVICE_URL, com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL, com_wiris_quizzes_api_ConfigurationKeys::$CACHE_DIR, com_wiris_quizzes_api_ConfigurationKeys::$MAXCONNECTIONS, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_HOST, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_PORT, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_USER, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_PASS, com_wiris_quizzes_api_ConfigurationKeys::$REFERER_URL, com_wiris_quizzes_api_ConfigurationKeys::$HAND_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$CALC_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$HAND_LOGTRACES, com_wiris_quizzes_api_ConfigurationKeys::$SERVICE_OFFLINE, com_wiris_quizzes_api_ConfigurationKeys::$CROSSORIGINCALLS_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$RESOURCES_STATIC, com_wiris_quizzes_api_ConfigurationKeys::$RESOURCES_URL, com_wiris_quizzes_api_ConfigurationKeys::$GRAPH_URL, com_wiris_quizzes_impl_ConfigurationImpl::$IMAGESCACHE_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$VARIABLESCACHE_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$LOCKPROVIDER_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$ACCESSPROVIDER_CLASS));
+					$keys = new _hx_array(array(com_wiris_quizzes_api_ConfigurationKeys::$WIRIS_URL, com_wiris_quizzes_api_ConfigurationKeys::$WIRISLAUNCHER_URL, com_wiris_quizzes_api_ConfigurationKeys::$CALC_URL, com_wiris_quizzes_api_ConfigurationKeys::$EDITOR_URL, com_wiris_quizzes_api_ConfigurationKeys::$HAND_URL, com_wiris_quizzes_api_ConfigurationKeys::$SERVICE_URL, com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL, com_wiris_quizzes_api_ConfigurationKeys::$CACHE_DIR, com_wiris_quizzes_api_ConfigurationKeys::$MAXCONNECTIONS, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_HOST, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_PORT, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_USER, com_wiris_quizzes_api_ConfigurationKeys::$HTTPPROXY_PASS, com_wiris_quizzes_api_ConfigurationKeys::$REFERER_URL, com_wiris_quizzes_api_ConfigurationKeys::$HAND_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$CALC_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$HAND_LOGTRACES, com_wiris_quizzes_api_ConfigurationKeys::$SERVICE_OFFLINE, com_wiris_quizzes_api_ConfigurationKeys::$CROSSORIGINCALLS_ENABLED, com_wiris_quizzes_api_ConfigurationKeys::$RESOURCES_STATIC, com_wiris_quizzes_api_ConfigurationKeys::$RESOURCES_URL, com_wiris_quizzes_api_ConfigurationKeys::$GRAPH_URL, com_wiris_quizzes_api_ConfigurationKeys::$DEPLOYMENT_ID, com_wiris_quizzes_api_ConfigurationKeys::$LICENSE_ID, com_wiris_quizzes_impl_ConfigurationImpl::$IMAGESCACHE_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$VARIABLESCACHE_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$LOCKPROVIDER_CLASS, com_wiris_quizzes_impl_ConfigurationImpl::$ACCESSPROVIDER_CLASS));
 					$i = null;
 					{
 						$_g1 = 0; $_g = $keys->length;
@@ -134,6 +140,12 @@ class com_wiris_quizzes_impl_ConfigurationImpl implements com_wiris_quizzes_api_
 		$sb->add($prefix . "DEF_HAND_LOGTRACES" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$HAND_LOGTRACES)) . "\";\x0A");
 		$sb->add($prefix . "DEF_GRAPH_URL" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$GRAPH_URL)) . "\";\x0A");
 		$sb->add($prefix . "DEF_VERSION" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$VERSION)) . "\";\x0A");
+		$sb->add($prefix . "DEF_DEPLOYMENT_ID" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$DEPLOYMENT_ID)) . "\";\x0A");
+		$sb->add($prefix . "DEF_LICENSE_ID" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$LICENSE_ID)) . "\";\x0A");
+		$sb->add($prefix . "DEF_TELEMETRY_URL" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$TELEMETRY_URL)) . "\";\x0A");
+		$sb->add($prefix . "DEF_TELEMETRY_TOKEN" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$TELEMETRY_TOKEN)) . "\";\x0A");
+		$sb->add($prefix . "DEF_QUIZZES_LOGGING_LEVEL" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$QUIZZES_LOGGING_LEVEL)) . "\";\x0A");
+		$sb->add($prefix . "DEF_QUIZZES_TRACKING_ENABLED" . " = \"" . $this->jsEscape($this->get(com_wiris_quizzes_api_ConfigurationKeys::$QUIZZES_TRACKING_ENABLED)) . "\";\x0A");
 		return $sb->b;
 	}
 	public function set($key, $value) {
@@ -216,6 +228,12 @@ class com_wiris_quizzes_impl_ConfigurationImpl implements com_wiris_quizzes_api_
 	static $DEF_RESOURCES_URL = "quizzes/resources";
 	static $DEF_GRAPH_URL = "http://www.wiris.net/demo/graph";
 	static $DEF_VERSION = "";
+	static $DEF_DEPLOYMENT_ID = "quizzes-unknown";
+	static $DEF_LICENSE_ID = "";
+	static $DEF_TELEMETRY_URL = "https://telemetry.wiris.net";
+	static $DEF_TELEMETRY_TOKEN = "1lt1OnlX3898VauysJ1nr5ODR8CNfVmB80KGxSSt";
+	static $DEF_QUIZZES_LOGGING_LEVEL = "WARNING";
+	static $DEF_QUIZZES_TRACKING_ENABLED = "true";
 	static $config = null;
 	static function thisLock() { $»args = func_get_args(); return call_user_func_array(self::$thisLock, $»args); }
 	static $thisLock;

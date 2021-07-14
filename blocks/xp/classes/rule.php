@@ -76,6 +76,20 @@ abstract class block_xp_rule implements renderable {
     }
 
     /**
+     * Get the renderer.
+     *
+     * Somes rules seem to be making use of the renderer, but the renderer should
+     * not be initialised with the object, so we it's best that we provide a
+     * method to get the renderer instead of letting each rule decide of the best
+     * way to load it.
+     *
+     * @return renderer_base
+     */
+    protected function get_renderer() {
+        return \block_xp\di::get('renderer');
+    }
+
+    /**
      * Export the properties and their values.
      *
      * This must return all the values required by the {@link self::import()} method.
@@ -112,6 +126,14 @@ abstract class block_xp_rule implements renderable {
      * @return bool Whether or not it matches.
      */
     abstract public function match($subject);
+
+    /**
+     * Update the rule after a restore.
+     *
+     * @return void
+     */
+    public function update_after_restore($restoreid, $courseid, base_logger $logger) {
+    }
 
     /**
      * Validate the data.

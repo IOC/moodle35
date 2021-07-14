@@ -141,7 +141,7 @@ class core_calendar_event_mapper_testcase extends advanced_testcase {
     protected function create_event($properties = []) {
         $record = new \stdClass();
         $record->name = 'event name';
-        $record->eventtype = 'global';
+        $record->eventtype = 'site';
         $record->timestart = time();
         $record->timeduration = 0;
         $record->timesort = 0;
@@ -203,6 +203,10 @@ class event_mapper_test_action_event implements action_event_interface {
         return $this->event->get_description();
     }
 
+    public function get_location() {
+        return $this->event->get_location();
+    }
+
     public function get_category() {
         return $this->event->get_category();
     }
@@ -251,6 +255,14 @@ class event_mapper_test_action_event implements action_event_interface {
             true
         );
     }
+
+    /**
+     * Component
+     * @return string|null
+     */
+    public function get_component() {
+        return $this->event->get_component();
+    }
 }
 
 /**
@@ -293,7 +305,7 @@ class event_mapper_test_event implements event_interface {
     /**
      * Constructor.
      *
-     * @param calendar_event $legacyevent Legacy event to exctract IDs etc from.
+     * @param calendar_event $legacyevent Legacy event to extract IDs etc from.
      */
     public function __construct($legacyevent = null) {
         if ($legacyevent) {
@@ -320,6 +332,10 @@ class event_mapper_test_event implements event_interface {
 
     public function get_description() {
         return new event_description('asdf', 1);
+    }
+
+    public function get_location() {
+        return 'Cube office';
     }
 
     public function get_category() {
@@ -351,7 +367,8 @@ class event_mapper_test_event implements event_interface {
             (new \DateTimeImmutable())->setTimestamp(-386380800),
             (new \DateTimeImmutable())->setTimestamp(115776000),
             (new \DateTimeImmutable())->setTimestamp(115776000),
-            (new \DateTimeImmutable())->setTimestamp(time())
+            (new \DateTimeImmutable())->setTimestamp(time()),
+            (new \DateTimeImmutable())->setTimestamp(115776000)
         );
     }
 
@@ -365,6 +382,14 @@ class event_mapper_test_event implements event_interface {
 
     public function is_visible() {
         return true;
+    }
+
+    /**
+     * Component
+     * @return string|null
+     */
+    public function get_component() {
+        return null;
     }
 }
 

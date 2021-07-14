@@ -44,14 +44,14 @@ class behat_search extends behat_base {
      * @param string $query Query to search for
      */
     public function i_search_for_using_the_header_global_search_box($query) {
-        // Hover over the search icon.
-        $this->execute('behat_general::i_hover', ['.icon[title=Search]', 'css_element']);
+        // Click the search icon.
+        $this->execute("behat_general::i_click_on", [get_string('togglesearch', 'core'), 'button']);
 
         // Set the field.
         $this->execute('behat_forms::i_set_the_field_to', ['q', $query]);
 
         // Submit the form.
-        $this->getSession()->executeScript('document.querySelector(".search-input-form.expanded").submit();');
+        $this->execute_script('return document.querySelector(".searchform-navbar").submit();');
     }
 
     /**
@@ -134,5 +134,15 @@ class behat_search extends behat_base {
         }
 
         set_config('behat_fakeresult', json_encode($outdata), 'core_search');
+    }
+
+    /**
+     * Updates the global search index to take account of any added activities.
+     *
+     * @Given /^I update the global search index$/
+     * @throws moodle_exception
+     */
+    public function i_update_the_global_search_index() {
+        \core_search\manager::instance()->index(false);
     }
 }

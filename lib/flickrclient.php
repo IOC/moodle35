@@ -60,12 +60,16 @@ class flickr_client extends oauth_helper {
      * @param moodle_url|string $callbackurl
      */
     public function __construct($consumerkey, $consumersecret, $callbackurl = '') {
+        global $CFG;
+        $version = moodle_major_version();
+        $useragent = "MoodleSite/$version (+{$CFG->wwwroot})";
 
         parent::__construct([
             'api_root' => self::OAUTH_ROOT,
             'oauth_consumer_key' => $consumerkey,
             'oauth_consumer_secret' => $consumersecret,
             'oauth_callback' => $callbackurl,
+            'http_options' => ['CURLOPT_USERAGENT' => $useragent]
         ]);
     }
 
@@ -231,6 +235,9 @@ class flickr_client extends oauth_helper {
 
         $response = $this->http->post(self::UPLOAD_ROOT, $params);
 
+        // Reset http header and options to prepare for the next request.
+        $this->reset_state();
+
         if ($response) {
             $xml = simplexml_load_string($response);
 
@@ -249,5 +256,15 @@ class flickr_client extends oauth_helper {
         } else {
             throw new moodle_exception('flickr_upload_error', 'core_error', '', null, $response);
         }
+    }
+
+    /**
+     * Resets curl state.
+     *
+     * @return void
+     */
+    public function reset_state(): void {
+        $this->http->cleanopt();
+        $this->http->resetHeader();
     }
 }

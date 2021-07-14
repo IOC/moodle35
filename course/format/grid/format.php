@@ -17,8 +17,7 @@
 /**
  * Grid Format - A topics based format that uses a grid of user selectable images to popup a light box of the section.
  *
- * @package    course/format
- * @subpackage grid
+ * @package    format_grid
  * @version    See the value of '$plugin->version' in version.php.
  * @copyright  &copy; 2012 G J Barnard in respect to modifications of standard topics format.
  * @author     G J Barnard - {@link http://about.me/gjbarnard} and
@@ -78,8 +77,8 @@ if ($devicetype == "mobile") {
 $renderer->set_portable($portable);
 
 $gfsettings = $courseformat->get_settings();
-$imageproperties = $courseformat->calculate_image_container_properties(
-$gfsettings['imagecontainerwidth'], $gfsettings['imagecontainerratio'], $gfsettings['borderwidth']);
+$imageproperties = \format_grid\toolbox::calculate_image_container_properties(
+    $gfsettings['imagecontainerwidth'], $gfsettings['imagecontainerratio'], $gfsettings['borderwidth']);
 
 echo '<style type="text/css" media="screen">';
 echo '/* <![CDATA[ */';
@@ -196,7 +195,7 @@ if ($gfsettings['sectiontitleboxposition'] == 1) { // Inside.
     echo '}';
 }
 
-echo '.course-content ul.gridicons li .gridicon_link .tooltip-inner {';
+echo '.course-content ul.gridicons li .tooltip-inner {';
 echo 'background-color: ';
 if ($gfsettings['sectiontitlesummarybackgroundcolour'][0] != '#') {
     echo '#';
@@ -210,7 +209,7 @@ echo $gfsettings['sectiontitlesummarytextcolour'].';';
 echo '}';
 
 $tooltiparrowposition = $courseformat->get_set_show_section_title_summary_position();
-echo '.course-content ul.gridicons li .gridicon_link .tooltip.'.$tooltiparrowposition.' .tooltip-arrow {';
+echo '.course-content ul.gridicons li .tooltip.'.$tooltiparrowposition.' .tooltip-arrow {';
 echo 'border-'.$tooltiparrowposition.'-color: ';
 if ($gfsettings['sectiontitlesummarybackgroundcolour'][0] != '#') {
     echo '#';
@@ -218,7 +217,7 @@ if ($gfsettings['sectiontitlesummarybackgroundcolour'][0] != '#') {
 echo $gfsettings['sectiontitlesummarybackgroundcolour'].';';
 echo '}';
 
-echo '.course-content ul.gridicons li .gridicon_link .image_holder .tooltip {';
+echo '.course-content ul.gridicons li .tooltip.in {';
 echo 'opacity: '.$gfsettings['sectiontitlesummarybackgroundopacity'].';';
 echo '}';
 

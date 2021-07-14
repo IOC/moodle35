@@ -85,9 +85,9 @@ class provider_testcase extends advanced_testcase {
      */
     public function test_null_provider($component, $classname) {
         $reason = $classname::get_reason();
-        $this->assertInternalType('string', $reason);
+        $this->assertIsString($reason);
 
-        $this->assertInternalType('string', get_string($reason, $component));
+        $this->assertIsString(get_string($reason, $component));
         $this->assertDebuggingNotCalled();
     }
 
@@ -124,7 +124,7 @@ class provider_testcase extends advanced_testcase {
         foreach ($metadata->get_collection() as $item) {
             // All items must have a valid string name.
             // Note: This is not a string identifier.
-            $this->assertInternalType('string', $item->get_name());
+            $this->assertIsString($item->get_name());
 
             if ($item instanceof database_table) {
                 // Check that the table is valid.
@@ -145,21 +145,21 @@ class provider_testcase extends advanced_testcase {
 
             if ($summary = $item->get_summary()) {
                 // Summary is optional, but when provided must be a valid string identifier.
-                $this->assertInternalType('string', $summary);
+                $this->assertIsString($summary);
 
                 // Check that the string is also correctly defined.
-                $this->assertInternalType('string', get_string($summary, $component));
+                $this->assertIsString(get_string($summary, $component));
                 $this->assertDebuggingNotCalled();
             }
 
             if ($fields = $item->get_privacy_fields()) {
                 // Privacy fields are optional, but when provided must be a valid string identifier.
                 foreach ($fields as $field => $identifier) {
-                    $this->assertInternalType('string', $field);
-                    $this->assertInternalType('string', $identifier);
+                    $this->assertIsString($field);
+                    $this->assertIsString($identifier);
 
                     // Check that the string is also correctly defined.
-                    $this->assertInternalType('string', get_string($identifier, $component));
+                    $this->assertIsString(get_string($identifier, $component));
                     $this->assertDebuggingNotCalled();
                 }
             }
@@ -199,6 +199,17 @@ class provider_testcase extends advanced_testcase {
                 'get_contexts_for_userid', [$user->id]);
 
         $this->assertInstanceOf(\core_privacy\local\request\contextlist::class, $contextlist);
+    }
+
+    /**
+     * Ensure that providers do not throw an error when processing a deleted user.
+     *
+     * @dataProvider    is_user_data_provider
+     * @param   string  $component
+     */
+    public function test_userdata_provider_implements_userlist($component) {
+        $classname = manager::get_provider_classname_for_component($component);
+        $this->assertTrue(is_subclass_of($classname, \core_privacy\local\request\core_userlist_provider::class));
     }
 
     /**
@@ -281,15 +292,20 @@ class provider_testcase extends advanced_testcase {
     public function test_table_coverage() {
         global $DB;
         $dbman = $DB->get_manager();
-        $schema = $dbman->get_install_xml_schema();
         $tables = [];
-        foreach ($schema->getTables() as $table) {
-            if ($table->getName() === 'role_sortorder') {
-                // TODO MDL-62459 this table is not used anywhere. Remove the table and this statement.
+
+        foreach ($dbman->get_install_xml_files() as $filename) {
+            $xmldbfile = new xmldb_file($filename);
+            if (!$xmldbfile->loadXMLStructure()) {
                 continue;
             }
-            if ($fields = $this->get_userid_fields($table)) {
-                $tables[$table->getName()] = '  - ' . $table->getName() . ' (' . join(', ', $fields) . ')';
+            $structure = $xmldbfile->getStructure();
+            $tablelist = $structure->getTables();
+
+            foreach ($tablelist as $table) {
+                if ($fields = $this->get_userid_fields($table)) {
+                    $tables[$table->getName()] = '  - ' . $table->getName() . ' (' . join(', ', $fields) . ')';
+                }
             }
         }
 

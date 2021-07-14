@@ -270,20 +270,13 @@ function glossary_user_outline($course, $user, $mod, $glossary) {
         }
         return $result;
     } else if ($grade) {
-        $result = new stdClass();
+        $result = (object) [
+            'time' => grade_get_date_for_user_grade($grade, $user),
+        ];
         if (!$grade->hidden || has_capability('moodle/grade:viewhidden', context_course::instance($course->id))) {
             $result->info = get_string('grade') . ': ' . $grade->str_long_grade;
         } else {
             $result->info = get_string('grade') . ': ' . get_string('hidden', 'grades');
-        }
-
-        //datesubmitted == time created. dategraded == time modified or time overridden
-        //if grade was last modified by the user themselves use date graded. Otherwise use date submitted
-        //TODO: move this copied & pasted code somewhere in the grades API. See MDL-26704
-        if ($grade->usermodified == $user->id || empty($grade->datesubmitted)) {
-            $result->time = $grade->dategraded;
-        } else {
-            $result->time = $grade->datesubmitted;
         }
 
         return $result;
@@ -577,13 +570,13 @@ function glossary_print_recent_activity($course, $viewfullnames, $timestart) {
 
     $joins = array(' FROM {glossary_entries} ge ');
     $joins[] = 'JOIN {user} u ON u.id = ge.userid ';
-    $fromsql = implode($joins, "\n");
+    $fromsql = implode("\n", $joins);
 
     $params['timestart'] = $timestart;
     $clausesql = ' WHERE ge.timemodified > :timestart ';
 
     if (count($approvals) > 0) {
-        $approvalsql = 'AND ('. implode($approvals, ' OR ') .') ';
+        $approvalsql = 'AND ('. implode(' OR ', $approvals) .') ';
     } else {
         $approvalsql = '';
     }
@@ -594,7 +587,7 @@ function glossary_print_recent_activity($course, $viewfullnames, $timestart) {
         return false;
     }
 
-    echo $OUTPUT->heading(get_string('newentries', 'glossary').':', 3);
+    echo $OUTPUT->heading(get_string('newentries', 'glossary') . ':', 6);
     $strftimerecent = get_string('strftimerecent');
     $entrycount = 0;
     foreach ($entries as $entry) {
@@ -865,24 +858,11 @@ function glossary_grade_item_delete($glossary) {
 }
 
 /**
- * @global object
- * @param int $gloassryid
- * @param int $scaleid
- * @return bool
+ * @deprecated since Moodle 3.8
  */
-function glossary_scale_used ($glossaryid,$scaleid) {
-//This function returns if a scale is being used by one glossary
-    global $DB;
-
-    $return = false;
-
-    $rec = $DB->get_record("glossary", array("id"=>$glossaryid, "scale"=>-$scaleid));
-
-    if (!empty($rec)  && !empty($scaleid)) {
-        $return = true;
-    }
-
-    return $return;
+function glossary_scale_used() {
+    throw new coding_exception('glossary_scale_used() can not be used anymore. Plugins can implement ' .
+        '<modname>_scale_used_anywhere, all implementations of <modname>_scale_used are now ignored');
 }
 
 /**
@@ -897,7 +877,7 @@ function glossary_scale_used ($glossaryid,$scaleid) {
 function glossary_scale_used_anywhere($scaleid) {
     global $DB;
 
-    if ($scaleid and $DB->record_exists('glossary', array('scale'=>-$scaleid))) {
+    if ($scaleid and $DB->record_exists_select('glossary', "scale = ? and assessed > 0", [-$scaleid])) {
         return true;
     } else {
         return false;
@@ -1389,7 +1369,7 @@ function  glossary_print_entry_lower_section($course, $cm, $glossary, $entry, $m
             echo '<tr valign="top"><td class="icons">'.$icons.'</td></tr>';
         }
         if (!empty($entry->rating)) {
-            echo '<tr valign="top"><td class="ratings p-t-1">';
+            echo '<tr valign="top"><td class="ratings pt-3">';
             glossary_print_entry_ratings($course, $entry);
             echo '</td></tr>';
         }
@@ -2438,8 +2418,8 @@ function glossary_generate_export_file($glossary, $ignored = "", $hook = 0) {
  * @return string
  */
 function glossary_read_imported_file($file_content) {
-    require_once "../../lib/xmlize.php";
     global $CFG;
+    require_once "../../lib/xmlize.php";
 
     return xmlize($file_content, 0);
 }
@@ -3211,7 +3191,7 @@ function glossary_extend_settings_navigation(settings_navigation $settings, navi
     if (!empty($CFG->enablerssfeeds) && !empty($CFG->glossary_enablerssfeeds) && $glossary->rsstype && $glossary->rssarticles && has_capability('mod/glossary:view', $PAGE->cm->context)) {
         require_once("$CFG->libdir/rsslib.php");
 
-        $string = get_string('rsstype','forum');
+        $string = get_string('rsstype', 'glossary');
 
         $url = new moodle_url(rss_get_url($PAGE->cm->context->id, $USER->id, 'mod_glossary', $glossary->id));
         $glossarynode->add($string, $url, settings_navigation::TYPE_SETTING, null, null, new pix_icon('i/rss', ''));
@@ -4328,14 +4308,207 @@ function mod_glossary_get_completion_active_rule_descriptions($cm) {
     foreach ($cm->customdata['customcompletionrules'] as $key => $val) {
         switch ($key) {
             case 'completionentries':
-                if (empty($val)) {
-                    continue;
+                if (!empty($val)) {
+                    $descriptions[] = get_string('completionentriesdesc', 'glossary', $val);
                 }
-                $descriptions[] = get_string('completionentriesdesc', 'glossary', $val);
                 break;
             default:
                 break;
         }
     }
     return $descriptions;
+}
+
+/**
+ * Checks if the current user can delete the given glossary entry.
+ *
+ * @since Moodle 3.10
+ * @param stdClass $entry the entry database object
+ * @param stdClass $glossary the glossary database object
+ * @param stdClass $context the glossary context
+ * @param bool $return Whether to return a boolean value or stop the execution (exception)
+ * @return bool if the user can delete the entry
+ * @throws moodle_exception
+ */
+function mod_glossary_can_delete_entry($entry, $glossary, $context, $return = true) {
+    global $USER, $CFG;
+
+    $manageentries = has_capability('mod/glossary:manageentries', $context);
+
+    if ($manageentries) {   // Users with the capability will always be able to delete entries.
+        return true;
+    }
+
+    if ($entry->userid != $USER->id) { // Guest id is never matched, no need for special check here.
+        if ($return) {
+            return false;
+        }
+        throw new moodle_exception('nopermissiontodelentry');
+    }
+
+    $ineditperiod = ((time() - $entry->timecreated < $CFG->maxeditingtime) || $glossary->editalways);
+
+    if (!$ineditperiod) {
+        if ($return) {
+            return false;
+        }
+        throw new moodle_exception('errdeltimeexpired', 'glossary');
+    }
+
+    return true;
+}
+
+/**
+ * Deletes the given entry, this function does not perform capabilities/permission checks.
+ *
+ * @since Moodle 3.10
+ * @param stdClass $entry the entry database object
+ * @param stdClass $glossary the glossary database object
+ * @param stdClass $cm the glossary course moduule object
+ * @param stdClass $context the glossary context
+ * @param stdClass $course the glossary course
+ * @param string $hook the hook, usually type of filtering, value
+ * @param string $prevmode the previsualisation mode
+ * @throws moodle_exception
+ */
+function mod_glossary_delete_entry($entry, $glossary, $cm, $context, $course, $hook = '', $prevmode = '') {
+    global $CFG, $DB;
+
+    $origentry = fullclone($entry);
+
+    // If it is an imported entry, just delete the relation.
+    if ($entry->sourceglossaryid) {
+        if (!$newcm = get_coursemodule_from_instance('glossary', $entry->sourceglossaryid)) {
+            print_error('invalidcoursemodule');
+        }
+        $newcontext = context_module::instance($newcm->id);
+
+        $entry->glossaryid       = $entry->sourceglossaryid;
+        $entry->sourceglossaryid = 0;
+        $DB->update_record('glossary_entries', $entry);
+
+        // Move attachments too.
+        $fs = get_file_storage();
+
+        if ($oldfiles = $fs->get_area_files($context->id, 'mod_glossary', 'attachment', $entry->id)) {
+            foreach ($oldfiles as $oldfile) {
+                $filerecord = new stdClass();
+                $filerecord->contextid = $newcontext->id;
+                $fs->create_file_from_storedfile($filerecord, $oldfile);
+            }
+            $fs->delete_area_files($context->id, 'mod_glossary', 'attachment', $entry->id);
+            $entry->attachment = '1';
+        } else {
+            $entry->attachment = '0';
+        }
+        $DB->update_record('glossary_entries', $entry);
+
+    } else {
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'mod_glossary', 'attachment', $entry->id);
+        $DB->delete_records("comments",
+            ['itemid' => $entry->id, 'commentarea' => 'glossary_entry', 'contextid' => $context->id]);
+        $DB->delete_records("glossary_alias", ["entryid" => $entry->id]);
+        $DB->delete_records("glossary_entries", ["id" => $entry->id]);
+
+        // Update completion state.
+        $completion = new completion_info($course);
+        if ($completion->is_enabled($cm) == COMPLETION_TRACKING_AUTOMATIC && $glossary->completionentries) {
+            $completion->update_state($cm, COMPLETION_INCOMPLETE, $entry->userid);
+        }
+
+        // Delete glossary entry ratings.
+        require_once($CFG->dirroot.'/rating/lib.php');
+        $delopt = new stdClass;
+        $delopt->contextid = $context->id;
+        $delopt->component = 'mod_glossary';
+        $delopt->ratingarea = 'entry';
+        $delopt->itemid = $entry->id;
+        $rm = new rating_manager();
+        $rm->delete_ratings($delopt);
+    }
+
+    // Delete cached RSS feeds.
+    if (!empty($CFG->enablerssfeeds)) {
+        require_once($CFG->dirroot . '/mod/glossary/rsslib.php');
+        glossary_rss_delete_file($glossary);
+    }
+
+    core_tag_tag::remove_all_item_tags('mod_glossary', 'glossary_entries', $origentry->id);
+
+    $event = \mod_glossary\event\entry_deleted::create(
+        [
+            'context' => $context,
+            'objectid' => $origentry->id,
+            'other' => [
+                'mode' => $prevmode,
+                'hook' => $hook,
+                'concept' => $origentry->concept
+            ]
+        ]
+    );
+    $event->add_record_snapshot('glossary_entries', $origentry);
+    $event->trigger();
+
+    // Reset caches.
+    if ($entry->usedynalink and $entry->approved) {
+        \mod_glossary\local\concept_cache::reset_glossary($glossary);
+    }
+}
+
+/**
+ * Checks if the current user can update the given glossary entry.
+ *
+ * @since Moodle 3.10
+ * @param stdClass $entry the entry database object
+ * @param stdClass $glossary the glossary database object
+ * @param stdClass $context the glossary context
+ * @param object $cm the course module object (cm record or cm_info instance)
+ * @param bool $return Whether to return a boolean value or stop the execution (exception)
+ * @return bool if the user can update the entry
+ * @throws moodle_exception
+ */
+function mod_glossary_can_update_entry(stdClass $entry, stdClass $glossary, stdClass $context, object $cm,
+        bool $return = true): bool {
+
+    global $USER, $CFG;
+
+    $ineditperiod = ((time() - $entry->timecreated < $CFG->maxeditingtime) || $glossary->editalways);
+    if (!has_capability('mod/glossary:manageentries', $context) and
+            !($entry->userid == $USER->id and ($ineditperiod and has_capability('mod/glossary:write', $context)))) {
+
+        if ($USER->id != $entry->userid) {
+            if ($return) {
+                return false;
+            }
+            throw new moodle_exception('errcannoteditothers', 'glossary', "view.php?id=$cm->id&amp;mode=entry&amp;hook=$entry->id");
+        } else if (!$ineditperiod) {
+            if ($return) {
+                return false;
+            }
+            throw new moodle_exception('erredittimeexpired', 'glossary', "view.php?id=$cm->id&amp;mode=entry&amp;hook=$entry->id");
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Prepares an entry for editing, adding aliases and category information.
+ *
+ * @param  stdClass $entry the entry being edited
+ * @return stdClass the entry with the additional data
+ */
+function mod_glossary_prepare_entry_for_edition(stdClass $entry): stdClass {
+    global $DB;
+
+    if ($aliases = $DB->get_records_menu("glossary_alias", ["entryid" => $entry->id], '', 'id, alias')) {
+        $entry->aliases = implode("\n", $aliases) . "\n";
+    }
+    if ($categoriesarr = $DB->get_records_menu("glossary_entries_categories", ['entryid' => $entry->id], '', 'id, categoryid')) {
+        // TODO: this fetches cats from both main and secondary glossary :-(
+        $entry->categories = array_values($categoriesarr);
+    }
+
+    return $entry;
 }

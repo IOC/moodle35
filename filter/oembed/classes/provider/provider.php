@@ -156,12 +156,18 @@ class provider {
             // Get the regex arrauy to look for matching schemes.
             $regexarr = $this->endpoints_regex($endpoint);
             foreach ($regexarr as $regex) {
-                if (preg_match($regex, $text)) {
-                    // If {format} is in the URL, replace it with the actual format.
-                    // At the moment, we're only supporting JSON, so this must be JSON.
-                    $requesturl = str_replace('{format}', 'json', $endpoint->url) .
-                           '?url=' . urlencode($text) . '&format=json';
-                    break 2; // Done, break out of all loops.
+                // Endpoints may have invalid regex strings that cause preg_match to throw an exception. We need to skip them
+                // in that case. Eventually, need to figure out how to inform the site about this.
+                try {
+                    if (preg_match($regex, $text)) {
+                        // If {format} is in the URL, replace it with the actual format.
+                        // At the moment, we're only supporting JSON, so this must be JSON.
+                        $requesturl = str_replace('{format}', 'json', $endpoint->url) .
+                            '?url=' . urlencode($text) . '&format=json';
+                        break 2; // Done, break out of all loops.
+                    }
+                } catch (\Exception $e) {
+                    continue;
                 }
             }
         }
@@ -211,16 +217,18 @@ class provider {
         foreach ($schemes as $scheme) {
             // An "http[s]:" may not be present, so flag it as a non-capturing subpattern with "(?:".
             $url1 = preg_split('/((?:https?:)?\/\/)/', $scheme);
-            $url2 = preg_split('/\//', $url1[1]);
-            $regexarr = [];
-            foreach ($url2 as $url) {
-                $find = ['.', '*'];
-                $replace = ['\.', '.*?'];
-                $url = str_replace($find, $replace, $url);
-                $regexarr[] = '('.$url.')';
-            }
+            if (!empty($url1[1])) {
+                $url2 = preg_split('/\//', $url1[1]);
+                $regexarr = [];
+                foreach ($url2 as $url) {
+                    $find = ['.', '*'];
+                    $replace = ['\.', '.*?'];
+                    $url = str_replace($find, $replace, $url);
+                    $regexarr[] = '(' . $url . ')';
+                }
 
-            $regex[] = '/(https?:\/\/)'.implode('\/', $regexarr).'/';
+                $regex[] = '/(https?:\/\/)' . implode('\/', $regexarr) . '/';
+            }
         }
         return $regex;
     }

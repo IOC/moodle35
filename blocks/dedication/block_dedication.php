@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Dedication block definition.
  *
@@ -60,14 +62,6 @@ class block_dedication extends block_base {
 
         if ($this->config->show_dedication == 1) {
             require_once('dedication_lib.php');
-            // Check if user is in grouping or has access to show the block.
-            $cannotviewblock = isset($this->config->grouping_dedication) &&
-                    $this->config->grouping_dedication &&
-                    !has_capability('moodle/site:accessallgroups', $this->context) &&
-                    !array_key_exists($USER->id, groups_get_grouping_members($this->config->grouping_dedication));
-            if ($cannotviewblock) {
-                return $this->content;
-            }
             $mintime = $this->page->course->startdate;
             $maxtime = time();
             $dm = new block_dedication_manager($this->page->course, $mintime, $maxtime, $this->config->limit);
@@ -82,7 +76,6 @@ class block_dedication extends block_base {
             $url = new moodle_url('/blocks/dedication/dedication.php', array(
                 'courseid' => $this->page->course->id,
                 'instanceid' => $this->instance->id,
-                'action' => 'firstaccess',
             ));
             $this->content->footer .= $OUTPUT->single_button($url, get_string('access_button', 'block_dedication'), 'get');
         }

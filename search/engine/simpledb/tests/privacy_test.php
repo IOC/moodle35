@@ -41,7 +41,7 @@ require_once($CFG->dirroot . '/search/tests/fixtures/mock_search_area.php');
  */
 class privacy_model_testcase extends \core_privacy\tests\provider_testcase {
 
-    public function setUp() {
+    public function setUp(): void {
         global $DB;
 
         if ($this->requires_manual_index_update()) {
@@ -103,7 +103,10 @@ class privacy_model_testcase extends \core_privacy\tests\provider_testcase {
      *
      * @return void
      */
-    public function tearDown() {
+    public function tearDown(): void {
+        // Call parent tearDown() first.
+        parent::tearDown();
+
         // For unit tests before PHP 7, teardown is called even on skip. So only do our teardown if we did setup.
         if ($this->generator) {
             // Moodle DML freaks out if we don't teardown the temp table after each run.

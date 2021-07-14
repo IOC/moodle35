@@ -23,6 +23,8 @@
  * @author    Jesus Federico  (jesus [at] blindsidenetworks [dt] com)
  */
 
+use mod_bigbluebuttonbn\locallib\bigbluebutton;
+
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 
@@ -90,15 +92,21 @@ if ($timeline || $index) {
 
     // Check group.
     if ($group >= 0) {
-        $bbbsession['group'] = $group;
-        $groupname = get_string('allparticipants');
-        if ($bbbsession['group'] != 0) {
-            $groupname = groups_get_group_name($bbbsession['group']);
-        }
+        global $USER;
+        // CONTRIB-8471: prevent user from accessing the activity if not member of the group.
+        if (bigbluebutton::user_can_access_groups($group, $USER, $course, $cm)) {
+            $bbbsession['group'] = $group;
+            $groupname = get_string('allparticipants');
+            if ($bbbsession['group'] != 0) {
+                $groupname = groups_get_group_name($bbbsession['group']);
+            }
 
-        // Assign group default values.
-        $bbbsession['meetingid'] .= '['.$bbbsession['group'].']';
-        $bbbsession['meetingname'] .= ' ('.$groupname.')';
+            // Assign group default values.
+            $bbbsession['meetingid'] .= '[' . $bbbsession['group'] . ']';
+            $bbbsession['meetingname'] .= ' (' . $groupname . ')';
+        } else {
+            print_error('invalidaccess');
+        }
     }
 
     // Initialize session variable used across views.
@@ -116,11 +124,11 @@ $PAGE->blocks->show_only_fake_blocks();
 switch (strtolower($action)) {
     case 'logout':
         if (isset($errors) && $errors != '') {
-            bigbluebutton_bbb_view_errors($errors, $id);
+            bigbluebuttonbn_bbb_view_errors($errors, $id);
             break;
         }
         if (is_null($bbbsession)) {
-            bigbluebutton_bbb_view_close_window_manually();
+            bigbluebuttonbn_bbb_view_close_window_manually();
             break;
         }
         // Moodle event logger: Create an event for meeting left.
@@ -141,7 +149,7 @@ switch (strtolower($action)) {
             redirect($CFG->wwwroot . '/my/');
         }
         // Close the tab or window where BBB was opened.
-        bigbluebutton_bbb_view_close_window();
+        bigbluebuttonbn_bbb_view_close_window();
         break;
     case 'join':
         if (is_null($bbbsession)) {
@@ -158,7 +166,7 @@ switch (strtolower($action)) {
         // See if the session is in progress.
         if (bigbluebuttonbn_is_meeting_running($bbbsession['meetingid'])) {
             // Since the meeting is already running, we just join the session.
-            bigbluebutton_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin);
+            bigbluebuttonbn_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin);
             break;
         }
         // If user is not administrator nor moderator (user is steudent) and waiting is required.
@@ -168,8 +176,8 @@ switch (strtolower($action)) {
         }
         // As the meeting doesn't exist, try to create it.
         $response = bigbluebuttonbn_get_create_meeting_array(
-            bigbluebutton_bbb_view_create_meeting_data($bbbsession),
-            bigbluebutton_bbb_view_create_meeting_metadata($bbbsession),
+            bigbluebuttonbn_bbb_view_create_meeting_data($bbbsession),
+            bigbluebuttonbn_bbb_view_create_meeting_metadata($bbbsession),
             $bbbsession['presentation']['name'],
             $bbbsession['presentation']['url']
         );
@@ -210,10 +218,10 @@ switch (strtolower($action)) {
         $meta = '{"record":'.($bbbsession['record'] ? 'true' : 'false').'}';
         bigbluebuttonbn_log($bbbsession['bigbluebuttonbn'], BIGBLUEBUTTONBN_LOG_EVENT_CREATE, $overrides, $meta);
         // Since the meeting is already running, we just join the session.
-        bigbluebutton_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin);
+        bigbluebuttonbn_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin);
         break;
     case 'play':
-        $href = bigbluebutton_bbb_view_playback_href($href, $mid, $rid, $rtype);
+        $href = bigbluebuttonbn_bbb_view_playback_href($href, $mid, $rid, $rtype);
         // Moodle event logger: Create an event for meeting left.
         bigbluebuttonbn_event_log(\mod_bigbluebuttonbn\event\events::$events['recording_play'], $bigbluebuttonbn,
             ['other' => $rid]);
@@ -224,7 +232,7 @@ switch (strtolower($action)) {
         header('Location: '.urldecode($href));
         break;
     default:
-        bigbluebutton_bbb_view_close_window();
+        bigbluebuttonbn_bbb_view_close_window();
 }
 
 /**
@@ -236,7 +244,7 @@ switch (strtolower($action)) {
  * @param  string   $rtype
  * @return string
  */
-function bigbluebutton_bbb_view_playback_href($href, $mid, $rid, $rtype) {
+function bigbluebuttonbn_bbb_view_playback_href($href, $mid, $rid, $rtype) {
     if ($href != '' || $mid == '' || $rid == '') {
         return $href;
     }
@@ -244,7 +252,7 @@ function bigbluebutton_bbb_view_playback_href($href, $mid, $rid, $rtype) {
     if (empty($recordings)) {
         return '';
     }
-    return bigbluebutton_bbb_view_playback_href_lookup($recordings[$rid]['playbacks'], $rtype);
+    return bigbluebuttonbn_bbb_view_playback_href_lookup($recordings[$rid]['playbacks'], $rtype);
 }
 
 /**
@@ -254,7 +262,7 @@ function bigbluebutton_bbb_view_playback_href($href, $mid, $rid, $rtype) {
  * @param  string   $type
  * @return string
  */
-function bigbluebutton_bbb_view_playback_href_lookup($playbacks, $type) {
+function bigbluebuttonbn_bbb_view_playback_href_lookup($playbacks, $type) {
     foreach ($playbacks as $playback) {
         if ($playback['type'] == $type) {
             return $playback['url'];
@@ -268,7 +276,7 @@ function bigbluebutton_bbb_view_playback_href_lookup($playbacks, $type) {
  *
  * @return string
  */
-function bigbluebutton_bbb_view_close_window() {
+function bigbluebuttonbn_bbb_view_close_window() {
     global $OUTPUT, $PAGE;
     echo $OUTPUT->header();
     $PAGE->requires->yui_module('moodle-mod_bigbluebuttonbn-rooms', 'M.mod_bigbluebuttonbn.rooms.windowClose');
@@ -280,7 +288,7 @@ function bigbluebutton_bbb_view_close_window() {
  *
  * @return string
  */
-function bigbluebutton_bbb_view_close_window_manually() {
+function bigbluebuttonbn_bbb_view_close_window_manually() {
     echo get_string('view_message_tab_close', 'bigbluebuttonbn');
 }
 
@@ -290,14 +298,14 @@ function bigbluebutton_bbb_view_close_window_manually() {
  * @param  array    $bbbsession
  * @return object
  */
-function bigbluebutton_bbb_view_create_meeting_data(&$bbbsession) {
+function bigbluebuttonbn_bbb_view_create_meeting_data(&$bbbsession) {
     $data = ['meetingID' => $bbbsession['meetingid'],
               'name' => bigbluebuttonbn_html2text($bbbsession['meetingname'], 64),
               'attendeePW' => $bbbsession['viewerPW'],
               'moderatorPW' => $bbbsession['modPW'],
               'logoutURL' => $bbbsession['logoutURL'],
             ];
-    $data['record'] = bigbluebutton_bbb_view_create_meeting_data_record($bbbsession['record']);
+    $data['record'] = bigbluebuttonbn_bbb_view_create_meeting_data_record($bbbsession['record']);
     // Check if auto_start_record is enable.
     if ($data['record'] == 'true' && $bbbsession['recordallfromstart']) {
         $data['autoStartRecording'] = 'true';
@@ -309,7 +317,7 @@ function bigbluebutton_bbb_view_create_meeting_data(&$bbbsession) {
 
     $data['welcome'] = trim($bbbsession['welcome']);
     // Set the duration for the meeting.
-    $durationtime = bigbluebutton_bbb_view_create_meeting_data_duration($bbbsession['bigbluebuttonbn']->closingtime);
+    $durationtime = bigbluebuttonbn_bbb_view_create_meeting_data_duration($bbbsession['bigbluebuttonbn']->closingtime);
     if ($durationtime > 0) {
         $data['duration'] = $durationtime;
         $data['welcome'] .= '<br><br>';
@@ -330,6 +338,34 @@ function bigbluebutton_bbb_view_create_meeting_data(&$bbbsession) {
     if ($bbbsession['muteonstart']) {
         $data['muteOnStart'] = 'true';
     }
+    // Lock settings.
+    if ($bbbsession['disablecam']) {
+        $data['lockSettingsDisableCam'] = 'true';
+    }
+    if ($bbbsession['disablemic']) {
+        $data['lockSettingsDisableMic'] = 'true';
+    }
+    if ($bbbsession['disableprivatechat']) {
+        $data['lockSettingsDisablePrivateChat'] = 'true';
+    }
+    if ($bbbsession['disablepublicchat']) {
+        $data['lockSettingsDisablePublicChat'] = 'true';
+    }
+    if ($bbbsession['disablenote']) {
+        $data['lockSettingsDisableNote'] = 'true';
+    }
+    if ($bbbsession['hideuserlist']) {
+        $data['lockSettingsHideUserList'] = 'true';
+    }
+    if ($bbbsession['lockedlayout']) {
+        $data['lockSettingsLockedLayout'] = 'true';
+    }
+    if ($bbbsession['lockonjoin']) {
+        $data['lockSettingsLockOnJoin'] = 'false';
+    }
+    if ($bbbsession['lockonjoinconfigurable']) {
+        $data['lockSettingsLockOnJoinConfigurable'] = 'true';
+    }
     return $data;
 }
 
@@ -339,7 +375,7 @@ function bigbluebutton_bbb_view_create_meeting_data(&$bbbsession) {
  * @param  boolean    $record
  * @return string
  */
-function bigbluebutton_bbb_view_create_meeting_data_record($record) {
+function bigbluebuttonbn_bbb_view_create_meeting_data_record($record) {
     if ((boolean)\mod_bigbluebuttonbn\locallib\config::recordings_enabled() && $record) {
         return 'true';
     }
@@ -352,7 +388,7 @@ function bigbluebutton_bbb_view_create_meeting_data_record($record) {
  * @param  string    $closingtime
  * @return integer
  */
-function bigbluebutton_bbb_view_create_meeting_data_duration($closingtime) {
+function bigbluebuttonbn_bbb_view_create_meeting_data_duration($closingtime) {
     if ((boolean)\mod_bigbluebuttonbn\locallib\config::get('scheduled_duration_enabled')) {
         return bigbluebuttonbn_get_duration($closingtime);
     }
@@ -365,33 +401,8 @@ function bigbluebutton_bbb_view_create_meeting_data_duration($closingtime) {
  * @param  array    $bbbsession
  * @return array
  */
-function bigbluebutton_bbb_view_create_meeting_metadata(&$bbbsession) {
-    global $USER;
-    $metadata = ['bbb-origin' => $bbbsession['origin'],
-                 'bbb-origin-version' => $bbbsession['originVersion'],
-                 'bbb-origin-server-name' => $bbbsession['originServerName'],
-                 'bbb-origin-server-common-name' => $bbbsession['originServerCommonName'],
-                 'bbb-origin-tag' => $bbbsession['originTag'],
-                 'bbb-context' => $bbbsession['course']->fullname,
-                 'bbb-recording-name' => bigbluebuttonbn_html2text($bbbsession['meetingname'], 64),
-                 'bbb-recording-description' => bigbluebuttonbn_html2text($bbbsession['meetingdescription'], 64),
-                 'bbb-recording-tags' => bigbluebuttonbn_get_tags($bbbsession['cm']->id), // Same as $id.
-                ];
-    if ((boolean)\mod_bigbluebuttonbn\locallib\config::get('recordingstatus_enabled')) {
-        $metadata["bn-recording-status"] = json_encode(
-            array(
-                'email' => array('"' . fullname($USER) . '" <' . $USER->email . '>'),
-                'context' => $bbbsession['bigbluebuttonbnURL']
-              )
-          );
-    }
-    if ((boolean)\mod_bigbluebuttonbn\locallib\config::get('recordingready_enabled')) {
-        $metadata['bn-recording-ready-url'] = $bbbsession['recordingReadyURL'];
-    }
-    if ((boolean)\mod_bigbluebuttonbn\locallib\config::get('meetingevents_enabled')) {
-        $metadata['bn-meeting-events-url'] = $bbbsession['meetingEventsURL'];
-    }
-    return $metadata;
+function bigbluebuttonbn_bbb_view_create_meeting_metadata(&$bbbsession) {
+    return bigbluebuttonbn_create_meeting_metadata($bbbsession);
 }
 
 /**
@@ -401,7 +412,7 @@ function bigbluebutton_bbb_view_create_meeting_metadata(&$bbbsession) {
  * @param object   $bigbluebuttonbn
  * @param integer  $origin
  */
-function bigbluebutton_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin = 0) {
+function bigbluebuttonbn_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $origin = 0) {
     // Update the cache.
     $meetinginfo = bigbluebuttonbn_get_meeting_info($bbbsession['meetingid'], BIGBLUEBUTTONBN_UPDATE_CACHE);
     if ($bbbsession['userlimit'] > 0 && intval($meetinginfo['participantCount']) >= $bbbsession['userlimit']) {
@@ -414,8 +425,9 @@ function bigbluebutton_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $ori
     if ($bbbsession['administrator'] || $bbbsession['moderator']) {
         $password = $bbbsession['modPW'];
     }
+    $bbbsession['createtime'] = $meetinginfo['createTime'];
     $joinurl = bigbluebuttonbn_get_join_url($bbbsession['meetingid'], $bbbsession['username'],
-        $password, $bbbsession['logoutURL'], null, $bbbsession['userID'], $bbbsession['clienttype']);
+        $password, $bbbsession['logoutURL'], null, $bbbsession['userID'], $bbbsession['clienttype'], $bbbsession['createtime']);
     // Moodle event logger: Create an event for meeting joined.
     bigbluebuttonbn_event_log(\mod_bigbluebuttonbn\event\events::$events['meeting_join'], $bigbluebuttonbn);
     // Internal logger: Instert a record with the meeting created.
@@ -436,7 +448,7 @@ function bigbluebutton_bbb_view_join_meeting($bbbsession, $bigbluebuttonbn, $ori
  * @param  string   $id
  * @return string
  */
-function bigbluebutton_bbb_view_errors($serrors, $id) {
+function bigbluebuttonbn_bbb_view_errors($serrors, $id) {
     global $CFG, $OUTPUT;
     $errors = (array) json_decode(urldecode($serrors));
     $msgerrors = '';

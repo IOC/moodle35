@@ -15,7 +15,17 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Backup task for the Completion Progress block
+ * Restore task for the Completion Progress block
+ *
+ * @package    block_completion_progress
+ * @copyright  2016 Michael de Raadt
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+defined('MOODLE_INTERNAL') || die;
+
+/**
+ * Restore task for the Completion Progress block
  *
  * @package    block_completion_progress
  * @copyright  2016 Michael de Raadt
@@ -25,8 +35,6 @@ class restore_completion_progress_block_task extends restore_block_task {
 
     /**
      * Translates the backed up configuration data for the target course modules.
-     *
-     * @global type $DB
      */
     public function after_restore() {
         global $DB;
@@ -34,25 +42,24 @@ class restore_completion_progress_block_task extends restore_block_task {
         // Get the blockid.
         $id = $this->get_blockid();
 
-        // Get restored course id.
-        $courseid = $this->get_courseid();
-
         if ($configdata = $DB->get_field('block_instances', 'configdata', array('id' => $id))) {
             $config = (array)unserialize(base64_decode($configdata));
             $newactivities = array();
+            if (isset($config['selectactivities'])) {
 
-            // Translate the old config information to the target course values.
-            foreach ($config['selectactivities'] as $index => $value) {
-                $matches = array();
-                preg_match('/(.+)-(\d+)/', $value, $matches);
-                if (!empty($matches)) {
-                    $module = $matches[1];
-                    $instance = $matches[2];
+                // Translate the old config information to the target course values.
+                foreach ($config['selectactivities'] as $value) {
+                    $matches = array();
+                    preg_match('/(.+)-(\d+)/', $value, $matches);
+                    if (!empty($matches)) {
+                        $module = $matches[1];
+                        $instance = $matches[2];
 
-                    // Find the mapped instance ID.
-                    if ($newinstance = restore_dbops::get_backup_ids_record($this->get_restoreid(), $module, $instance)) {
-                        $newinstanceid = $newinstance->newitemid;
-                        $newactivities[] = "$module-$newinstanceid";
+                        // Find the mapped instance ID.
+                        if ($newinstance = restore_dbops::get_backup_ids_record($this->get_restoreid(), $module, $instance)) {
+                            $newinstanceid = $newinstance->newitemid;
+                            $newactivities[] = "$module-$newinstanceid";
+                        }
                     }
                 }
             }
@@ -99,7 +106,7 @@ class restore_completion_progress_block_task extends restore_block_task {
      *
      * @return array An empty array
      */
-    static public function define_decode_contents() {
+    public static function define_decode_contents() {
         return array();
     }
 
@@ -108,7 +115,7 @@ class restore_completion_progress_block_task extends restore_block_task {
      *
      * @return array An empty array
      */
-    static public function define_decode_rules() {
+    public static function define_decode_rules() {
         return array();
     }
 }

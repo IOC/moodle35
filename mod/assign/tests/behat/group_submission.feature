@@ -168,7 +168,7 @@ Feature: Group assignment submissions
       | assignsubmission_onlinetext_enabled | 1 |
       | assignsubmission_file_enabled | 0 |
       | Students submit in groups | Yes |
-      | Attempts reopened | Manually |
+      | Additional attempts | Manually |
       | Group mode | No groups |
       | Require group to make submission | No |
     And I log out
@@ -189,11 +189,9 @@ Feature: Group assignment submissions
       | Grade out of 100 | 50.0 |
       | Apply grades and feedback to entire group | 1 |
     And I press "Save changes"
-    And I press "Ok"
     And I set the following fields to these values:
       | Allow another attempt | 1 |
     And I press "Save changes"
-    And I press "Ok"
     When I am on "Course 1" course homepage
     And I follow "Test assignment name"
     And I navigate to "View all submissions" in current page administration

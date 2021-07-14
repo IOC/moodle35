@@ -378,10 +378,12 @@ class core_modinfolib_testcase extends advanced_testcase {
         $this->assertEquals('', $modinfo->get_section_info(2)->sequence);
         $this->assertEquals($page3->cmid, $modinfo->get_section_info(3)->sequence);
         $this->assertEquals($course->id, $modinfo->get_course()->id);
-        $this->assertEquals(array('assign', 'forum', 'page'),
-                array_keys($modinfo->get_used_module_names()));
-        $this->assertEquals(array('assign', 'forum', 'page'),
-                array_keys($modinfo->get_used_module_names(true)));
+        $names = array_keys($modinfo->get_used_module_names());
+        sort($names);
+        $this->assertEquals(array('assign', 'forum', 'page'), $names);
+        $names = array_keys($modinfo->get_used_module_names(true));
+        sort($names);
+        $this->assertEquals(array('assign', 'forum', 'page'), $names);
         // Admin can see hidden modules/sections.
         $this->assertTrue($modinfo->cms[$assign0->cmid]->uservisible);
         $this->assertTrue($modinfo->get_section_info(3)->uservisible);
@@ -804,7 +806,7 @@ class core_modinfolib_testcase extends advanced_testcase {
             get_course_and_cm_from_cmid($page->cmid, 'pigs can fly');
             $this->fail();
         } catch (coding_exception $e) {
-            $this->assertContains('Invalid modulename parameter', $e->getMessage());
+            $this->assertStringContainsString('Invalid modulename parameter', $e->getMessage());
         }
 
         // Doesn't exist.
@@ -893,7 +895,7 @@ class core_modinfolib_testcase extends advanced_testcase {
             get_course_and_cm_from_cmid($page->cmid, '1337 h4x0ring');
             $this->fail();
         } catch (coding_exception $e) {
-            $this->assertContains('Invalid modulename parameter', $e->getMessage());
+            $this->assertStringContainsString('Invalid modulename parameter', $e->getMessage());
         }
 
         // Create a second hidden activity.

@@ -632,7 +632,6 @@ function mnet_profile_field_options() {
         'session.gc_lifetime',
         '_mnet_userpicture_timemodified',
         '_mnet_userpicture_mimetype',
-        'imagehash',
     );
 
     // these are the ones we used to send/receive (pre 2.0)

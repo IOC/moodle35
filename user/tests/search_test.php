@@ -41,7 +41,7 @@ class user_search_testcase extends advanced_testcase {
      */
     protected $userareaid = null;
 
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(true);
         set_config('enableglobalsearch', true);
 
@@ -214,5 +214,29 @@ class user_search_testcase extends advanced_testcase {
         $this->assertEquals(\core_search\manager::ACCESS_GRANTED, $searcharea->check_access($user1->id));
         $this->assertEquals(\core_search\manager::ACCESS_GRANTED, $searcharea->check_access($user2->id));
         $this->assertEquals(\core_search\manager::ACCESS_GRANTED, $searcharea->check_access($user3->id));
+    }
+
+    /**
+     * Test document icon.
+     */
+    public function test_get_doc_icon() {
+        $searcharea = \core_search\manager::get_search_area($this->userareaid);
+        $user = self::getDataGenerator()->create_user();
+        $doc = $searcharea->get_document($user);
+
+        $result = $searcharea->get_doc_icon($doc);
+
+        $this->assertEquals('i/user', $result->get_name());
+        $this->assertEquals('moodle', $result->get_component());
+    }
+
+    /**
+     * Test assigned search categories.
+     */
+    public function test_get_category_names() {
+        $searcharea = \core_search\manager::get_search_area($this->userareaid);
+
+        $expected = ['core-users'];
+        $this->assertEquals($expected, $searcharea->get_category_names());
     }
 }

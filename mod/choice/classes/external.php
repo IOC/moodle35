@@ -502,11 +502,10 @@ class mod_choice_external extends external_api {
                 $choicedetails['course'] = $choice->course;
                 $choicedetails['name']  = external_format_string($choice->name, $context->id);
                 // Format intro.
+                $options = array('noclean' => true);
                 list($choicedetails['intro'], $choicedetails['introformat']) =
-                    external_format_text($choice->intro, $choice->introformat,
-                                            $context->id, 'mod_choice', 'intro', null);
-                    $choicedetails['introfiles'] = external_util::get_area_files($context->id, 'mod_choice', 'intro', false,
-                                                                                    false);
+                    external_format_text($choice->intro, $choice->introformat, $context->id, 'mod_choice', 'intro', null, $options);
+                $choicedetails['introfiles'] = external_util::get_area_files($context->id, 'mod_choice', 'intro', false, false);
 
                 if (has_capability('mod/choice:choose', $context)) {
                     $choicedetails['publish']  = $choice->publish;
@@ -520,6 +519,7 @@ class mod_choice_external extends external_api {
                     $choicedetails['limitanswers']  = $choice->limitanswers;
                     $choicedetails['showunanswered']  = $choice->showunanswered;
                     $choicedetails['includeinactive']  = $choice->includeinactive;
+                    $choicedetails['showavailable']  = $choice->showavailable;
                 }
 
                 if (has_capability('moodle/course:manageactivities', $context)) {
@@ -572,6 +572,7 @@ class mod_choice_external extends external_api {
                             'showpreview' => new external_value(PARAM_BOOL, 'Show preview before timeopen', VALUE_OPTIONAL),
                             'timemodified' => new external_value(PARAM_INT, 'Time of last modification', VALUE_OPTIONAL),
                             'completionsubmit' => new external_value(PARAM_BOOL, 'Completion on user submission', VALUE_OPTIONAL),
+                            'showavailable' => new external_value(PARAM_BOOL, 'Show available spaces', VALUE_OPTIONAL),
                             'section' => new external_value(PARAM_INT, 'Course section id', VALUE_OPTIONAL),
                             'visible' => new external_value(PARAM_BOOL, 'Visible', VALUE_OPTIONAL),
                             'groupmode' => new external_value(PARAM_INT, 'Group mode', VALUE_OPTIONAL),

@@ -19,9 +19,7 @@ Feature: Edit quiz page - pagination
       | quiz       | Quiz 1 | Quiz 1 description | C1     | quiz1    |
 
     When I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I follow "Quiz 1"
-    And I navigate to "Edit quiz" in current page administration
+    And I am on the "Quiz 1" "mod_quiz > Edit" page
 
   @javascript
   Scenario: Repaginate questions with N question(s) per page as well as clicking
@@ -109,7 +107,7 @@ Feature: Edit quiz page - pagination
     # Repaginate one question per page.
     When I press "Repaginate"
     And I set the field "menuquestionsperpage" to "1"
-    And I press "Go"
+    And I click on "Go" "button" in the "Repaginate" "dialogue"
     Then I should see "Essay 01 new" on quiz page "1"
     And I should see "Essay 02 new" on quiz page "2"
     And I should see "Essay 03 new" on quiz page "3"
@@ -138,7 +136,7 @@ Feature: Edit quiz page - pagination
     # Repaginate with 2 questions per page.
     When I press "Repaginate"
     And I set the field "menuquestionsperpage" to "2"
-    And I press "Go"
+    And I click on "Go" "button" in the "Repaginate" "dialogue"
     Then I should see "Essay 01 new" on quiz page "1"
     And I should see "Essay 02 new" on quiz page "1"
     And I should see "Essay 03 new" on quiz page "2"
@@ -147,7 +145,7 @@ Feature: Edit quiz page - pagination
     # Repaginate with unlimited questions per page (All questions on Page 1).
     When I press "Repaginate"
     And I set the field "menuquestionsperpage" to "Unlimited"
-    And I press "Go"
+    And I click on "Go" "button" in the "Repaginate" "dialogue"
     Then I should see "Essay 01 new" on quiz page "1"
     And I should see "Essay 02 new" on quiz page "1"
     And I should see "Essay 03 new" on quiz page "1"

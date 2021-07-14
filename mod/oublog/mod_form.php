@@ -56,16 +56,6 @@ class mod_oublog_mod_form extends moodleform_mod {
             $mform->setType('allowcomments', PARAM_INT);
             $mform->addHelpButton('allowcomments', 'allowcomments', 'oublog');
 
-            // Adding the "allowreblogs" field.
-            $mform->addElement('checkbox', 'allowreblogs', get_string('allowreblogs', 'oublog'));
-            $mform->setType('allowreblogs', PARAM_BOOL);
-
-            // Adding the "maxreblogs" field.
-            $choices = array(0, 1, 2, 3, 4, 5, 10, 15, 20, 25, 50);
-            $mform->addElement('select', 'maxreblogs', get_string('maxreblogs', 'oublog'), $choices);
-            $mform->setType('maxreblogs', PARAM_INT);
-            $mform->setDefault('maxreblogs', 5);
-
             // Adding the "individual" field.
             $options = array(OUBLOG_NO_INDIVIDUAL_BLOGS => get_string('no_blogtogetheroringroups', 'oublog'),
                     OUBLOG_SEPARATE_INDIVIDUAL_BLOGS => get_string('separateindividualblogs', 'oublog'),
@@ -126,15 +116,6 @@ class mod_oublog_mod_form extends moodleform_mod {
                 get_string('numberofposts', 'oublog'), $choices);
             $mform->addHelpButton('postperpage', 'numberofposts', 'oublog');
             $mform->setDefault('postperpage', 25);
-
-            // Read tracking.
-            $mform->addElement('checkbox', 'readtracking', get_string('readtracking', 'oublog'));
-            $mform->setType('readtracking', PARAM_BOOL);
-
-            // Preview Comments.
-            $choices = array(0, 1, 2, 3, 4, 5, 10 => 10, 15 => 15, 20 => 20);
-            $mform->addElement('select', 'previewcomments', get_string('previewcomments', 'oublog'), $choices);
-            $mform->setType('readtracking', PARAM_INT);
 
             // Show OU Alerts reporting link.
             if (oublog_oualerts_enabled()) {
@@ -264,12 +245,14 @@ class mod_oublog_mod_form extends moodleform_mod {
             return false;
         }
         // Turn off completion settings if the checkboxes aren't ticked
-        $autocompletion=!empty($data->completion) && $data->completion==COMPLETION_TRACKING_AUTOMATIC;
-        if (empty($data->completionpostsenabled) || !$autocompletion) {
-            $data->completionposts=0;
-        }
-        if (empty($data->completioncommentsenabled) || !$autocompletion) {
-            $data->completioncomments=0;
+        if (!empty($data->completionunlocked)) {
+            $autocompletion = !empty($data->completion) && $data->completion == COMPLETION_TRACKING_AUTOMATIC;
+            if (empty($data->completionpostsenabled) || !$autocompletion) {
+                $data->completionposts = 0;
+            }
+            if (empty($data->completioncommentsenabled) || !$autocompletion) {
+                $data->completioncomments = 0;
+            }
         }
         // If maxvisibility is disabled by individual mode, ensure it's limited to course.
         if (isset($data->individual) && ($data->individual == OUBLOG_SEPARATE_INDIVIDUAL_BLOGS

@@ -115,6 +115,12 @@ class media_videojs_plugin extends core_media_player_native {
         if ($this->youtube) {
             $datasetup[] = '"techOrder": ["youtube"]';
             $datasetup[] = '"sources": [{"type": "video/youtube", "src":"' . $urls[0] . '"}]';
+
+            // Check if we have a time parameter.
+            if ($time = $urls[0]->get_param('t')) {
+                $datasetup[] = '"youtube": {"start": "' . self::get_start_time($time) . '"}';
+            }
+
             $sources = ''; // Do not specify <source> tags - it may confuse browser.
             $isaudio = false; // Just in case.
         } else if ($flashtech) {
@@ -201,7 +207,7 @@ class media_videojs_plugin extends core_media_player_native {
             }
         }
 
-        return html_writer::div($text, 'mediaplugin mediaplugin_videojs');
+        return html_writer::div($text, 'mediaplugin mediaplugin_videojs d-block');
     }
 
     /**
@@ -218,19 +224,45 @@ class media_videojs_plugin extends core_media_player_native {
         parent::pick_video_size($width, $height);
     }
 
+    /**
+     * Method to convert Youtube time parameter string, which can contain human readable time
+     * intervals such as '1h5m', '1m10s', etc or a numeric seconds value
+     *
+     * @param string $timestr
+     * @return int
+     */
+    protected static function get_start_time(string $timestr): int {
+        if (is_numeric($timestr)) {
+            // We can return the time string itself if it's already numeric.
+            return (int) $timestr;
+        }
+
+        try {
+            // Parse the time string as an ISO 8601 time interval.
+            $timeinterval = new DateInterval('PT' . core_text::strtoupper($timestr));
+
+            return ($timeinterval->h * HOURSECS) + ($timeinterval->i * MINSECS) + $timeinterval->s;
+        } catch (Exception $ex) {
+            // Invalid time interval.
+            return 0;
+        }
+    }
+
     public function get_supported_extensions() {
         global $CFG;
         require_once($CFG->libdir . '/filelib.php');
         if ($this->extensions === null) {
+            // Get extensions set by user in UI config.
             $filetypes = preg_split('/\s*,\s*/',
                 strtolower(trim(get_config('media_videojs', 'videoextensions') . ',' .
                 get_config('media_videojs', 'audioextensions'))));
+
             $this->extensions = file_get_typegroup('extension', $filetypes);
             if ($this->extensions && !get_config('media_videojs', 'useflash')) {
-                // If Flash is disabled only return extensions natively supported by browsers.
-                $nativeextensions = array_merge(file_get_typegroup('extension', 'html_video'),
-                    file_get_typegroup('extension', 'html_audio'));
-                $this->extensions = array_intersect($this->extensions, $nativeextensions);
+                // If Flash is disabled get extensions supported by player that don't rely on flash.
+                $supportedextensions = array_merge(file_get_typegroup('extension', 'html_video'),
+                    file_get_typegroup('extension', 'html_audio'), file_get_typegroup('extension', 'media_source'));
+                $this->extensions = array_intersect($this->extensions, $supportedextensions);
             }
         }
         return $this->extensions;
@@ -250,7 +282,6 @@ class media_videojs_plugin extends core_media_player_native {
             }
         }
 
-        // If Flash fallback is enabled we can not check if/when browser supports flash.
         $extensions = $this->get_supported_extensions();
         $rtmpallowed = get_config('media_videojs', 'rtmp') && get_config('media_videojs', 'useflash');
         foreach ($urls as $url) {
@@ -259,8 +290,17 @@ class media_videojs_plugin extends core_media_player_native {
             if (!$rtmpallowed && ($url->get_scheme() === 'rtmp')) {
                 continue;
             }
+
             // If RTMP support is allowed, URL with RTMP scheme is supported irrespective to extension.
             if ($rtmpallowed && ($url->get_scheme() === 'rtmp')) {
+                $result[] = $url;
+                continue;
+            }
+
+            $ext = '.' . core_media_manager::instance()->get_extension($url);
+            // Handle HLS and MPEG-DASH if supported.
+            $isstream = in_array($ext, file_get_typegroup('extension', 'media_source'));
+            if ($isstream && in_array($ext, $extensions) && core_useragent::supports_media_source_extensions($ext)) {
                 $result[] = $url;
                 continue;
             }
@@ -268,8 +308,9 @@ class media_videojs_plugin extends core_media_player_native {
             if (!get_config('media_videojs', 'useflash')) {
                 return parent::list_supported_urls($urls, $options);
             } else {
-                $ext = core_media_manager::instance()->get_extension($url);
-                if (in_array('.' . $ext, $extensions)) {
+                // If Flash fallback is enabled we can not check if/when browser supports flash.
+                // We assume it will be able to handle any other extensions that player supports.
+                if (in_array($ext, $extensions)) {
                     $result[] = $url;
                 }
             }
@@ -299,33 +340,40 @@ class media_videojs_plugin extends core_media_player_native {
         $langfiles = get_directory_list($basedir);
         $candidates = [];
         foreach ($langfiles as $langfile) {
-            if (strtolower(pathinfo($langfile, PATHINFO_EXTENSION)) !== 'js') {
+            if (strtolower(pathinfo($langfile, PATHINFO_EXTENSION)) !== 'json') {
                 continue;
             }
-            $lang = basename($langfile, '.js');
-            if (strtolower($langfile) === $this->language . '.js') {
-                // Found an exact match for the language.
-                $js = file_get_contents($basedir . $langfile);
-                break;
+            $lang = basename($langfile, '.json');
+            if (strtolower($langfile) === $this->language . '.json') {
+                // Found an exact match for the language. It is stored in $this->language.
+                return;
             }
             if (substr($this->language, 0, 2) === strtolower(substr($langfile, 0, 2))) {
                 // Not an exact match but similar, for example "pt_br" is similar to "pt".
                 $candidates[$lang] = $langfile;
             }
         }
-        if (empty($js) && $candidates) {
+
+        if ($candidates) {
             // Exact match was not found, take the first candidate.
             $this->language = key($candidates);
-            $js = file_get_contents($basedir . $candidates[$this->language]);
+        } else {
+            // Could not match, use default language of video player (English).
+            $this->language = 'en';
         }
-        // Add it as a language for Video.JS.
-        if (!empty($js)) {
-            return "$js\n";
-        }
+    }
 
-        // Could not match, use default language of video player (English).
-        $this->language = null;
-        return "";
+    /**
+     * Returns the requested language pack in the json format.
+     *
+     * @param string $lang The language code
+     * @return false|string The read data or false on failure
+     */
+    public static function get_language_content(string $lang) {
+        global $CFG;
+        $langfile = "{$CFG->dirroot}/media/player/videojs/videojs/lang/{$lang}.json";
+
+        return file_exists($langfile) ? file_get_contents($langfile) : '';
     }
 
     public function supports($usedextensions = []) {
@@ -380,14 +428,10 @@ class media_videojs_plugin extends core_media_player_native {
         // Load dynamic loader. It will scan page for videojs media and load necessary modules.
         // Loader will be loaded on absolutely every page, however the videojs will only be loaded
         // when video is present on the page or added later to it in AJAX.
-        $path = new moodle_url('/media/player/videojs/videojs/video-js.swf');
-        $contents = 'videojs.options.flash.swf = "' . $path . '";' . "\n";
-        $contents .= $this->find_language(current_language());
+        $this->find_language();
         $page->requires->js_amd_inline(<<<EOT
 require(["media_videojs/loader"], function(loader) {
-    loader.setUp(function(videojs) {
-        $contents
-    });
+    loader.setUp('$this->language');
 });
 EOT
         );

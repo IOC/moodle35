@@ -48,8 +48,6 @@ Y.namespace('M.block_xp.Filters').DnD = Y.extend(DND, M.core.dragdrop, {
 
     /**
      * Initializer.
-     *
-     * @return {Void}
      */
     initializer: function() {
         this.groups = this.get('groups');
@@ -93,6 +91,7 @@ Y.namespace('M.block_xp.Filters').DnD = Y.extend(DND, M.core.dragdrop, {
     },
 
     global_drop_over: function(e) {
+
         // Check that drop object belong to correct group.
         if (!e.drop || !e.drop.inGroup(this.groups)) {
             return;
@@ -142,8 +141,6 @@ Y.namespace('M.block_xp.Filters').DnD = Y.extend(DND, M.core.dragdrop, {
 
     /**
      * Sync the drop targets.
-     *
-     * @return {Void}
      */
     syncTargets: function() {
         this.delegate.syncTargets();

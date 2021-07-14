@@ -85,6 +85,8 @@ Feature: Users can view and search database entries
   Scenario: Check that searching by tags works as expected
     Given I log in as "student1"
     And I am on "Course 1" course homepage
+    # This is required for now to prevent the tag suggestion menu from overlapping over the Save & view button.
+    And I change window size to "large"
     And I add an entry to "Test database name" database with:
       | Test field name   | Student original entry untagged   |
       | Test field 2 name | Student original entry untagged 2 |
@@ -92,7 +94,6 @@ Feature: Users can view and search database entries
       | Test field name   | Student original entry tagged   |
       | Test field 2 name | Student original entry tagged 2 |
     And I set the field with xpath "//div[@class='datatagcontrol']//input[@type='text']" to "Tag1"
-    And I click on "[data-value='Tag1']" "css_element"
     And I press "Save and view"
     And I should see "Student original entry"
     And I should see "Tag1" in the "div.tag_list" "css_element"

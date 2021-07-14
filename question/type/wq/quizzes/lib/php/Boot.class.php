@@ -218,7 +218,7 @@ function _hx_char_at($o, $i) { $c = substr($o, $i, 1); return FALSE === $c ? '' 
 
 function _hx_char_code_at($s, $pos) {
 	if($pos < 0 || $pos >= strlen($s)) return null;
-	return ord($s{$pos});
+	return ord($s[$pos]);
 }
 
 function _hx_deref($o) { return $o; }
@@ -246,7 +246,7 @@ function _hx_mod($x, $y) {
 	}
 	if (!is_nan($x) && !is_nan($y) && !is_finite($y) && is_finite($x)) {
 		return $x;
-	} 
+	}
 	return fmod($x, $y);
 }
 
@@ -576,12 +576,12 @@ function _hx_string_rec($o, $s) {
 		}
 	}
 	if(is_string($o)) {
-		if(_hx_is_lambda($o)) return '«function»';
+		if(_hx_is_lambda($o)) return '»function»';
 //		if(strlen($s) > 0)    return '"' . str_replace('"', '\"', $o) . '"';
 		else                  return $o;
 	}
 	if(is_array($o)) {
-		if(is_callable($o)) return '«function»';
+		if(is_callable($o)) return '»function»';
 		$str = '[';
 		$s .= "	";
 		$first = true;
@@ -662,7 +662,7 @@ class _hx_anonymous extends stdClass {
 		$b = '{ ';
 		$properties = $rfl->getProperties();
 		$first = true;
-		while(list(, $prop) = each($properties)) {
+		foreach ($properties as $prop) {
 			if($first)
 				$first = false;
 			else
@@ -831,13 +831,13 @@ if(!file_exists($_hx_autload_cache_file)) {
 					$t = 3;
 				} else
 					continue;
-				$qname = ($bn == 'HList' && empty($pack)) ? 'List' : join(array_merge($pack, array($bn)), '.');
+				$qname = ($bn == 'HList' && empty($pack)) ? 'List' : join('.', array_merge($pack, array($bn)));
 				$_hx_types_array[] = array(
 					'path' => $p,
 					'name' => $prefix . $bn,
 					'type' => $t,
 					'qname' => $qname,
-					'phpname' => join(array_merge($pack, array($prefix . $bn)), '_')
+					'phpname' => join('_', array_merge($pack, array($prefix . $bn)))
 				);
 			} else if(is_dir($p))
 				_hx_build_paths($p, $_hx_types_array, array_merge($pack, array($f)), $prefix);

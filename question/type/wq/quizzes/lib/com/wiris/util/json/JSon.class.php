@@ -93,7 +93,7 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 			if($this->c === 46 || $this->c === 69 || $this->c === 101) {
 				$floating = true;
 			}
-		} while($this->c >= 48 && $this->c <= 58 || $hex && $this->isHexDigit($this->c) || $floating && ($this->c === 46 || $this->c === 69 || $this->c === 101 || $this->c === 45));
+		} while($this->c >= 48 && $this->c <= 58 || $hex && $this->isHexDigit($this->c) || $floating && ($this->c === 46 || $this->c === 69 || $this->c === 101 || $this->c === 43 || $this->c === 45));
 		if($floating) {
 			return Std::parseFloat($sb->b);
 		} else {
@@ -232,6 +232,19 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 		$sb->add($s);
 		$sb->add("\"");
 	}
+	public function encodeArrayString($sb, $v) {
+		$astr = new _hx_array(array());
+		{
+			$_g = 0;
+			while($_g < $v->length) {
+				$s = $v[$_g];
+				++$_g;
+				$astr->push($s);
+				unset($s);
+			}
+		}
+		$this->encodeArray($sb, $astr);
+	}
 	public function encodeArrayBoolean($sb, $v) {
 		$v2 = new _hx_array(array());
 		$i = 0;
@@ -336,25 +349,29 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 						if(Std::is($o, _hx_qtype("Array"))) {
 							$this->encodeArrayBoolean($sb, $o);
 						} else {
-							if(Std::is($o, _hx_qtype("String"))) {
-								$this->encodeString($sb, $o);
+							if(Std::is($o, _hx_qtype("Array"))) {
+								$this->encodeArrayString($sb, $o);
 							} else {
-								if(Std::is($o, _hx_qtype("Int"))) {
-									$this->encodeInteger($sb, $o);
+								if(Std::is($o, _hx_qtype("String"))) {
+									$this->encodeString($sb, $o);
 								} else {
-									if(Std::is($o, _hx_qtype("haxe.Int64"))) {
-										$this->encodeLong($sb, $o);
+									if(Std::is($o, _hx_qtype("Int"))) {
+										$this->encodeInteger($sb, $o);
 									} else {
-										if(Std::is($o, _hx_qtype("com.wiris.util.json.JSonIntegerFormat"))) {
-											$this->encodeIntegerFormat($sb, $o);
+										if(Std::is($o, _hx_qtype("haxe.Int64"))) {
+											$this->encodeLong($sb, $o);
 										} else {
-											if(Std::is($o, _hx_qtype("Bool"))) {
-												$this->encodeBoolean($sb, $o);
+											if(Std::is($o, _hx_qtype("com.wiris.util.json.JSonIntegerFormat"))) {
+												$this->encodeIntegerFormat($sb, $o);
 											} else {
-												if(Std::is($o, _hx_qtype("Float"))) {
-													$this->encodeFloat($sb, $o);
+												if(Std::is($o, _hx_qtype("Bool"))) {
+													$this->encodeBoolean($sb, $o);
 												} else {
-													throw new HException("Impossible to convert to json object of type " . Std::string(Type::getClass($o)));
+													if(Std::is($o, _hx_qtype("Float"))) {
+														$this->encodeFloat($sb, $o);
+													} else {
+														throw new HException("Impossible to convert to json object of type " . Std::string(Type::getClass($o)));
+													}
 												}
 											}
 										}
@@ -443,7 +460,7 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 			return $n;
 		} else {
 			if(Std::is($n, _hx_qtype("Int"))) {
-				return $n + 0.0;
+				return $n;
 			} else {
 				return 0.0;
 			}
@@ -466,107 +483,22 @@ class com_wiris_util_json_JSon extends com_wiris_util_json_StringParser {
 	static function getArray($a) {
 		return $a;
 	}
+	static function getHashArray($a) {
+		return $a;
+	}
 	static function getHash($a) {
 		return $a;
 	}
-	static function compare($a, $b, $eps) {
-		if(com_wiris_system_TypeTools::isHash($a)) {
-			$isBHash = com_wiris_system_TypeTools::isHash($b);
-			if(!$isBHash) {
-				return false;
-			}
-			$ha = $a;
-			$hb = $b;
-			$it = $ha->keys();
-			$itb = $hb->keys();
-			while($it->hasNext()) {
-				if(!$itb->hasNext()) {
-					return false;
-				}
-				$itb->next();
-				$key = $it->next();
-				if(!$hb->exists($key) || !com_wiris_util_json_JSon::compare($ha->get($key), $hb->get($key), $eps)) {
-					return false;
-				}
-				unset($key);
-			}
-			if($itb->hasNext()) {
-				return false;
-			}
+	static function isJson($json) {
+		try {
+			com_wiris_util_json_JSon::decode($json);
 			return true;
-		} else {
-			if(com_wiris_system_TypeTools::isArray($a)) {
-				$isBArray = com_wiris_system_TypeTools::isArray($b);
-				if(!$isBArray) {
-					return false;
-				}
-				$aa = $a;
-				$ab = $b;
-				if($aa->length !== $ab->length) {
-					return false;
-				}
-				$i = null;
-				{
-					$_g1 = 0; $_g = $aa->length;
-					while($_g1 < $_g) {
-						$i1 = $_g1++;
-						if(!com_wiris_util_json_JSon::compare($aa[$i1], $ab[$i1], $eps)) {
-							return false;
-						}
-						unset($i1);
-					}
-				}
-				return true;
-			} else {
-				if(Std::is($a, _hx_qtype("String"))) {
-					if(!Std::is($b, _hx_qtype("String"))) {
-						return false;
-					}
-					return _hx_equal($a, $b);
-				} else {
-					if(Std::is($a, _hx_qtype("Int"))) {
-						if(!Std::is($b, _hx_qtype("Int"))) {
-							return false;
-						}
-						return _hx_equal($a, $b);
-					} else {
-						if(Std::is($a, _hx_qtype("haxe.Int64"))) {
-							$isBLong = Std::is($b, _hx_qtype("haxe.Int64"));
-							if(!$isBLong) {
-								return false;
-							}
-							return _hx_equal($a, $b);
-						} else {
-							if(Std::is($a, _hx_qtype("com.wiris.util.json.JSonIntegerFormat"))) {
-								if(!Std::is($b, _hx_qtype("com.wiris.util.json.JSonIntegerFormat"))) {
-									return false;
-								}
-								$ja = $a;
-								$jb = $b;
-								return $ja->toString() === $jb->toString();
-							} else {
-								if(Std::is($a, _hx_qtype("Bool"))) {
-									if(!Std::is($b, _hx_qtype("Bool"))) {
-										return false;
-									}
-									return _hx_equal($a, $b);
-								} else {
-									if(Std::is($a, _hx_qtype("Float"))) {
-										if(!Std::is($b, _hx_qtype("Float"))) {
-											return false;
-										}
-										$da = com_wiris_util_json_JSon::getFloat($a);
-										$db = com_wiris_util_json_JSon::getFloat($b);
-										return $da >= $db - $eps && $da <= $db + $eps;
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+		}catch(Exception $»e) {
+			$_ex_ = ($»e instanceof HException) ? $»e->e : $»e;
+			if(($e = $_ex_) instanceof com_wiris_system_Exception){
+				return false;
+			} else throw $»e;;
 		}
-		return true;
 	}
 	function __toString() { return 'com.wiris.util.json.JSon'; }
 }

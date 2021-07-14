@@ -370,7 +370,8 @@ class webservice {
                     $newtoken->contextid = context_system::instance()->id;
                     $newtoken->creatorid = $userid;
                     $newtoken->timecreated = time();
-                    $newtoken->privatetoken = null;
+                    // Generate the private token, it must be transmitted only via https.
+                    $newtoken->privatetoken = random_string(64);
 
                     $DB->insert_record('external_tokens', $newtoken);
                 }
@@ -1159,6 +1160,7 @@ abstract class webservice_server implements webservice_server_interface {
             'fileurl' => array('default' => true, 'type' => PARAM_BOOL),
             'filter' => array('default' => false, 'type' => PARAM_BOOL),
             'lang' => array('default' => '', 'type' => PARAM_LANG),
+            'timezone' => array('default' => '', 'type' => PARAM_TIMEZONE),
         );
 
         // Load the external settings with the web service settings.
@@ -1234,7 +1236,7 @@ abstract class webservice_base_server extends webservice_server {
      * @uses die
      */
     public function run() {
-        global $CFG, $SESSION;
+        global $CFG, $USER, $SESSION;
 
         // we will probably need a lot of memory in some functions
         raise_memory_limit(MEMORY_EXTRA);
@@ -1284,6 +1286,12 @@ abstract class webservice_base_server extends webservice_server {
             } else {
                 $CFG->lang = $SESSION->lang;
             }
+        }
+
+        // Change timezone only in sites where it isn't forced.
+        $newtimezone = $settings->get_timezone();
+        if (!empty($newtimezone) && (!isset($CFG->forcetimezone) || $CFG->forcetimezone == 99)) {
+            $USER->timezone = $newtimezone;
         }
 
         // finally, execute the function - any errors are catched by the default exception handler
@@ -1421,9 +1429,27 @@ abstract class webservice_base_server extends webservice_server {
     protected function execute() {
         // validate params, this also sorts the params properly, we need the correct order in the next part
         $params = call_user_func(array($this->function->classname, 'validate_parameters'), $this->function->parameters_desc, $this->parameters);
+        $params = array_values($params);
+
+        // Allow any Moodle plugin a chance to override this call. This is a convenient spot to
+        // make arbitrary behaviour customisations, for example to affect the mobile app behaviour.
+        // The overriding plugin could call the 'real' function first and then modify the results,
+        // or it could do a completely separate thing.
+        $callbacks = get_plugins_with_function('override_webservice_execution');
+        foreach ($callbacks as $plugintype => $plugins) {
+            foreach ($plugins as $plugin => $callback) {
+                $result = $callback($this->function, $params);
+                if ($result !== false) {
+                    // If the callback returns anything other than false, we assume it replaces the
+                    // real function.
+                    $this->returns = $result;
+                    return;
+                }
+            }
+        }
 
         // execute - yay!
-        $this->returns = call_user_func_array(array($this->function->classname, $this->function->methodname), array_values($params));
+        $this->returns = call_user_func_array(array($this->function->classname, $this->function->methodname), $params);
     }
 
     /**
@@ -1734,4 +1760,21 @@ $castingcode
 EOD;
         return $methodbody;
     }
+}
+
+/**
+ * Early WS exception handler.
+ * It handles exceptions during setup and returns the Exception text in the WS format.
+ * If a raise function is found nothing is returned. Throws Exception otherwise.
+ *
+ * @param  Exception $ex Raised exception.
+ * @throws Exception
+ */
+function early_ws_exception_handler(Exception $ex): void {
+    if (function_exists('raise_early_ws_exception')) {
+        raise_early_ws_exception($ex);
+        die;
+    }
+
+    throw $ex;
 }

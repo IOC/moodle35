@@ -31,7 +31,7 @@ $username = optional_param('u', '', PARAM_USERNAME);// User login name.
 $tag    = optional_param('tag', null, PARAM_TAG);   // Tag to display.
 $page = optional_param('page', 0, PARAM_INT);
 $tagorder = optional_param('tagorder', '', PARAM_ALPHA);// Tag display order.
-$unread = optional_param('unread', false, PARAM_BOOL);
+$taglimit = optional_param('taglimit', OUBLOG_TAGS_SHOW, PARAM_INT);// Tag display order.
 
 // Set user value if u (username) set.
 if ($username != '') {
@@ -54,7 +54,7 @@ if (isloggedin()) {
 }
 
 $url = new moodle_url('/mod/oublog/view.php', array('id' => $id, 'user' => $user,
-        'page' => $page, 'tag' => $tag, 'tagorder' => $tagorder));
+        'page' => $page, 'tag' => $tag, 'tagorder' => $tagorder, 'taglimit' => $taglimit));
 
 $PAGE->set_url($url);
 
@@ -181,6 +181,9 @@ if ($oublog->global) {
 if ($tag) {
     $returnurl .= '&amp;tag='.urlencode($tag);
 }
+if ($taglimit) {
+    $returnurl .= '&amp;taglimit='.urlencode($taglimit);
+}
 
 // Set-up individual.
 $currentindividual = -1;
@@ -230,29 +233,8 @@ $postsoublog = !empty($masterblog) ? $masterblog : $oublog;
 
 // Get Posts.
 list($posts, $recordcount) = oublog_get_posts($oublog, $context, $offset, $cm, $currentgroup,
-        $currentindividual, $oubloguser->id, $tag, $canaudit, null, $masterblog, null, '', $unread);
+        $currentindividual, $oubloguser->id, $tag, $canaudit, null, $masterblog);
 
-// Read tracking
-if (isloggedin() and $oublog->readtracking) {
-    if ($posts && is_array($posts)) {
-        list($commentsunreadbypost, ) = oublog_get_unread_comments($posts);
-        foreach ($posts as $post) {
-            oublog_mark_read($post);
-        }
-        if ($oublog->allowcomments && $oublog->previewcomments) {
-            foreach ($posts as $post) {
-                oublog_mark_comments_read($post, $oublog->previewcomments);
-            }
-        }
-    }
-}
-
-// Favourite tracking
-if (isloggedin()) {
-    if ($posts && is_array($posts)) {
-        list($commentsfavouritedbypost, ) = oublog_get_favourite_comments($posts);
-    }
-}
 
 $hideunusedblog = !$posts && !$canpost && !$canaudit;
 
@@ -354,7 +336,7 @@ if (!$hideunusedblog) {
 
     // Tag Cloud.
     list ($tags, $currentfiltertag) = oublog_get_tag_cloud($returnurl, $oublog, $currentgroup, $cm,
-            $oubloginstanceid, $currentindividual, $tagorder, $masterblog);
+            $oubloginstanceid, $currentindividual, $tagorder, $masterblog, $taglimit);
     if ($tags) {
         $bc = new block_contents();
         $bc->attributes['id'] = 'oublog-tags';
@@ -407,27 +389,12 @@ if (!$hideunusedblog) {
         $bc->content = $stats;
         $PAGE->blocks->add_fake_block($bc, BLOCK_POS_RIGHT);
     }
-
-    // Feeds.
-    if ($feeds = oublog_get_feedblock($oublog, $oubloginstance, $currentgroup, false, $cm, $currentindividual,
-                $masterblog)) {
-        $feedicon = ' <img src="'.$OUTPUT->image_url('i/rss').'" alt="'.get_string('blogfeed', 'oublog').'"  class="feedicon" />';
-        $bc = new block_contents();
-        $bc->attributes['id'] = 'oublog-feeds';
-        $bc->attributes['class'] = 'oublog-sideblock block';
-        $bc->attributes['data-osepid'] = $id . '_oublog_blockfeeds';
-        $bc->title = $strfeeds;
-        $bc->content = $feeds;
-        $PAGE->blocks->add_fake_block($bc, BLOCK_POS_RIGHT);
-    }
 }
 
 // Show portfolio export link.
 // Will need to be passed enough details on the blog so it can accurately work out what
 // posts are displayed (as oublog_get_posts above).
-if (!empty($CFG->enableportfolios) &&
-    (has_capability('mod/oublog:exportpost', $context) ||
-         has_capability('mod/oublog:exportownpost', $context))) {
+if (!empty($CFG->enableportfolios) && (has_capability('mod/oublog:exportpost', $context))) {
     require_once($CFG->libdir . '/portfoliolib.php');
 
     if ($canaudit) {
@@ -450,7 +417,7 @@ if (!empty($CFG->enableportfolios) &&
 
     // Note: render_export_button_top and render_export_button_bottom are added to
     // support the OSEP design which includes the export button differently from the old OU theme.
-    if (!empty($posts) && is_array($posts)) {
+    if (!empty($posts)) {
         $oublogoutput->render_export_button_top($context, $postsoublog, null, $oubloguserid,
                 $canaudit, $offset, $currentgroup, $currentindividual, $tagid, $cm, $course->id, $masterblog ? 1 : 0);
     }
@@ -511,7 +478,7 @@ if (($showpostbutton || $capable) && $oublog->postuntil != 0) {
     }
 }
 // If timed comments show info.
-if ($posts && is_array($posts)) {
+if ($posts) {
     $maxpost = (object) array('allowcomments' => false, 'visibility' => OUBLOG_VISIBILITY_COURSEUSER);
     foreach ($posts as $apost) {
         // Work out if any posts on page allow commenting + max visibility.
@@ -572,7 +539,7 @@ if ($canview) {
 echo '</div>';
 
 // Print blog posts.
-if ($posts && is_array($posts)) {
+if ($posts) {
     if ($recordcount > $postperpage) {
         echo "<div class='oublog-paging'>";
         echo $OUTPUT->paging_bar($recordcount, $page, $postperpage, $returnurl);
@@ -584,14 +551,8 @@ if ($posts && is_array($posts)) {
     $retnurl = $returnurl . '&page=' . $page;
     foreach ($posts as $post) {
         $post->row = $rowcounter;
-        if (isset($commentsunreadbypost[$post->id])) {
-            $post->unreadcomments = $commentsunreadbypost[$post->id];
-        }
-        if (isset($commentsfavouritedbypost[$post->id])) {
-            $post->favouritecomments = $commentsfavouritedbypost[$post->id];
-        }
         echo $oublogoutput->render_post($cm, $oublog, $post, $retnurl, $blogtype,
-                $canmanageposts, $canaudit, true, false, false, false, 'top', $cmmaster, $masterblog ? $cm->id : null, null, false, true);
+                $canmanageposts, $canaudit, true, false, false, false, 'top', $cmmaster, $masterblog ? $cm->id : null);
         $rowcounter++;
     }
     if ($recordcount > $postperpage) {
@@ -604,9 +565,7 @@ if ($posts && is_array($posts)) {
     // Show portfolio export link.
     // Will need to be passed enough details on the blog so it can accurately work out what
     // posts are displayed (as oublog_get_posts above).
-    if (!empty($CFG->enableportfolios) &&
-        (has_capability('mod/oublog:exportpost', $context) ||
-         has_capability('mod/oublog:exportownpost', $context))) {
+    if (!empty($CFG->enableportfolios) && (has_capability('mod/oublog:exportpost', $context))) {
         echo $oublogoutput->render_export_button_bottom($context, $postsoublog, null, $oubloguserid,
                 $canaudit, $offset, $currentgroup, $currentindividual, $tagid, $cm, $masterblog ? 1 : 0);
     }

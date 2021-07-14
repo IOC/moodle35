@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/bigbluebuttonbn/db" VERSION="20120628" COMMENT="XMLDB file for Moodle mod/bigbluebuttonbn"
+<XMLDB PATH="mod/bigbluebuttonbn/db" VERSION="20200505" COMMENT="XMLDB file for Moodle mod/bigbluebuttonbn"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
   <TABLES>
-
     <TABLE NAME="bigbluebuttonbn" COMMENT="The bigbluebuttonbn table to store information about a meeting activities.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
@@ -35,6 +34,21 @@
         <FIELD NAME="recordings_preview" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="clienttype" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="muteonstart" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="disablecam" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="disablemic" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="disableprivatechat" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="disablepublicchat" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="disablenote" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="hideuserlist" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lockedlayout" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lockonjoin" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="lockonjoinconfigurable" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="completionattendance" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if a certain number of minutes in the meeting are required to mark an activity completed for a user."/>
+        <FIELD NAME="completionengagementchats" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if chat during the meeting is required to mark an activity completed for a user."/>
+        <FIELD NAME="completionengagementtalks" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if talking during the meeting is required to mark an activity completed for a user."/>
+        <FIELD NAME="completionengagementraisehand" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if raising hand during the meeting is required to mark an activity completed for a user."/>
+        <FIELD NAME="completionengagementpollvotes" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if poll voting during the meeting is required to mark an activity completed for a user."/>
+        <FIELD NAME="completionengagementemojis" TYPE="int" LENGTH="9" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Nonzero if the use of emojis during the meeting is required to mark an activity completed for a user."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -56,12 +70,9 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
-      </INDEXES>
-      <INDEXES>
         <INDEX NAME="log" UNIQUE="false" FIELDS="log"/>
-      </INDEXES>
-      <INDEXES>
         <INDEX NAME="logrow" UNIQUE="false" FIELDS="courseid, bigbluebuttonbnid, userid, log"/>
+        <INDEX NAME="userlog" UNIQUE="false" FIELDS="userid, log"/>
       </INDEXES>
     </TABLE>
   </TABLES>

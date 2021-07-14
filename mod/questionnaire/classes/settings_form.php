@@ -72,7 +72,7 @@ class settings_form extends \moodleform {
         $mform->addElement('header', 'submithdr', get_string('submitoptions', 'questionnaire'));
 
         $mform->addElement('text', 'thanks_page', get_string('url', 'questionnaire'), array('size' => '60'));
-        $mform->setType('thanks_page', PARAM_URL);
+        $mform->setType('thanks_page', PARAM_TEXT);
         $mform->setDefault('thanks_page', $questionnaire->survey->thanks_page);
         $mform->addHelpButton('thanks_page', 'url', 'questionnaire');
 
@@ -88,7 +88,13 @@ class settings_form extends \moodleform {
         $mform->setType('thank_body', PARAM_RAW);
         $mform->setDefault('thank_body', $questionnaire->survey->thank_body);
 
-        $mform->addElement('text', 'email', get_string('email', 'questionnaire'), array('size' => '75'));
+        $allowemailreporting = get_config('questionnaire', 'allowemailreporting');
+        if (!$allowemailreporting) {
+            $attributes = ['size' => '75', 'disabled' => 'disabled'];
+        } else {
+            $attributes = ['size' => '75'];
+        }
+        $mform->addElement('text', 'email', get_string('email', 'questionnaire'), $attributes);
         $mform->setType('email', PARAM_TEXT);
         $mform->setDefault('email', $questionnaire->survey->email);
         $mform->addHelpButton('email', 'sendemail', 'questionnaire');
@@ -123,9 +129,6 @@ class settings_form extends \moodleform {
 
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
-        if (!empty($data['thanks_page']) && !preg_match('/^https?:\/\//i', $data['thanks_page'])) {
-            $errors['thanks_page'] = get_string('invalidurl', 'error');
-        }
         return $errors;
     }
 }

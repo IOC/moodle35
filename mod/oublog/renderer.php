@@ -74,7 +74,7 @@ class mod_oublog_renderer extends plugin_renderer_base {
     public function render_post($cm, $oublog, $post, $baseurl, $blogtype,
             $canmanageposts = false, $canaudit = false, $commentcount = true,
             $forexport = false, $format = false, $email = false, $socialshareposition = 'top',
-            $cmmaster = null, $cmid = null, $referurlparam = null, $allowexport = false, $previewcomments = false) {
+            $cmmaster = null, $cmid = null, $referurlparam = null, $allowexport = false) {
         global $CFG, $USER, $OUTPUT;
         $output = '';
         $modcontext = context_module::instance($cm->id);
@@ -89,13 +89,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
         $strdelete = get_string('delete', 'oublog');
         $strpermalink = get_string('permalink', 'oublog');
         $cmparam = !empty($cmid) ? '&cmid=' . $cmid : null;
-        $strmarkread = get_string('markread', 'oublog');
-        $strmarkunread = get_string('markunread', 'oublog');
-        $strreblog = get_string('reblog', 'oublog');
-        $strreblogged = get_string('reblogged', 'oublog');
-        $strundoreblog = get_string('undoreblog', 'oublog');
-        $strexport = get_string('export', 'oublog');
-
         $row = '';
         if (isset($post->row)) {
             $row = ($post->row % 2) ? 'oublog-odd' : 'oublog-even';
@@ -104,9 +97,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
         $extraclasses = $post->deletedby ? ' oublog-deleted' : '';
         $extraclasses .= ' oublog-hasuserpic';
         $extraclasses .= ' ' . $row;
-        if (isloggedin() and $oublog->readtracking and !$post->readstatus) {
-            $extraclasses .= ' oublog-unread';
-        }
 
         $output .= html_writer::start_tag('div', array('class' => 'oublog-post'. $extraclasses));
         $output .= html_writer::start_tag('div', array('class' => 'oublog-post-top'));
@@ -179,21 +169,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
             $posttitle = get_accesshide(get_string('newpost', 'mod_oublog',
                     oublog_get_displayname($oublog)));
             $output .= html_writer::tag('h2', $posttitle, array('class' => 'oublog-title'));
-        }
-
-        // Reblogged by
-        if ($oublog->individual and $oublog->allowreblogs and !empty($post->reblogs) and !$forexport) {
-            $output .= html_writer::start_tag('div', array('class' => 'oublog-reblogs'));
-            foreach (array_slice($post->reblogs, 0, $oublog->maxreblogs) as $user) {
-                $output .= $this->output->user_picture($user, array('courseid' => $oublog->course, 'size' => 35));
-            }
-            if (count($post->reblogs) === 1) {
-                $strnreblogs = get_string('onereblog', 'oublog');
-            } else {
-                $strnreblogs = get_string('numreblogs', 'oublog', count($post->reblogs));
-            }
-            $output .= html_writer::tag('div', $strnreblogs, array('class' => 'oublog-numreblogs'));
-            $output .= html_writer::end_tag('div');
         }
 
         if ($post->deletedby) {
@@ -339,22 +314,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
             }
         }
         $output .= html_writer::start_tag('div', array('class' => 'oublog-post-links'));
-
-        if (isloggedin() and $oublog->readtracking and !$forexport and !$email) {
-            $url = new moodle_url('/mod/oublog/markread.php');
-            $url->param('post', $post->id);
-            $url->param('sesskey', sesskey());
-            $url->param('returnurl', $baseurl);
-            $url->set_anchor('oublog-post-' . $post->id);
-            if (!$post->readid or $post->readstatus) {
-                $url->param('status', 0);
-                $output .= html_writer::tag('a', $strmarkunread, array('href' => $url));
-            } else {
-                $url->param('status', 1);
-                $output .= html_writer::tag('a', $strmarkread, array('href' => $url));
-            }
-        }
-
         if (!$forexport && !$email) {
             $output .= html_writer::tag('a', $strpermalink, array('href' => $CFG->wwwroot .
                     '/mod/oublog/viewpost.php?post=' . $post->id . $cmparam)).' ';
@@ -397,7 +356,7 @@ class mod_oublog_renderer extends plugin_renderer_base {
                     } else {
                         $button->set_formats(PORTFOLIO_FORMAT_RICHHTML);
                     }
-                    $output .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK , $strexport).' ';
+                    $output .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK).' ';
                 }
             }
             // Show OU Alerts reporting link.
@@ -410,32 +369,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
                 if ($reportlink != '' && !$forexport && !$email) {
                     $output .= html_writer::tag('a', get_string('postalert', 'oublog'),
                             array('href' => $reportlink));
-                }
-            }
-
-            // Reblogs
-            if (!$forexport and isloggedin() and oublog_can_post($oublog, $USER->id, $cm) and
-                $oublog->allowreblogs and $oublog->individual and
-                !$post->deletedby and $post->userid != $USER->id ) {
-
-                $url = new moodle_url('/mod/oublog/reblog.php');
-                $url->param('post', $post->id);
-                $url->param('sesskey', sesskey());
-                $url->param('returnurl', $baseurl);
-                $url->set_anchor('oublog-post-' . $post->id);
-                if (isset($post->reblogs[$USER->id])) {
-                    $url->param('reblog', 0);
-                    $output .= html_writer::tag('a', $strreblogged, array(
-                        'href' => $url,
-                        'class' => 'oublog-reblogged',
-                        'title' => s($strundoreblog),
-                    ));
-                } else {
-                    $url->param('reblog', 1);
-                    $output .= html_writer::tag('a', $strreblog, array(
-                        'href' => $url,
-                        'class' => 'oublog-reblog',
-                    ));
                 }
             }
 
@@ -469,24 +402,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
                                 '/mod/oublog/viewpost.php?post=' . $post->id . $referurlparam . $cmparam . '#oublogcomments'));
                     } else {
                         $output .= $linktext;
-                    }
-                    // Display unread comments counter
-                    if (isset($post->unreadcomments)) {
-                        if ($post->unreadcomments == 1) {
-                            $strunreadcomments = get_string('overviewcommentsunread1', 'oublog', $post->unreadcomments);
-                        } else {
-                            $strunreadcomments = get_string('overviewcommentsunread', 'oublog', $post->unreadcomments);
-                        }
-                        $output .= html_writer::tag('span', '(' . $strunreadcomments . ')', array('class' => 'oublog-count-unread-comments'));
-                    }
-                    // Display favourite comments counter
-                    if (isset($post->favouritecomments)) {
-                        if ($post->favouritecomments == 1) {
-                            $strfavouritecomments = get_string('overviewcommentsfavourite1', 'oublog', $post->favouritecomments);
-                        } else {
-                            $strfavouritecomments = get_string('overviewcommentsfavourite', 'oublog', $post->favouritecomments);
-                        }
-                        $output .= html_writer::tag('span', '(' . $strfavouritecomments . ')', array('class' => 'oublog-count-favourite-comments'));
                     }
                     // Display information about most recent comment.
                     if (isset($post->comments)) {
@@ -526,31 +441,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
         }
 
         $output .= html_writer::tag('div', '', array('style' => 'clear: both'));
-
-        if ($previewcomments and !empty($oublog->previewcomments) and !empty($post->comments) and !$forexport) {
-            $output .= html_writer::start_tag('div', array('class' => 'oublog-preview-comments'));
-            $comments = array_slice(array_reverse($post->comments), 0, $oublog->previewcomments);
-            $output .= html_writer::start_tag('ul');
-            $unreadcomments = (isloggedin() && $oublog->readtracking);
-            foreach ($comments as $comment) {
-                $unreadclass = '';
-                if ($unreadcomments && !$comment->commentread) {
-                    $unreadclass .= 'oublog-comment-unread';
-                }
-                $content = file_rewrite_pluginfile_urls($comment->message,
-                        $fileurlbase, $modcontext->id, 'mod_oublog', 'messagecomment',
-                        $comment->id);
-                $content = format_text($content, FORMAT_HTML);
-                $content = html_to_text($content, 0, false);
-                $output .= html_writer::start_tag('li', array('class' => $unreadclass, 'title' => $content));
-                $output .= html_writer::tag(
-                    'span', s(fullname($comment)), array('class' => 'oublog-preview-comment-user' ));
-                $output .= ' ' . s($content);
-                $output .= html_writer::end_tag('li');
-            }
-            $output .= html_writer::end_tag('ul');
-            $output .= html_writer::end_tag('div');
-        }
 
         $output .= html_writer::end_tag('div');
 
@@ -665,10 +555,9 @@ class mod_oublog_renderer extends plugin_renderer_base {
      * @param object $context current context
      * @param bool $viewfullnames flag for global users fullnames capability
      * @param string groupname group name for display, default ''
-     * @param bool $advancedgrading
      */
     public function render_participation_list($cm, $course, $oublog, $groupid,
-        $download, $page, $participation, $context, $viewfullnames, $groupname, $advancedgrading=false) {
+        $download, $page, $participation, $context, $viewfullnames, $groupname) {
         global $DB, $CFG, $OUTPUT;
 
         require_once($CFG->dirroot.'/mod/oublog/participation_table.php');
@@ -682,7 +571,7 @@ class mod_oublog_renderer extends plugin_renderer_base {
 
         $hasgrades = !empty($participation) && isset(reset($participation)->gradeobj);
         $table = new oublog_participation_table($cm, $course, $oublog,
-            $groupid, $groupname, $hasgrades, $advancedgrading);
+            $groupid, $groupname, $hasgrades);
         $table->setup($download);
         $table->is_downloading($download, $filename, get_string('participation', 'oublog'));
 
@@ -752,19 +641,9 @@ class mod_oublog_renderer extends plugin_renderer_base {
                             } else {
                                 $user->grade = abs($user->gradeobj->grade);
                             }
-                            $options = make_grades_menu($oublog->grade);
-                            if ($advancedgrading) {
-                                $url = new moodle_url('/mod/oublog/editadvancedgrade.php');
-                                $url->param('id', $cm->id);
-                                $url->param('user', $user->id);
-                                $url->param('group' , $groupid);
-                                $text = $user->grade >= 0 ? $options[$user->grade] : get_string('nograde');
-                                $menu = html_writer::link($url, $text);
-                            } else {
-                                $menu = html_writer::select(
-                                    $options, 'menu['.$user->id.']', $user->grade,
-                                    array(-1 => get_string('nograde')), $attributes);
-                            }
+                            $menu = html_writer::select(make_grades_menu($oublog->grade),
+                                'menu['.$user->id.']', $user->grade,
+                                array(-1 => get_string('nograde')), $attributes);
                             $gradeitem = '<div id="gradeuser'.$user->id.'">'. $menu .'</div>';
                         } else {
                             if (!isset($user->gradeobj->grade)) {
@@ -1141,8 +1020,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
                 $commenttitle = get_accesshide(get_string('newcomment', 'mod_oublog'));
                 $title = html_writer::tag('h3', $commenttitle, array('class' => 'oublog-title'));
             }
-            $extraclasses .= !$comment->commentread ? ' oublog-comment-unread' : '';
-            $extraclasses .= $comment->commentfavourite ? ' oublog-comment-favourite' : '';
 
             $output .= html_writer::start_tag('div', array(
                     'class' => 'oublog-comment' . $extraclasses, 'id' => 'cid' . $comment->id));
@@ -1181,9 +1058,8 @@ class mod_oublog_renderer extends plugin_renderer_base {
                         array('courseid' => $oublog->course, 'size' => 70));
                 $output .= html_writer::end_tag('div');
             }
-            if (!$forexport) {
-                $commenttitle = get_accesshide(get_string('newcomment', 'mod_oublog'));
-                $output .= html_writer::tag('h2', $commenttitle, array('class' => 'oublog-title'));
+            if (!$contenttitle) {
+                $output .= $title;
             }
             $output .= html_writer::start_tag('div', array('class' => 'oublog-post-date'));
             $output .= oublog_date($comment->timeposted);
@@ -1213,6 +1089,9 @@ class mod_oublog_renderer extends plugin_renderer_base {
             $output .= html_writer::end_div();
             $output .= html_writer::start_tag('div',
                     array('class' => 'oublog-comment-content'));
+            if ($contenttitle) {
+                $output .= $title;
+            }
             if (!$forexport) {
                 if ($post->visibility == OUBLOG_VISIBILITY_PUBLIC) {
                     $fileurlbase = 'mod/oublog/pluginfile.php';
@@ -1248,21 +1127,6 @@ class mod_oublog_renderer extends plugin_renderer_base {
                         $output .= '<a href="deletecomment.php?comment=' .
                                 $comment->id . $cmparam . $referurlparam  . '">' . $strdelete.'</a>';
                     }
-                }
-                if (!$forexport) {
-                    $strfavourite = $comment->commentfavourite ? get_string('markasnofav', 'oublog') : get_string('markasfav', 'oublog');
-                    $retnurl = new moodle_url('/mod/oublog/viewpost.php',
-                         array('post' => $post->id));
-                    $returnurl = $retnurl->out() . '#cid' . $comment->id;
-                    $params = array(
-                        'post' => $post->id,
-                        'comment' => $comment->id,
-                        'status' => is_null($comment->commentfavourite),
-                        'returnurl' => $returnurl,
-                        'sesskey' => sesskey(),
-                    );
-                    $url = new moodle_url('/mod/oublog/markfavourite.php', $params);
-                    $output .= html_writer::link($url, $strfavourite);
                 }
             }
             // Show OU Alerts reporting link.
@@ -1791,10 +1655,8 @@ EOF;
                 'ca_cmid' => $cm->id,
                 'ca_issharedblog' => $issharedblog));
 
-        $str = get_string(has_capability('mod/oublog:exportpost', $context) ?
-                       'exportpostscomments' : 'exportownpostscomments', 'oublog');
         $output .= html_writer::tag('a', get_string('addtoportfolio', 'portfolio'),
-                array('href' => $exportlink)) . $str;
+                array('href' => $exportlink)) . get_string('exportpostscomments', 'oublog');
 
         $output .= '</div>';
 
@@ -1880,12 +1742,12 @@ EOF;
         if (!empty($issharedblog) && $issharedblog) {
             $sharemode = true;
             $extraparams['cmid'] = $childcmid;
+            $masterblog = $oublog;
+            $childdata = oublog_get_blog_data_base_on_cmid_of_childblog($childcmid, $masterblog);
+            $oublog = $childdata['ousharedblog'];
+            $cm = $childdata['cm'];
         }
-
-        // Call early to cache group mode - stops debugging warning from oublog_get_posts later.
-        $cm->activitygroupmode = oublog_get_activity_groupmode($cm, $COURSE);
         $context = context_module::instance($cm->id);
-        $modcontext = $context;
         if (empty($oubloguserid)) {
             $oubloguserid = null;
         }
@@ -1894,7 +1756,7 @@ EOF;
         }
         list($posts, $recordcount) = oublog_get_posts($oublog,
                 $context, $offset, $cm, $currentgroup, $currentindividual,
-                $oubloguserid, null, $canaudit, null, null, OUBLOG_POSTS_PER_PAGE_EXPORT, $orderby);
+                $oubloguserid, null, $canaudit, null, $masterblog, OUBLOG_POSTS_PER_PAGE_EXPORT, $orderby);
         $data = [];
         foreach ($posts as $post) {
             $onerow = [];

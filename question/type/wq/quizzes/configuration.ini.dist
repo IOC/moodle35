@@ -110,3 +110,23 @@
 ; Wiris Graph URL.
 ;
 ;quizzes.graph.url = "http://www.wiris.net/demo/graph"
+
+;
+; The identifier of your license to use Wiris Quizzes. Will be used to track usage
+; in the future, but it is not required right now.
+;
+;quizzes.license.id = ""
+
+;
+; Logging level for Quizzes telemetry service integration.
+; Possible values: NONE, ERROR, WARNING, INFO, DEBUG.
+;
+
+;quizzes.logging.level = "WARNING";
+
+;
+; Default tracking configuration for Quizzes telemetry service integration.
+;
+
+;quizzes.tracking.enabled = "true";
+

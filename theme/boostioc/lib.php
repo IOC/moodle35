@@ -30,7 +30,10 @@ function theme_boostioc_get_main_scss_content($theme)
     $scss .= file_get_contents($CFG->dirroot . '/theme/boost/scss/bootstrap.scss');
     $scss .= file_get_contents($CFG->dirroot . '/theme/boost/scss/moodle.scss');
     $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/post.scss');
-    $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/iedib-avirtual-stylesheet-div.scss');
+    $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/components.scss');
+    $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-ges.scss');
+    $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-components-eoi.scss');
+    $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-components-fp.scss');
 
     return $scss;
 }

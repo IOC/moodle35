@@ -43,7 +43,7 @@ class cohort_edit_form extends moodleform {
         $mform->setType('name', PARAM_TEXT);
 
         $options = $this->get_category_options($cohort->contextid);
-        $mform->addElement('select', 'contextid', get_string('context', 'role'), $options);
+        $mform->addElement('autocomplete', 'contextid', get_string('context', 'role'), $options);
 
         $mform->addElement('text', 'idnumber', get_string('idnumber', 'cohort'), 'maxlength="254" size="50"');
         $mform->setType('idnumber', PARAM_RAW); // Idnumbers are plain text, must not be changed.
@@ -100,9 +100,7 @@ class cohort_edit_form extends moodleform {
     }
 
     protected function get_category_options($currentcontextid) {
-        global $CFG;
-        require_once($CFG->libdir. '/coursecatlib.php');
-        $displaylist = coursecat::make_categories_list('moodle/cohort:manage');
+        $displaylist = core_course_category::make_categories_list('moodle/cohort:manage');
         $options = array();
         $syscontext = context_system::instance();
         if (has_capability('moodle/cohort:manage', $syscontext)) {

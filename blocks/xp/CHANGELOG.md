@@ -1,6 +1,147 @@
 Changelog
 =========
 
+v3.11.2
+-------
+
+Bug fixes
+
+- Some CSS styles were not applied for some older Moodle versions
+
+v3.11.1
+-------
+
+Quality of life
+
+- Update information in promotional page
+
+v3.11.0
+-------
+
+New features
+
+- Complete revamp of the user interface to setup the levels
+- Rule picker redesigned to include a description of each rule
+
+Quality of life
+
+- Confirmation asked when deleting a rule or condition with children
+- A help message is displayed when other plugins cause the rules screen to crash
+
+Bug fixes
+
+- The leaderboard was not accessible when using Oracle
+- The filters on the log table could not be removed when empty
+
+Technical changes
+
+- Compatibility with Moodle 3.11
+
+v3.10.2
+-------
+
+Bug fixes
+
+- The filtered_config class did not work with excluded keys
+
+v3.10.1
+-------
+
+Technical changes
+
+- Rules base class includes the get_renderer method for children classes to use
+- Switched to using numday, numweek, etc. language strings for durations in log settings
+- Travis configuration changes
+
+v3.10.0
+-------
+
+New features
+
+- Administrators can enforce the anonymity of the leaderboard
+- An additional capability to control access to the logs was added
+
+Bug fixes
+
+- The report could be stuck in an empty state after using some filters
+
+Quality of life
+
+- Display a warning when leaving the rules page without saving
+- Inform users when the cheat guard settings may become ineffective
+- Keep promo page visible when the add-on has been installed
+
+_Level up! Plus_ users may be required to upgrade the add-on for some of these changes to take effect.
+
+v3.9.0
+------
+
+New features
+
+- Support additional Privacy API requirement (core_userlist_provider)
+
+Bug fixes
+
+- Fixed vertical alignment of content in report table
+
+Quality of life
+
+- Report and logs display a nicer notice when page is empty
+
+Technical changes
+
+- Level change is identified from within the state store
+- Report controller to support additional actions from add-on
+
+v3.8.1
+------
+
+Bug fixes
+
+- The cheat guard miscounted the max of actions in time frame
+- Sorting the logs by points raised a database error
+- The manage permission is now required to search courses in the course rule
+- Missing bind when handling exception in module resource selector
+
+Quality of life
+
+- Display a warning when the plugin configuration and URLs mismatch
+
+Technical changes
+
+- Changes to filters and rules to support grade-based rewards in _Level up! Plus_
+
+v3.8.0
+------
+
+New features
+
+- Include support for the shortcode `xplevelname`
+- Compatibility with Moodle 3.8
+
+Bug fixes
+
+- Restored rules are now updating their internal configuration
+- Shortcode `xpladder` would display even when ladder is disabled
+- Minor fixes to notification behat test
+- Other minor bug fixes and improvements
+
+Quality of life
+
+- Increased the size of the description field in levels form
+- Prevent the notices from being announced to screen readers
+
+v3.7.0
+------
+
+- Levels can be given a custom name
+- Added ability to completely remove the points of a user
+- Added filter support (e.g. multi lang) to block description and title - David Bogner
+- The report displays a hyphen as level for users that do not have any points
+- Minor bug fixes and improvements
+
+Some of these changes were sponsored by Xi'an Jiaotong-Liverpool University.
+
 v3.6.1
 ------
 

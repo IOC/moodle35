@@ -67,6 +67,9 @@ class grading_app implements templatable, renderable {
         $this->userid = $userid;
         $this->groupid = $groupid;
         $this->assignment = $assignment;
+        user_preference_allow_ajax_update('assign_filter', PARAM_ALPHA);
+        user_preference_allow_ajax_update('assign_workflowfilter', PARAM_ALPHA);
+        user_preference_allow_ajax_update('assign_markerfilter', PARAM_ALPHANUMEXT);
         $this->participants = $assignment->list_participants_with_filter_status_and_group($groupid);
         if (!$this->userid && count($this->participants)) {
             $this->userid = reset($this->participants)->id;
@@ -80,7 +83,7 @@ class grading_app implements templatable, renderable {
      * @return stdClass - Flat list of exported data.
      */
     public function export_for_template(renderer_base $output) {
-        global $CFG;
+        global $CFG, $USER;
 
         $export = new stdClass();
         $export->userid = $this->userid;
@@ -88,9 +91,15 @@ class grading_app implements templatable, renderable {
         $export->cmid = $this->assignment->get_course_module()->id;
         $export->contextid = $this->assignment->get_context()->id;
         $export->groupid = $this->groupid;
-        $export->name = $this->assignment->get_context()->get_context_name();
+        $export->name = $this->assignment->get_context()->get_context_name(true, false, false);
         $export->courseid = $this->assignment->get_course()->id;
         $export->participants = array();
+        $export->filters = $this->assignment->get_filters();
+        $export->markingworkflowfilters = $this->assignment->get_marking_workflow_filters(true);
+        $export->hasmarkingworkflow = count($export->markingworkflowfilters) > 0;
+        $export->markingallocationfilters = $this->assignment->get_marking_allocation_filters(true);
+        $export->hasmarkingallocation = count($export->markingallocationfilters) > 0;
+
         $num = 1;
         foreach ($this->participants as $idx => $record) {
             $user = new stdClass();
@@ -128,27 +137,10 @@ class grading_app implements templatable, renderable {
 
         $time = time();
         $export->count = count($export->participants);
-        $export->coursename = $this->assignment->get_course_context()->get_context_name();
+        $export->coursename = $this->assignment->get_course_context()->get_context_name(true, false, false);
         $export->caneditsettings = has_capability('mod/assign:addinstance', $this->assignment->get_context());
         $export->duedate = $this->assignment->get_instance()->duedate;
         $export->duedatestr = userdate($this->assignment->get_instance()->duedate);
-
-        $filter = get_user_preferences('assign_filter', '');
-        $export->filtersubmitted = false;
-        $export->filternotsubmitted = false;
-        $export->filterrequiregrading = false;
-        $export->filtergrantedextension = false;
-        if ($this->assignment->is_any_submission_plugin_enabled()) {
-            if ($filter == ASSIGN_FILTER_SUBMITTED) {
-                $export->filtersubmitted = true;
-            } else if ($filter == ASSIGN_FILTER_NOT_SUBMITTED) {
-                $export->filternotsubmitted = true;
-            } else if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
-                $export->filterrequiregrading = true;
-            } else if ($filter == ASSIGN_FILTER_GRANTED_EXTENSION) {
-                $export->filtergrantedextension = true;
-            }
-        }
 
         // Time remaining.
         $due = '';
@@ -177,7 +169,9 @@ class grading_app implements templatable, renderable {
         $export->larrow = $output->larrow();
         // List of identity fields to display (the user info will not contain any fields the user cannot view anyway).
         $export->showuseridentity = $CFG->showuseridentity;
-
+        $export->currentuserid = $USER->id;
+        $helpicon = new \help_icon('sendstudentnotifications', 'assign');
+        $export->helpicon = $helpicon->export_for_template($output);
         return $export;
     }
 

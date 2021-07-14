@@ -38,12 +38,11 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
         // Define each element separated
         $oublog = new backup_nested_element('oublog', array('id'), array('name', 'course',
                 'accesstoken', 'intro', 'introformat', 'allowcomments', 'individual',
-                'allowreblogs', 'maxreblogs',
                 'maxbytes', 'maxattachments', 'maxvisibility', 'global', 'views',
                 'completionposts', 'completioncomments', 'reportingemail', 'displayname',
                 'statblockon', 'allowimport', 'introonpost', 'tags', 'assessed',
                 'assesstimestart', 'assesstimefinish', 'scale', 'grading', 'restricttags',
-                'postfrom', 'postuntil', 'commentfrom', 'commentuntil', 'timemodified', 'postperpage', 'idsharedblog', 'readtracking', 'previewcomments'
+                'postfrom', 'postuntil', 'commentfrom', 'commentuntil', 'timemodified', 'postperpage', 'idsharedblog', 'grade'
         ));
 
         $instances = new backup_nested_element('instances');
@@ -58,7 +57,7 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
         $post  = new backup_nested_element('post', array('id'), array('groupid', 'title',
                                                                              'message', 'timeposted', 'allowcomments',
                                                                              'timeupdated', 'lasteditedby', 'deletedby',
-                                                                             'timedeleted', 'visibility', 'individualvisible'));
+                                                                             'timedeleted', 'visibility'));
 
         $ratings = new backup_nested_element('ratings');
 
@@ -76,12 +75,6 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
 
         $taginstances = new backup_nested_element('tags');
         $taginstance  = new backup_nested_element('tag', array('id'), array('tag'));
-
-        $reads = new backup_nested_element('reads');
-        $read = new backup_nested_element('read', array('id'), array('userid', 'status'));
-
-        $reblogs = new backup_nested_element('reblogs');
-        $reblog = new backup_nested_element('reblog', array('id'), array('userid', 'timereblogged'));
 
         // Build the tree
         $oublog->add_child($instances);
@@ -105,12 +98,6 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
         $post->add_child($taginstances);
         $taginstances->add_child($taginstance);
 
-        $post->add_child($reads);
-        $reads->add_child($read);
-
-        $post->add_child($reblogs);
-        $reblogs->add_child($reblog);
-
         // Define sources
         $oublog->set_source_table('oublog', array('id' => backup::VAR_ACTIVITYID));
 
@@ -131,8 +118,6 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
                             'component' => backup_helper::is_sqlparam('mod_oublog'),
                             'ratingarea' => backup_helper::is_sqlparam('post')));
             $rating->set_source_alias('rating', 'value');
-            $read->set_source_table('oublog_read', array('postid' => backup::VAR_PARENTID));
-            $reblog->set_source_table('oublog_reblogs', array('postid' => backup::VAR_PARENTID));
         }
 
         // Define id annotations
@@ -146,8 +131,6 @@ class backup_oublog_activity_structure_step extends backup_activity_structure_st
         $oublog->annotate_ids('scale', 'scale');
         $rating->annotate_ids('scale', 'scaleid');
         $rating->annotate_ids('user', 'userid');
-        $read->annotate_ids('user', 'userid');
-        $reblog->annotate_ids('user', 'userid');
 
         // Define file annotations
         $oublog->annotate_files('mod_oublog', 'intro', null); // This file area hasn't itemid

@@ -380,33 +380,41 @@ if ($glossary->intro && $showcommonelements) {
 
 /// Search box
 if ($showcommonelements ) {
-    echo '<form method="post" class="form form-inline m-b-1" action="' . $CFG->wwwroot . '/mod/glossary/view.php">';
-
-
-    if ($mode == 'search') {
-        echo '<input type="text" name="hook" size="20" value="'.s($hook).'" alt="'.$strsearch.'" class="form-control"/> ';
-    } else {
-        echo '<input type="text" name="hook" size="20" value="" alt="'.$strsearch.'" class="form-control"/> ';
-    }
-    echo '<input type="submit" value="'.$strsearch.'" name="searchbutton" class="btn btn-secondary m-r-1"/> ';
+    $fullsearchchecked = false;
     if ($fullsearch || $mode != 'search') {
-        $fullsearchchecked = 'checked="checked"';
-    } else {
-        $fullsearchchecked = '';
+        $fullsearchchecked = true;
     }
-    echo '<span class="checkbox"><label for="fullsearch">';
-    echo ' <input type="checkbox" name="fullsearch" id="fullsearch" value="1" '.$fullsearchchecked.'/> ';
-    echo '<input type="hidden" name="mode" value="search" />';
-    echo '<input type="hidden" name="id" value="'.$cm->id.'" />';
-    echo $strsearchindefinition.'</label></span>';
 
-    echo '</form>';
+    $check = [
+        'name' => 'fullsearch',
+        'id' => 'fullsearch',
+        'value' => '1',
+        'checked' => $fullsearchchecked,
+        'label' => $strsearchindefinition
+    ];
+
+    $checkbox = $OUTPUT->render_from_template('core/checkbox', $check);
+
+    $hiddenfields = [
+        (object) ['name' => 'id', 'value' => $cm->id],
+        (object) ['name' => 'mode', 'value' => 'search'],
+    ];
+    $data = [
+        'action' => new moodle_url('/mod/glossary/view.php'),
+        'hiddenfields' => $hiddenfields,
+        'otherfields' => $checkbox,
+        'inputname' => 'hook',
+        'query' => ($mode == 'search') ? s($hook) : '',
+        'searchstring' => get_string('search'),
+        'extraclasses' => 'my-2'
+    ];
+    echo $OUTPUT->render_from_template('core/search_input', $data);
 }
 
 /// Show the add entry button if allowed
 if (has_capability('mod/glossary:write', $context) && $showcommonelements ) {
     echo '<div class="singlebutton glossaryaddentry">';
-    echo "<form class=\"form form-inline m-b-1\" id=\"newentryform\" method=\"get\" action=\"$CFG->wwwroot/mod/glossary/edit.php\">";
+    echo "<form class=\"form form-inline mb-1\" id=\"newentryform\" method=\"get\" action=\"$CFG->wwwroot/mod/glossary/edit.php\">";
     echo '<div>';
     echo "<input type=\"hidden\" name=\"cmid\" value=\"$cm->id\" />";
     echo '<input type="submit" value="'.get_string('addentry', 'glossary').'" class="btn btn-secondary" />';

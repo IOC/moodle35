@@ -44,7 +44,7 @@ class message_popup_externallib_testcase extends advanced_testcase {
      *
      * This is executed before running any test in this file.
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->preventResetByRollback(); // Messaging is not compatible with transactions.
         $this->messagesink = $this->redirectMessages();
         $this->resetAfterTest();
@@ -96,6 +96,15 @@ class message_popup_externallib_testcase extends advanced_testcase {
         $this->setAdminUser();
         $result = message_popup_external::get_popup_notifications($recipient->id, false, 0, 0);
         $this->assertCount(4, $result['notifications']);
+        // Check we receive custom data as a unserialisable json.
+        $found = 0;
+        foreach ($result['notifications'] as $notification) {
+            if (!empty($notification->customdata)) {
+                $this->assertObjectHasAttribute('datakey', json_decode($notification->customdata));
+                $found++;
+            }
+        }
+        $this->assertEquals(2, $found);
 
         $this->setUser($recipient);
         $result = message_popup_external::get_popup_notifications($recipient->id, false, 0, 0);

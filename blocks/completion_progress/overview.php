@@ -26,11 +26,17 @@
 // Include required files.
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot.'/blocks/completion_progress/lib.php');
+require_once($CFG->dirroot.'/notes/lib.php');
 require_once($CFG->libdir.'/tablelib.php');
 
-const USER_SMALL_CLASS = 20;   // Below this is considered small.
-const USER_LARGE_CLASS = 200;  // Above this is considered large.
+/**
+ * Default number of participants per page.
+ */
 const DEFAULT_PAGE_SIZE = 20;
+
+/**
+ * An impractically high number of participants indicating 'all' are to be shown.
+ */
 const SHOW_ALL_PAGE_SIZE = 5000;
 
 // Gather form data.
@@ -38,11 +44,18 @@ $id       = required_param('instanceid', PARAM_INT);
 $courseid = required_param('courseid', PARAM_INT);
 $page     = optional_param('page', 0, PARAM_INT); // Which page to show.
 $perpage  = optional_param('perpage', DEFAULT_PAGE_SIZE, PARAM_INT); // How many per page.
-$group    = optional_param('group', 0, PARAM_INT); // Group selected.
+$group    = optional_param('group', 0, PARAM_ALPHANUMEXT); // Group selected.
 
 // Determine course and context.
 $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
-$context = CONTEXT_COURSE::instance($courseid);
+$context = context_course::instance($courseid);
+
+$notesallowed = !empty($CFG->enablenotes) && has_capability('moodle/notes:manage', $context);
+$messagingallowed = !empty($CFG->messaging) && has_capability('moodle/site:sendmessage', $context);
+$bulkoperations = ($CFG->version >= 2017111300.00) &&
+    has_capability('moodle/course:bulkmessaging', $context) && (
+        $notesallowed || $messagingallowed
+    );
 
 // Find the role to display, defaulting to students.
 $sql = "SELECT DISTINCT r.id, r.name, r.archetype
@@ -62,11 +75,10 @@ $roleselected = optional_param('role', $studentroleid, PARAM_INT);
 // Get specific block config and context.
 $block = $DB->get_record('block_instances', array('id' => $id), '*', MUST_EXIST);
 $config = unserialize(base64_decode($block->configdata));
-$blockcontext = CONTEXT_BLOCK::instance($id);
+$blockcontext = context_block::instance($id);
 
 // Set up page parameters.
 $PAGE->set_course($course);
-$PAGE->requires->css('/blocks/completion_progress/styles.css');
 $PAGE->set_url(
     '/blocks/completion_progress/overview.php',
     array(
@@ -86,10 +98,15 @@ $PAGE->set_heading($title);
 $PAGE->navbar->add($title);
 $PAGE->set_pagelayout('report');
 
+$cachevalue = debugging() ? -1 : (int)get_config('block_completion_progress', 'cachevalue');
+$PAGE->requires->css('/blocks/completion_progress/css.php?v=' . $cachevalue);
+
 // Check user is logged in and capable of accessing the Overview.
 require_login($course, false);
 require_capability('block/completion_progress:overview', $blockcontext);
 confirm_sesskey();
+
+$output = $PAGE->get_renderer('block_completion_progress');
 
 // Start page output.
 echo $OUTPUT->header();
@@ -123,18 +140,28 @@ if (has_capability('moodle/site:accessallgroups', $context)) {
     $groupuserid = 0;
 }
 $groupids = array();
+$groupidnums = array();
+$groupingids = array();
 $groups = groups_get_all_groups($course->id, $groupuserid);
-if (!empty($groups)) {
-    $groupstodisplay = array(0 => get_string('allparticipants'));
-    foreach ($groups as $groupid => $groupobject) {
-        $groupstodisplay[$groupid] = $groupobject->name;
+$groupings = ($groupuserid == 0 ? groups_get_all_groupings($course->id) : []);
+if (!empty($groups) || !empty($groupings)) {
+    $groupstodisplay = ($groupuserid == 0 ? array(0 => get_string('allparticipants')) : []);
+    foreach ($groups as $groupidnum => $groupobject) {
+        $groupid = 'group-'.$groupidnum;
+        $groupstodisplay[$groupid] = format_string($groupobject->name);
         $groupids[] = $groupid;
+        $groupidnums[] = $groupidnum;
+    }
+    foreach ($groupings as $groupingidnum => $groupingobject) {
+        $groupingid = 'grouping-'.$groupingidnum;
+        $groupstodisplay[$groupingid] = format_string($groupingobject->name);
+        $groupids[] = $groupingid;
     }
     if (!in_array($group, $groupids)) {
-        $group = 0;
+        $group = '0';
         $PAGE->url->param('group', $group);
     }
-    echo get_string('groupsvisible');
+    echo get_string('groupsvisible') . '&nbsp;';
     echo $OUTPUT->single_select($PAGE->url, 'group', $groupstodisplay, $group);
 }
 
@@ -149,22 +176,32 @@ $rolestodisplay = array(0 => get_string('allparticipants'));
 foreach ($roles as $role) {
     $rolestodisplay[$role->id] = $role->localname;
 }
-echo '&nbsp;'.get_string('role');
+echo '&nbsp;' . get_string('role') . '&nbsp;';
 echo $OUTPUT->single_select($PAGE->url, 'role', $rolestodisplay, $roleselected);
 echo $OUTPUT->container_end();
 
 // Apply group restrictions.
 $params = array();
 $groupjoin = '';
-if ($group && $group != 0) {
+if ((substr($group, 0, 6) == 'group-') && ($groupid = intval(substr($group, 6)))) {
     $groupjoin = 'JOIN {groups_members} g ON (g.groupid = :groupselected AND g.userid = u.id)';
-    $params['groupselected'] = $group;
-} else if ($groupuserid != 0 && !empty($groupids)) {
-    $groupjoin = 'JOIN {groups_members} g ON (g.groupid IN ('.implode(',', $groupids).') AND g.userid = u.id)';
+    $params['groupselected'] = $groupid;
+} else if ((substr($group, 0, 9) == 'grouping-') && ($groupingid = intval(substr($group, 9)))) {
+    $groupjoin = 'JOIN {groups_members} g ON '.
+                 '(g.groupid IN (SELECT DISTINCT groupid FROM {groupings_groups} WHERE groupingid = :groupingselected) '.
+                 'AND g.userid = u.id)';
+    $params['groupingselected'] = $groupingid;
+} else if ($groupuserid != 0 && !empty($groupidnums)) {
+    $groupjoin = 'JOIN {groups_members} g ON (g.groupid IN ('.implode(',', $groupidnums).') AND g.userid = u.id)';
 }
 
+
 // Get the list of users enrolled in the course.
-$picturefields = user_picture::fields('u');
+if ($CFG->branch < 311) {
+    $picturefields = user_picture::fields('u');
+} else {
+    $picturefields = core_user\fields::for_userpic()->get_sql('u', false, '', '', false)->selects;
+}
 $sql = "SELECT DISTINCT $picturefields, COALESCE(l.timeaccess, 0) AS lastonlinetime
           FROM {user} u
           JOIN {role_assignments} a ON (a.contextid = :contextid AND a.userid = u.id $rolewhere)
@@ -173,7 +210,7 @@ $sql = "SELECT DISTINCT $picturefields, COALESCE(l.timeaccess, 0) AS lastonlinet
 $params['contextid'] = $context->id;
 $params['courseid'] = $course->id;
 $userrecords = $DB->get_records_sql($sql, $params);
-if (get_config('block_completion_progress', 'showinactive') !== 1) {
+if (get_config('block_completion_progress', 'showinactive') !== "1") {
     extract_suspended_users($context, $userrecords);
 }
 $userids = array_keys($userrecords);
@@ -182,15 +219,14 @@ $numberofusers = count($users);
 for ($i = 0; $i < $numberofusers; $i++) {
     $users[$i]->submissions = array();
 }
-$submissions = block_completion_progress_course_submissions($course->id);
-foreach ($submissions as $mapping) {
-    $mapvalues = explode('-', $mapping);
+$submissions = block_completion_progress_submissions($course->id);
+foreach ($submissions as $id => $obj) {
     $index = 0;
-    while ($index < $numberofusers && $users[$index]->id != $mapvalues[0]) {
+    while ($index < $numberofusers && $users[$index]->id != $obj->userid) {
         $index++;
     }
     if ($index < $numberofusers) {
-        $users[$index]->submissions[] = $mapvalues[1];
+        $users[$index]->submissions[$id] = $obj;
     }
 }
 
@@ -201,44 +237,62 @@ if (!$paged) {
 
 // Form for messaging selected participants.
 $formattributes = array('action' => $CFG->wwwroot.'/user/action_redir.php', 'method' => 'post', 'id' => 'participantsform');
+$formattributes['data-course-id'] = $course->id;
+$formattributes['data-table-unique-id'] = 'block-completion_progress-overview-' . $course->id;
 echo html_writer::start_tag('form', $formattributes);
 echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
 echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'returnto', 'value' => s($PAGE->url->out(false))));
 
+// Imitate a 3.9 dynamic table enough to fool the core_user/participants JS code, until
+// next time it changes again.
+$tabledivattributes = [
+    'data-region' => 'core_table/dynamic',
+    'data-table-uniqueid' => $formattributes['data-table-unique-id'],
+];
+echo html_writer::start_div('', $tabledivattributes);
+
 // Setup submissions table.
 $table = new flexible_table('mod-block-completion-progress-overview');
 $table->pagesize($perpage, $numberofusers);
-$tablecolumns = array('select', 'picture', 'fullname', 'lastonline', 'progressbar', 'progress');
+if (get_config('block_completion_progress', 'showlastincourse') !== "0") {
+    $tablecolumns = array('fullname', 'lastonline', 'progressbar', 'progress');
+    $tableheaders = array(
+                        get_string('fullname'),
+                        get_string('lastonline', 'block_completion_progress'),
+                        get_string('progressbar', 'block_completion_progress'),
+                        get_string('progress', 'block_completion_progress')
+                    );
+} else {
+    $tablecolumns = array('fullname', 'progressbar', 'progress');
+    $tableheaders = array(
+                        get_string('fullname'),
+                        get_string('progressbar', 'block_completion_progress'),
+                        get_string('progress', 'block_completion_progress')
+                    );
+}
+if ($bulkoperations) {
+    $checkbox = new core\output\checkbox_toggleall('participants-table', true, [
+        'id' => 'select-all-participants',
+        'name' => 'select-all-participants',
+        'label' => get_string('selectall'),
+        'labelclasses' => 'sr-only',
+        'checked' => false,
+    ]);
+    array_unshift($tablecolumns, 'select');
+    array_unshift($tableheaders, $output->render($checkbox));
+}
 $table->define_columns($tablecolumns);
-$tableheaders = array(
-                    get_string('select'),
-                    get_string('pictureofuser'),
-                    get_string('fullname'),
-                    get_string('lastonline', 'block_completion_progress'),
-                    get_string('progressbar', 'block_completion_progress'),
-                    get_string('progress', 'block_completion_progress')
-                );
 $table->define_headers($tableheaders);
 $table->sortable(true);
 $table->set_attribute('class', 'overviewTable');
-$table->column_style_all('padding', '5px');
-$table->column_style_all('text-align', 'left');
-$table->column_style_all('vertical-align', 'middle');
-$table->column_style('select', 'text-align', 'left');
-$table->column_style('select', 'padding', '5px 0 5px 5px');
-$table->column_style('select', 'width', '5%');
-$table->column_style('picture', 'width', '5%');
-$table->column_style('fullname', 'width', '15%');
-$table->column_style('lastonline', 'width', '15%');
-$table->column_style('progressbar', 'min-width', '200px');
-$table->column_style('progressbar', 'width', '*');
-$table->column_style('progressbar', 'padding', '0');
-$table->column_style('progress', 'text-align', 'center');
-$table->column_style('progress', 'width', '8%');
-
-$table->no_sorting('select');
-$select = '';
-$table->no_sorting('picture');
+$table->column_class('fullname', 'col-fullname');
+$table->column_class('lastonline', 'col-lastonline');
+$table->column_class('progressbar', 'col-progressbar');
+$table->column_class('progress', 'col-progress');
+if ($bulkoperations) {
+    $table->column_class('select', 'col-select');
+    $table->no_sorting('select');
+}
 $table->no_sorting('progressbar');
 $table->define_baseurl($PAGE->url);
 $table->setup();
@@ -264,12 +318,7 @@ if ($sortbyprogress) {
 $rows = array();
 $exclusions = block_completion_progress_exclusions($course->id);
 for ($i = $startuser; $i < $enduser; $i++) {
-    if ($CFG->enablenotes || $CFG->messaging) {
-        $selectattributes = array('type' => 'checkbox', 'class' => 'usercheckbox', 'name' => 'user'.$users[$i]->id);
-        $select = html_writer::empty_tag('input', $selectattributes);
-    }
-    $picture = $OUTPUT->user_picture($users[$i], array('course' => $course->id));
-    $namelink = html_writer::link($CFG->wwwroot.'/user/view.php?id='.$users[$i]->id.'&course='.$course->id, fullname($users[$i]));
+    $picture = $OUTPUT->user_picture($users[$i], array('course' => $course->id, 'includefullname' => true));
     if (empty($users[$i]->lastonlinetime)) {
         $lastonline = get_string('never');
     } else {
@@ -289,11 +338,11 @@ for ($i = $startuser; $i < $enduser; $i++) {
     }
 
     $rows[$i] = array(
+        'userid' => $users[$i]->id,
         'firstname' => strtoupper($users[$i]->firstname),
         'lastname' => strtoupper($users[$i]->lastname),
-        'select' => $select,
-        'picture' => $picture,
-        'fullname' => $namelink,
+        'fullname' => $picture,
+        'fullnametext' => fullname($users[$i]),
         'lastonlinetime' => $users[$i]->lastonlinetime,
         'lastonline' => $lastonline,
         'progressbar' => $progressbar,
@@ -310,12 +359,61 @@ if ($sortbyprogress) {
 // Build the table content and output.
 if ($numberofusers > 0) {
     for ($i = $startdisplay; $i < $enddisplay; $i++) {
-        $table->add_data(array($rows[$i]['select'], $rows[$i]['picture'],
-            $rows[$i]['fullname'], $rows[$i]['lastonline'],
-            $rows[$i]['progressbar'], $rows[$i]['progress']));
+        if (get_config('block_completion_progress', 'showlastincourse') !== "0") {
+            $rowdata = array($rows[$i]['fullname'], $rows[$i]['lastonline'], $rows[$i]['progressbar'], $rows[$i]['progress']);
+        } else {
+            $rowdata = array($rows[$i]['fullname'], $rows[$i]['progressbar'], $rows[$i]['progress']);
+        }
+        if ($bulkoperations) {
+            $checkbox = new core\output\checkbox_toggleall('participants-table', false, [
+                'classes' => 'usercheckbox',
+                'id' => 'user' . $rows[$i]['userid'],
+                'name' => 'user' . $rows[$i]['userid'],
+                'checked' => false,
+                'label' => get_string('selectitem', 'block_completion_progress', $rows[$i]['fullnametext']),
+                'labelclasses' => 'accesshide',
+            ]);
+            array_unshift($rowdata, $output->render($checkbox));
+        }
+        $table->add_data($rowdata);
     }
 }
 $table->print_html();
+echo html_writer::end_div();    // Closes the 3.9 imitation table wrapper.
+
+if ($bulkoperations) {
+    echo '<br /><div class="buttons">';
+
+    $displaylist = array();
+    if ($messagingallowed) {
+        $displaylist['#messageselect'] = get_string('messageselectadd');
+    }
+    if ($notesallowed) {
+        $displaylist['#addgroupnote'] = get_string('addnewnote', 'notes');
+    }
+
+    echo html_writer::tag('label', get_string("withselectedusers"), array('for' => 'formactionid'));
+    echo html_writer::select($displaylist, 'formaction', '', array('' => 'choosedots'), array('id' => 'formactionid'));
+
+    echo '<input type="hidden" name="id" value="'.$course->id.'" />';
+    echo '<noscript style="display:inline">';
+    echo '<div><input type="submit" value="'.get_string('ok').'" /></div>';
+    echo '</noscript>';
+    echo '</div>';
+
+    $options = new stdClass();
+    $options->moodleBranch = $CFG->branch;
+    if ($CFG->branch < 39) {
+        $options->courseid = $course->id;
+        $options->noteStateNames = note_get_state_names();
+        $options->stateHelpIcon = $OUTPUT->help_icon('publishstate', 'notes');
+    } else {
+        $options->uniqueid = $formattributes['data-table-unique-id'];
+        $options->noteStateNames = note_get_state_names();
+        echo '<div class="d-none" data-region="state-help-icon">' . $OUTPUT->help_icon('publishstate', 'notes') . '</div>';
+    }
+    $PAGE->requires->js_call_amd('block_completion_progress/overview', 'init', [$options]);
+}
 echo html_writer::end_tag('form');
 
 // Output paging controls.
@@ -328,34 +426,10 @@ if ($paged) {
     echo $OUTPUT->container(html_writer::link($perpageurl, get_string('showperpage', '', DEFAULT_PAGE_SIZE)), array(), 'showall');
 }
 
-// Output messaging controls.
-if ($CFG->enablenotes || $CFG->messaging) {
-    echo html_writer::start_tag('div', array('class' => 'buttons'));
-    echo html_writer::empty_tag('input', array('type' => 'button', 'id' => 'checkall', 'value' => get_string('selectall')));
-    echo html_writer::empty_tag('input', array('type' => 'button', 'id' => 'checknone', 'value' => get_string('deselectall')));
-    $displaylist = array();
-    if (!empty($CFG->messaging) && has_capability('moodle/course:bulkmessaging', $context)) {
-        $displaylist['messageselect.php'] = get_string('messageselectadd');
-    }
-    if (!empty($CFG->enablenotes) && has_capability('moodle/notes:manage', $context)) {
-        $displaylist['addnote.php'] = get_string('addnewnote', 'notes');
-        $displaylist['groupaddnote.php'] = get_string('groupaddnewnote', 'notes');
-    }
-    echo html_writer::tag('label', get_string("withselectedusers"), array('for' => 'formactionid'));
-    echo html_writer::select($displaylist, 'formaction', '', array('' => 'choosedots'), array('id' => 'formactionid'));
-    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'id', 'value' => $course->id));
-    echo html_writer::start_tag('noscript', array('style' => 'display:inline;'));
-    echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('ok')));
-    echo html_writer::end_tag('noscript');
-    echo $OUTPUT->help_icon('withselectedusers');
-    echo html_writer::end_tag('div');
-}
-
 // Organise access to JS for progress bars.
-$jsmodule = array('name' => 'block_completion_progress', 'fullpath' => '/blocks/completion_progress/module.js');
-$arguments = array(array($block->id), $userids);
-$PAGE->requires->js_init_call('M.block_completion_progress.setupScrolling', array(), false, $jsmodule);
-$PAGE->requires->js_init_call('M.block_completion_progress.init', $arguments, false, $jsmodule);
+$PAGE->requires->js_call_amd('block_completion_progress/progressbar', 'init', [
+    'instances' => array($block->id),
+]);
 
 echo $OUTPUT->container_end();
 echo $OUTPUT->footer();

@@ -49,7 +49,7 @@ class mod_lesson_renderer extends plugin_renderer_base {
         // Build the buttons
         $context = context_module::instance($cm->id);
 
-    /// Header setup
+        // Header setup.
         $this->page->set_title($title);
         $this->page->set_heading($this->page->course->fullname);
         lesson_add_header_buttons($cm, $context, $extraeditbuttons, $lessonpageid);
@@ -57,7 +57,10 @@ class mod_lesson_renderer extends plugin_renderer_base {
 
         if (has_capability('mod/lesson:manage', $context)) {
             $output .= $this->output->heading_with_help($activityname, 'overview', 'lesson');
-
+            // Info box.
+            if ($lesson->intro) {
+                $output .= $this->output->box(format_module_intro('lesson', $lesson, $cm->id), 'generalbox', 'intro');
+            }
             if (!empty($currenttab)) {
                 ob_start();
                 include($CFG->dirroot.'/mod/lesson/tabs.php');
@@ -66,6 +69,10 @@ class mod_lesson_renderer extends plugin_renderer_base {
             }
         } else {
             $output .= $this->output->heading($activityname);
+            // Info box.
+            if ($lesson->intro) {
+                $output .= $this->output->box(format_module_intro('lesson', $lesson, $cm->id), 'generalbox', 'intro');
+            }
         }
 
         foreach ($lesson->messages as $message) {
@@ -613,7 +620,8 @@ class mod_lesson_renderer extends plugin_renderer_base {
         $output .= $this->box_end(); // End of Lesson button to Continue.
 
         if ($data->reviewlesson !== false) {
-            $output .= html_writer::link($data->reviewlesson, get_string('reviewlesson', 'lesson'), array('class' => 'centerpadded lessonbutton standardbutton p-r-1'));
+            $output .= html_writer::link($data->reviewlesson, get_string('reviewlesson', 'lesson'),
+                array('class' => 'centerpadded lessonbutton standardbutton pr-3'));
         }
         if ($data->modattemptsnoteacher !== false) {
             $output .= $this->paragraph(get_string("modattemptsnoteacher", "lesson"), 'centerpadded');
@@ -625,13 +633,13 @@ class mod_lesson_renderer extends plugin_renderer_base {
 
         $url = new moodle_url('/course/view.php', array('id' => $course->id));
         $output .= html_writer::link($url, get_string('returnto', 'lesson', format_string($course->fullname, true)),
-                array('class' => 'centerpadded lessonbutton standardbutton p-r-1'));
+                array('class' => 'centerpadded lessonbutton standardbutton pr-3'));
 
         if (has_capability('gradereport/user:view', context_course::instance($course->id))
                 && $course->showgrades && $lesson->grade != 0 && !$lesson->practice) {
             $url = new moodle_url('/grade/index.php', array('id' => $course->id));
             $output .= html_writer::link($url, get_string('viewgrades', 'lesson'),
-                array('class' => 'centerpadded lessonbutton standardbutton p-r-1'));
+                array('class' => 'centerpadded lessonbutton standardbutton pr-3'));
         }
         return $output;
     }

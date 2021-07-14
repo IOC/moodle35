@@ -248,9 +248,6 @@ abstract class simplified_parser_processor extends progressive_parser_processor 
      * Returns the first selected parent if available or false
      */
     protected function selected_parent_exists($path) {
-        //@PATCH IOC002: performance
-        @set_time_limit(1 * 60 * 60);
-        // fi
         $parentpath = progressive_parser::dirname($path);
         while ($parentpath != '/') {
             if ($this->path_is_selected($parentpath)) {

@@ -87,115 +87,6 @@ $autonumbering = array (0 => get_string('autonumberno', 'questionnaire'),
         2 => get_string('autonumberpages', 'questionnaire'),
         3 => get_string('autonumberpagesandquestions', 'questionnaire'));
 
-function questionnaire_check_date ($thisdate, $insert=false) {
-    $dateformat = get_string('strfdate', 'questionnaire');
-    if (preg_match('/(%[mdyY])(.+)(%[mdyY])(.+)(%[mdyY])/', $dateformat, $matches)) {
-        $datepieces = explode($matches[2], $thisdate);
-        foreach ($datepieces as $datepiece) {
-            if (!is_numeric($datepiece)) {
-                return 'wrongdateformat';
-            }
-        }
-        $pattern = "/[^dmy]/i";
-        $dateorder = strtolower(preg_replace($pattern, '', $dateformat));
-        $countpieces = count($datepieces);
-        if ($countpieces == 1) { // Assume only year entered.
-            switch ($dateorder) {
-                case 'dmy': // Most countries.
-                case 'mdy': // USA.
-                    $datepieces[2] = $datepieces[0]; // year
-                    $datepieces[0] = '1'; // Assumed 1st month of year.
-                    $datepieces[1] = '1'; // Assumed 1st day of month.
-                    break;
-                case 'ymd': // ISO 8601 standard
-                    $datepieces[1] = '1'; // Assumed 1st month of year.
-                    $datepieces[2] = '1'; // Assumed 1st day of month.
-                    break;
-            }
-        }
-        if ($countpieces == 2) { // Assume only month and year entered.
-            switch ($dateorder) {
-                case 'dmy': // Most countries.
-                    $datepieces[2] = $datepieces[1]; // Year.
-                    $datepieces[1] = $datepieces[0]; // Month.
-                    $datepieces[0] = '1'; // Assumed 1st day of month.
-                    break;
-                case 'mdy': // USA
-                    $datepieces[2] = $datepieces[1]; // Year.
-                    $datepieces[0] = $datepieces[0]; // Month.
-                    $datepieces[1] = '1'; // Assumed 1st day of month.
-                    break;
-                case 'ymd': // ISO 8601 standard
-                    $datepieces[2] = '1'; // Assumed 1st day of month.
-                    break;
-            }
-        }
-        if (count($datepieces) > 1) {
-            if ($matches[1] == '%m') {
-                $month = $datepieces[0];
-            }
-            if ($matches[1] == '%d') {
-                $day = $datepieces[0];
-            }
-            if ($matches[1] == '%y') {
-                $year = strftime('%C').$datepieces[0];
-            }
-            if ($matches[1] == '%Y') {
-                $year = $datepieces[0];
-            }
-
-            if ($matches[3] == '%m') {
-                $month = $datepieces[1];
-            }
-            if ($matches[3] == '%d') {
-                $day = $datepieces[1];
-            }
-            if ($matches[3] == '%y') {
-                $year = strftime('%C').$datepieces[1];
-            }
-            if ($matches[3] == '%Y') {
-                $year = $datepieces[1];
-            }
-
-            if ($matches[5] == '%m') {
-                $month = $datepieces[2];
-            }
-            if ($matches[5] == '%d') {
-                $day = $datepieces[2];
-            }
-            if ($matches[5] == '%y') {
-                $year = strftime('%C').$datepieces[2];
-            }
-            if ($matches[5] == '%Y') {
-                $year = $datepieces[2];
-            }
-
-            $month = min(12, $month);
-            $month = max(1, $month);
-            if ($month == 2) {
-                $day = min(29, $day);
-            } else if ($month == 4 || $month == 6 || $month == 9 || $month == 11) {
-                $day = min(30, $day);
-            } else {
-                $day = min(31, $day);
-            }
-            $day = max(1, $day);
-            if (!$thisdate = gmmktime(0, 0, 0, $month, $day, $year)) {
-                return 'wrongdaterange';
-            } else {
-                if ($insert) {
-                    $thisdate = trim(userdate ($thisdate, '%Y-%m-%d', '1', false));
-                } else {
-                    $thisdate = trim(userdate ($thisdate, $dateformat, '1', false));
-                }
-            }
-            return $thisdate;
-        }
-    } else {
-        return ('wrongdateformat');
-    }
-}
-
 function questionnaire_choice_values($content) {
 
     // If we run the content through format_text first, any filters we want to use (e.g. multilanguage) should work.
@@ -331,7 +222,7 @@ function questionnaire_get_context($cmid) {
     }
 
     if (!$context = context_module::instance($cmid)) {
-            print_error('badcontext');
+        throw new \moodle_exception('badcontext', 'mod_questionnaire');
     }
     return $context;
 }
@@ -454,49 +345,44 @@ function questionnaire_get_survey_list($courseid=0, $type='') {
 
     if ($courseid == 0) {
         if (isadmin()) {
-            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,q.id as qid,q.name as qname,c.shortname as course " .
-                   "FROM {questionnaire_survey} s " .
-                   "JOIN {questionnaire} q ON q.sid = s.id " .
-                   "JOIN {course} c ON c.id = s.courseid " .
-                   "ORDER BY course,qname ";
+            $sql = "SELECT id,name,courseid,realm,status " .
+                   "{questionnaire_survey} " .
+                   "ORDER BY realm,name ";
             $params = null;
         } else {
             return false;
         }
     } else {
         if ($type == 'public') {
-            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,s.title,q.id as qid,q.name as qname,c.shortname as course " .
+            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,s.title,q.id as qid,q.name as qname " .
                    "FROM {questionnaire} q " .
                    "INNER JOIN {questionnaire_survey} s ON s.id = q.sid AND s.courseid = q.course " .
-                   "JOIN {course} c ON c.id = s.courseid " .
                    "WHERE realm = ? " .
-                   "ORDER BY course,qname ";
+                   "ORDER BY realm,name ";
             $params = [$type];
         } else if ($type == 'template') {
-            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,s.title,q.id as qid,q.name as qname,c.shortname as course " .
+            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,s.title,q.id as qid,q.name as qname " .
                    "FROM {questionnaire} q " .
                    "INNER JOIN {questionnaire_survey} s ON s.id = q.sid AND s.courseid = q.course " .
-                   "JOIN {course} c ON c.id = s.courseid " .
                    "WHERE (realm = ?) " .
-                   "ORDER BY course,qname ";
+                   "ORDER BY realm,name ";
             $params = [$type];
         } else if ($type == 'private') {
-            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,q.id as qid,q.name as qname,c.shortname as course " .
+            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,q.id as qid,q.name as qname " .
                 "FROM {questionnaire} q " .
                 "INNER JOIN {questionnaire_survey} s ON s.id = q.sid " .
-                "JOIN {course} c ON c.id = s.courseid " .
                 "WHERE s.courseid = ? and realm = ? " .
-                "ORDER BY course,qname ";
+                "ORDER BY realm,name ";
             $params = [$courseid, $type];
+
         } else {
             // Current get_survey_list is called from function questionnaire_reset_userdata so we need to get a
             // complete list of all questionnaires in current course to reset them.
-            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,q.id as qid,q.name as qname,c.shortname as course " .
+            $sql = "SELECT s.id,s.name,s.courseid,s.realm,s.status,q.id as qid,q.name as qname " .
                    "FROM {questionnaire} q " .
                     "INNER JOIN {questionnaire_survey} s ON s.id = q.sid AND s.courseid = q.course " .
-                   "JOIN {course} c ON c.id = s.courseid " .
                    "WHERE s.courseid = ? " .
-                   "ORDER BY course,qname ";
+                   "ORDER BY realm,name ";
             $params = [$courseid];
         }
     }
@@ -532,7 +418,7 @@ function questionnaire_get_survey_select($courseid=0, $type='') {
                 $action = new popup_action('click', $link);
                 $label = $OUTPUT->action_link($link, $survey->qname.' ['.$originalcourse->fullname.']',
                     $action, array('title' => $strpreview));
-                $surveylist[$type.'-'.$survey->id] = s($survey->course).' '.$label;
+                $surveylist[$type.'-'.$survey->id] = $label;
             }
         }
     }
@@ -594,6 +480,7 @@ function questionnaire_set_events($questionnaire) {
     $event->modulename = 'questionnaire';
     $event->instance = $questionnaire->id;
     $event->eventtype = 'open';
+    $event->type = CALENDAR_EVENT_TYPE_ACTION;
     $event->timestart = $questionnaire->opendate;
     $event->visible = instance_is_visible('questionnaire', $questionnaire);
     $event->timeduration = ($questionnaire->closedate - $questionnaire->opendate);
@@ -601,18 +488,21 @@ function questionnaire_set_events($questionnaire) {
     if ($questionnaire->closedate && $questionnaire->opendate && ($event->timeduration <= QUESTIONNAIRE_MAX_EVENT_LENGTH)) {
         // Single event for the whole questionnaire.
         $event->name = $questionnaire->name;
+        $event->timesort = $questionnaire->opendate;
         calendar_event::create($event);
     } else {
         // Separate start and end events.
         $event->timeduration  = 0;
         if ($questionnaire->opendate) {
             $event->name = $questionnaire->name.' ('.get_string('questionnaireopens', 'questionnaire').')';
+            $event->timesort = $questionnaire->opendate;
             calendar_event::create($event);
             unset($event->id); // So we can use the same object for the close event.
         }
         if ($questionnaire->closedate) {
             $event->name = $questionnaire->name.' ('.get_string('questionnairecloses', 'questionnaire').')';
             $event->timestart = $questionnaire->closedate;
+            $event->timesort = $questionnaire->closedate;
             $event->eventtype = 'close';
             calendar_event::create($event);
         }
@@ -736,7 +626,7 @@ function questionnaire_get_parent ($question) {
         $parent [$qid]['name'] = $question->name;
         $parent [$qid]['content'] = $question->content;
         $parent [$qid]['parentposition'] = $dependquestion->position;
-        $parent [$qid]['parent'] = $dependquestion->name.'->'.$dependchoice;
+        $parent [$qid]['parent'] = format_string($dependquestion->name) . '->' . format_string ($dependchoice);
     }
     return $parent;
 }
@@ -856,8 +746,10 @@ function questionnaire_check_page_breaks($questionnaire) {
                 $prevtypeid = $positions[$j]['type_id'];
                 $prevdependencies = $positions[$j]['dependencies'];
 
-                $outerdependencies = count($qu['dependencies']) >= count($prevdependencies) ? $qu['dependencies'] : $prevdependencies;
-                $innerdependencies = count($qu['dependencies']) < count($prevdependencies) ? $qu['dependencies'] : $prevdependencies;
+                $outerdependencies = count($qu['dependencies']) >= count($prevdependencies) ?
+                    $qu['dependencies'] : $prevdependencies;
+                $innerdependencies = count($qu['dependencies']) < count($prevdependencies) ?
+                    $qu['dependencies'] : $prevdependencies;
 
                 foreach ($outerdependencies as $okey => $outerdependency) {
                     foreach ($innerdependencies as $ikey => $innerdependency) {
@@ -938,7 +830,7 @@ function questionnaire_prep_for_questionform($questionnaire, $qid, $qtype) {
             }
         }
     } else {
-        $question = \mod_questionnaire\question\base::question_builder($qtype);
+        $question = \mod_questionnaire\question\question::question_builder($qtype);
         $question->sid = $questionnaire->survey->id;
         $question->id = $questionnaire->cm->id;
         $question->type_id = $qtype;
@@ -962,26 +854,26 @@ function questionnaire_get_standard_page_items($id = null, $a = null) {
 
     if ($id) {
         if (! $cm = get_coursemodule_from_id('questionnaire', $id)) {
-            print_error('invalidcoursemodule');
+            throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
         }
 
         if (! $course = $DB->get_record("course", array("id" => $cm->course))) {
-            print_error('coursemisconf');
+            throw new \moodle_exception('coursemisconf', 'mod_questionnaire');
         }
 
         if (! $questionnaire = $DB->get_record("questionnaire", array("id" => $cm->instance))) {
-            print_error('invalidcoursemodule');
+            throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
         }
 
     } else {
         if (! $questionnaire = $DB->get_record("questionnaire", array("id" => $a))) {
-            print_error('invalidcoursemodule');
+            throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
         }
         if (! $course = $DB->get_record("course", array("id" => $questionnaire->course))) {
-            print_error('coursemisconf');
+            throw new \moodle_exception('coursemisconf', 'mod_questionnaire');
         }
         if (! $cm = get_coursemodule_from_instance("questionnaire", $questionnaire->id, $course->id)) {
-            print_error('invalidcoursemodule');
+            throw new \moodle_exception('invalidcoursemodule', 'mod_questionnaire');
         }
     }
 

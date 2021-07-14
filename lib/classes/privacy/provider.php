@@ -88,6 +88,13 @@ class provider implements
                 'userid'        => 'privacy:metadata:task_adhoc:userid',
             ], 'privacy:metadata:task_adhoc');
 
+        // The task_log table stores debugging data for tasks.
+        // These are cleaned regularly and intended purely for debugging.
+        $collection->add_database_table('task_log', [
+                'component'     => 'privacy:metadata:task_log:component',
+                'userid'        => 'privacy:metadata:task_log:userid',
+            ], 'privacy:metadata:task_log');
+
         // The events_queue includes information about pending events tasks.
         // These are stored for short periods whilst being processed into other locations.
         $collection->add_database_table('events_queue', [
@@ -106,6 +113,17 @@ class provider implements
             'url' => 'privacy:metadata:log:url',
             'info' => 'privacy:metadata:log:info'
         ], 'privacy:metadata:log');
+
+        // The oauth2_refresh_token stores refresh tokens, allowing ongoing access to select oauth2 services.
+        // Such tokens are not considered to be user data.
+        $collection->add_database_table('oauth2_refresh_token', [
+            'timecreated' => 'privacy:metadata:oauth2_refresh_token:timecreated',
+            'timemodified' => 'privacy:metadata:oauth2_refresh_token:timemodified',
+            'userid' => 'privacy:metadata:oauth2_refresh_token:userid',
+            'issuerid' => 'privacy:metadata:oauth2_refresh_token:issuerid',
+            'token' => 'privacy:metadata:oauth2_refresh_token:token',
+            'scopehash' => 'privacy:metadata:oauth2_refresh_token:scopehash'
+        ], 'privacy:metadata:oauth2_refresh_token');
 
         return $collection;
     }

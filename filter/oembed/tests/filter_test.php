@@ -112,7 +112,6 @@ class filter_oembed_testcase extends advanced_testcase {
 
         $soundcloudlink = '<p><a href="https://soundcloud.com/forss/flickermood">soundcloud</a></p>';
         $youtubelink = '<p><a href="https://www.youtube.com/watch?v=ns6gCZI-Nj8">Youtube</a></p>';
-        $officemixlink = '<p><a href="https://mix.office.com/watch/50ujrxsjvp9c">mix</a></p>';
         $vimeolink = '<p><a href="http://vimeo.com/115538038">vimeo</a></p>';
         $tedlink = '<p><a href="https://ted.com/talks/aj_jacobs_how_healthy_living_nearly_killed_me">Ted</a></p>';
         $slidesharelink = '<p><a href="https://www.slideshare.net/timbrown/ideo-values-slideshare1">slideshare</a></p>';
@@ -120,8 +119,7 @@ class filter_oembed_testcase extends advanced_testcase {
         $polleverywherelink = '<p><a href="https://www.polleverywhere.com/multiple_choice_polls/AyCp2jkJ2HqYKXc/web">';
         $polleverywherelink .= '$popolleverywhere</a></p>';
 
-        $filterinput = $soundcloudlink.$youtubelink.$officemixlink.$vimeolink.$tedlink.$slidesharelink.$issuulink;
-        $filterinput .= $polleverywherelink;
+        $filterinput = $soundcloudlink.$youtubelink.$vimeolink.$tedlink.$slidesharelink.$issuulink.$polleverywherelink;
 
         $filteroutput = $this->filter->filter($filterinput);
 
@@ -133,13 +131,10 @@ class filter_oembed_testcase extends advanced_testcase {
                             '%2Ftracks%2F293&show_artwork=true".*/';
         $this->assertRegExp($soundcloudoutput, $filteroutput, 'Soundcloud filter fails');
 
-        $officemixoutput = '/.*<iframe .*src="https:\/\/mix\.office\.com\/embed\/50ujrxsjvp9c".*/';
-        $this->assertRegExp($officemixoutput, $filteroutput, 'Office mix filter fails');
-
-        $vimeooutput = '/.*<iframe .*src="https:\/\/player\.vimeo\.com\/video\/115538038".*/';
+        $vimeooutput = '/.*<iframe .*src="https:\/\/player\.vimeo\.com\/video\/115538038\?.*".*/';
         $this->assertRegExp($vimeooutput, $filteroutput, 'Vimeo filter fails');
 
-        $tedoutput = '/.*<iframe .*src="https:\/\/embed\.ted\.com\/talks\/aj_jacobs_how_healthy_living_nearly_killed_me".*/';
+        $tedoutput = '/.*<a href="https:\/\/ted\.com\/talks\/aj_jacobs_how_healthy_living_nearly_killed_me".*/';
         $this->assertRegExp($tedoutput, $filteroutput, 'Ted filter fails');
 
         $polleverywhereoutput = '/.*<script src="https:\/\/www\.polleverywhere\.com\/'.

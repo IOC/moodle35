@@ -23,10 +23,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->dirroot.'/blocks/completion_progress/lib.php');
-
 defined('MOODLE_INTERNAL') || die;
+
+require_once($CFG->dirroot.'/blocks/completion_progress/lib.php');
 
 /**
  * Completion Progress block class
@@ -42,7 +41,7 @@ class block_completion_progress extends block_base {
      * @return void
      */
     public function init() {
-        $this->title = get_string('config_default_title', 'block_completion_progress');
+        $this->title = get_string('pluginname', 'block_completion_progress');
     }
 
     /**
@@ -149,7 +148,7 @@ class block_completion_progress extends block_base {
                        AND bi.parentcontextid = :contextid
                   ORDER BY region, weight, bi.id";
 
-            foreach ($courses as $courseid => $course) {
+            foreach ($courses as $course) {
 
                 // Get specific block config and context.
                 $completion = new completion_info($course);
@@ -157,7 +156,7 @@ class block_completion_progress extends block_base {
                     $context = CONTEXT_COURSE::instance($course->id);
                     $params = array('contextid' => $context->id, 'pagetype' => 'course-view-%');
                     $blockinstances = $DB->get_records_sql($sql, $params);
-                    $exclusions = block_completion_progress_exclusions($course->id);
+                    $exclusions = block_completion_progress_exclusions($course->id, $USER->id);
                     foreach ($blockinstances as $blockid => $blockinstance) {
                         $blockinstance->config = unserialize(base64_decode($blockinstance->configdata));
                         $blockinstance->activities = block_completion_progress_get_activities($course->id, $blockinstance->config);
@@ -171,7 +170,7 @@ class block_completion_progress extends block_base {
                             (
                                 !empty($blockinstance->config->group) &&
                                 !has_capability('moodle/site:accessallgroups', $context) &&
-                                !groups_is_member($blockinstance->config->group, $USER->id)
+                                !block_completion_progress_group_membership($blockinstance->config->group, $course->id, $USER->id)
                             )
                         ) {
                             unset($blockinstances[$blockid]);
@@ -193,7 +192,7 @@ class block_completion_progress extends block_base {
                         ) {
                             $this->content->text .= HTML_WRITER::tag('p', s(format_string($blockinstance->config->progressTitle)));
                         }
-                        $submissions = block_completion_progress_student_submissions($course->id, $USER->id);
+                        $submissions = block_completion_progress_submissions($course->id, $USER->id);
                         $completions = block_completion_progress_completions($blockinstance->activities, $USER->id, $course,
                             $submissions);
                         $this->content->text .= block_completion_progress_bar($blockinstance->activities,
@@ -218,7 +217,7 @@ class block_completion_progress extends block_base {
             if (
                 !empty($this->config->group) &&
                 !has_capability('moodle/site:accessallgroups', $this->context) &&
-                !groups_is_member($this->config->group, $USER->id)
+                !block_completion_progress_group_membership($this->config->group, $COURSE->id, $USER->id)
             ) {
                 return $this->content;
             }
@@ -241,7 +240,7 @@ class block_completion_progress extends block_base {
             }
 
             // Check if any activities/resources have been created.
-            $exclusions = block_completion_progress_exclusions($COURSE->id);
+            $exclusions = block_completion_progress_exclusions($COURSE->id, $USER->id);
             $activities = block_completion_progress_get_activities($COURSE->id, $this->config);
             $activities = block_completion_progress_filter_visibility($activities, $USER->id, $COURSE->id, $exclusions);
             if (empty($activities)) {
@@ -253,7 +252,7 @@ class block_completion_progress extends block_base {
 
             // Display progress bar.
             if (has_capability('block/completion_progress:showbar', $this->context)) {
-                $submissions = block_completion_progress_student_submissions($COURSE->id, $USER->id);
+                $submissions = block_completion_progress_submissions($COURSE->id, $USER->id);
                 $completions = block_completion_progress_completions($activities, $USER->id, $COURSE, $submissions);
                 $this->content->text .= block_completion_progress_bar(
                     $activities,
@@ -277,16 +276,20 @@ class block_completion_progress extends block_base {
         }
 
         // Organise access to JS.
-        $jsmodule = array(
-            'name' => 'block_completion_progress',
-            'fullpath' => '/blocks/completion_progress/module.js',
-            'requires' => array(),
-            'strings' => array(),
-        );
-        $arguments = array($blockinstancesonpage, array($USER->id));
-        $this->page->requires->js_init_call('M.block_completion_progress.setupScrolling', array(), false, $jsmodule);
-        $this->page->requires->js_init_call('M.block_completion_progress.init', $arguments, false, $jsmodule);
+        $this->page->requires->js_call_amd('block_completion_progress/progressbar', 'init', [
+            'instances' => $blockinstancesonpage,
+        ]);
+        $cachevalue = debugging() ? -1 : (int)get_config('block_completion_progress', 'cachevalue');
+        $this->page->requires->css('/blocks/completion_progress/css.php?v=' . $cachevalue);
 
         return $this->content;
+    }
+
+    /**
+     * Bumps a value to assist in caching of configured colours in css.php.
+     */
+    public static function increment_cache_value() {
+        $value = get_config('block_completion_progress', 'cachevalue') + 1;
+        set_config('cachevalue', $value, 'block_completion_progress');
     }
 }

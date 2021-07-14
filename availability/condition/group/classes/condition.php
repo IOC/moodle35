@@ -289,7 +289,7 @@ class condition extends \core_availability\condition {
                  WHERE (userids.id IN ($aagsql)) OR $condition EXISTS ($matchsql)";
         return array($sql, array_merge($enrolparams, $aagparams, $matchparams));
     }
-
+    
     /**
      * Returns innaccessible properties.
      * @PATCH IOC004

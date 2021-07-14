@@ -30,7 +30,6 @@ $category = required_param('category', PARAM_SAFEDIR);
 $return = optional_param('return','', PARAM_ALPHA);
 $adminediting = optional_param('adminedit', -1, PARAM_BOOL);
 
-/// no guest autologin
 require_login(0, false);
 $PAGE->set_context(context_system::instance());
 $PAGE->set_url('/admin/category.php', array('category' => $category));
@@ -158,5 +157,10 @@ echo html_writer::tag('div', '<!-- -->', array('class' => 'clearer'));
 echo $outputhtml;
 echo html_writer::end_tag('fieldset');
 echo html_writer::end_tag('form');
+
+$PAGE->requires->yui_module('moodle-core-formchangechecker', 'M.core_formchangechecker.init', [[
+    'formid' => 'adminsettings'
+]]);
+$PAGE->requires->string_for_js('changesmadereallygoaway', 'moodle');
 
 echo $OUTPUT->footer();

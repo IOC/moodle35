@@ -87,9 +87,7 @@ class lesson_page_type_multichoice extends lesson_page {
     public function display($renderer, $attempt) {
         global $CFG, $PAGE;
         $answers = $this->get_used_answers();
-        if ($this->properties->shuffle) {
-            shuffle($answers);
-        }
+        shuffle($answers);
         $action = $CFG->wwwroot.'/mod/lesson/continue.php';
         $params = array('answers'=>$answers, 'lessonid'=>$this->lesson->id, 'contents'=>$this->get_contents(), 'attempt'=>$attempt);
         if ($this->properties->qoption) {
@@ -125,9 +123,7 @@ class lesson_page_type_multichoice extends lesson_page {
         $formattextdefoptions->para = false;
 
         $answers = $this->get_used_answers();
-        if ($this->properties->shuffle) {
-            shuffle($answers);
-        }
+        shuffle($answers);
         $action = $CFG->wwwroot.'/mod/lesson/continue.php';
         $params = array('answers'=>$answers, 'lessonid'=>$this->lesson->id, 'contents'=>$this->get_contents());
         if ($this->properties->qoption) {
@@ -315,12 +311,7 @@ class lesson_page_type_multichoice extends lesson_page {
         return $table;
     }
     public function stats(array &$pagestats, $tries) {
-        if(count($tries) > $this->lesson->maxattempts) { // if there are more tries than the max that is allowed, grab the last "legal" attempt
-            $temp = $tries[$this->lesson->maxattempts - 1];
-        } else {
-            // else, user attempted the question less than the max, so grab the last one
-            $temp = end($tries);
-        }
+        $temp = $this->lesson->get_last_attempt($tries);
         if ($this->properties->qoption) {
             $userresponse = explode(",", $temp->useranswer);
             foreach ($userresponse as $response) {
@@ -448,10 +439,6 @@ class lesson_add_page_form_multichoice extends lesson_add_page_form_base {
         $this->_form->addElement('checkbox', 'qoption', get_string('options', 'lesson'), get_string('multianswer', 'lesson'));
         $this->_form->setDefault('qoption', 0);
         $this->_form->addHelpButton('qoption', 'multianswer', 'lesson');
-
-        $this->_form->addElement('selectyesno', 'shuffle', get_string('shuffle', 'lesson'), get_string('shuffle', 'lesson'));
-        $this->_form->setDefault('shuffle', 1);
-        $this->_form->addHelpButton('shuffle', 'shuffle', 'lesson');
 
         for ($i = 0; $i < $this->_customdata['lesson']->maxanswers; $i++) {
             $this->_form->addElement('header', 'answertitle'.$i, get_string('answer').' '.($i+1));

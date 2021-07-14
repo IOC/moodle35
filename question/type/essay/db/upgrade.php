@@ -32,33 +32,39 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_qtype_essay_upgrade($oldversion) {
     global $CFG, $DB;
 
+    // Automatically generated Moodle v3.5.0 release upgrade line.
+    // Put any upgrade step following this.
+
+    // Automatically generated Moodle v3.6.0 release upgrade line.
+    // Put any upgrade step following this.
+
+    // Automatically generated Moodle v3.7.0 release upgrade line.
+    // Put any upgrade step following this.
+
+    // Automatically generated Moodle v3.8.0 release upgrade line.
+    // Put any upgrade step following this.
+
+    // Automatically generated Moodle v3.9.0 release upgrade line.
+    // Put any upgrade step following this.
+
     $dbman = $DB->get_manager();
+    if ($oldversion < 2020091600) {
 
-    // Automatically generated Moodle v3.2.0 release upgrade line.
-    // Put any upgrade step following this.
-
-    // Automatically generated Moodle v3.3.0 release upgrade line.
-    // Put any upgrade step following this.
-
-    // Automatically generated Moodle v3.4.0 release upgrade line.
-    // Put any upgrade step following this.
-
-    if ($oldversion < 2018021800) {
-
-        // Add "filetypeslist" column to the question type options to save the allowed file types.
+        // Define field maxbytes to be added to qtype_essay_options.
         $table = new xmldb_table('qtype_essay_options');
-        $field = new xmldb_field('filetypeslist', XMLDB_TYPE_TEXT, null, null, null, null, null, 'responsetemplateformat');
+        $field = new xmldb_field('maxbytes', XMLDB_TYPE_INTEGER, '10', null,
+            XMLDB_NOTNULL, null, '0', 'responsetemplateformat');
 
-        // Conditionally launch add field filetypeslist.
+        // Conditionally launch add field maxbytes.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Essay savepoint reached.
-        upgrade_plugin_savepoint(true, 2018021800, 'qtype', 'essay');
+        upgrade_plugin_savepoint(true, 2020091600, 'qtype', 'essay');
     }
 
-    // Automatically generated Moodle v3.5.0 release upgrade line.
+    // Automatically generated Moodle v3.10.0 release upgrade line.
     // Put any upgrade step following this.
 
     return true;

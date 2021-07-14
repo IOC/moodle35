@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 
-require_once(__DIR__ . '/helper.php');
+require_once(__DIR__ . '/generator_trait.php');
 require_once($CFG->dirroot . '/rating/lib.php');
 
 use \mod_forum\privacy\provider;
@@ -45,7 +45,7 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
 
     // Include the mod_forum test helpers.
     // This includes functions to create forums, users, discussions, and posts.
-    use helper;
+    use mod_forum_tests_generator_trait;
 
     // Include the privacy helper trait for the ratings API.
     use \core_rating\phpunit\privacy_helper;
@@ -56,7 +56,7 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
     /**
      * Test setUp.
      */
-    public function setUp() {
+    public function setUp(): void {
         $this->resetAfterTest(true);
     }
 
@@ -392,6 +392,93 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
         $this->assertNotEmpty($post->subject);
         $this->assertNotEmpty($post->message);
         $this->assertEquals(0, $post->deleted);
+    }
+
+    /**
+     * Test private reply in a range of scenarios.
+     */
+    public function test_user_private_reply() {
+        global $DB;
+
+        $course = $this->getDataGenerator()->create_course();
+        $forum = $this->getDataGenerator()->create_module('forum', ['course' => $course->id]);
+        $cm = get_coursemodule_from_instance('forum', $forum->id);
+        $context = \context_module::instance($cm->id);
+
+        [$student, $otherstudent] = $this->helper_create_users($course, 2, 'student');
+        [$teacher, $otherteacher] = $this->helper_create_users($course, 2, 'teacher');
+
+        [$discussion, $post] = $this->helper_post_to_forum($forum, $student);
+        $reply = $this->helper_reply_to_post($post, $teacher, [
+                'privatereplyto' => $student->id,
+            ]);
+
+        // Testing as user $student.
+        $this->setUser($student);
+
+        // Retrieve all contexts - only this context should be returned.
+        $contextlist = $this->get_contexts_for_userid($student->id, 'mod_forum');
+        $this->assertCount(1, $contextlist);
+        $this->assertEquals($context, $contextlist->current());
+
+        // Export all of the data for the context.
+        $this->export_context_data_for_user($student->id, $context, 'mod_forum');
+        $writer = \core_privacy\local\request\writer::with_context($context);
+        $this->assertTrue($writer->has_any_data());
+
+        // The initial post and reply will be included.
+        $this->assert_post_data($post, $writer->get_data($this->get_subcontext($forum, $discussion, $post)), $writer);
+        $this->assert_post_data($reply, $writer->get_data($this->get_subcontext($forum, $discussion, $reply)), $writer);
+
+        // Testing as user $teacher.
+        \core_privacy\local\request\writer::reset();
+        $this->setUser($teacher);
+
+        // Retrieve all contexts - only this context should be returned.
+        $contextlist = $this->get_contexts_for_userid($teacher->id, 'mod_forum');
+        $this->assertCount(1, $contextlist);
+        $this->assertEquals($context, $contextlist->current());
+
+        // Export all of the data for the context.
+        $this->export_context_data_for_user($teacher->id, $context, 'mod_forum');
+        $writer = \core_privacy\local\request\writer::with_context($context);
+        $this->assertTrue($writer->has_any_data());
+
+        // The reply will be included.
+        $this->assert_post_data($post, $writer->get_data($this->get_subcontext($forum, $discussion, $post)), $writer);
+        $this->assert_post_data($reply, $writer->get_data($this->get_subcontext($forum, $discussion, $reply)), $writer);
+
+        // Testing as user $otherteacher.
+        // The user was not involved in any of the conversation.
+        \core_privacy\local\request\writer::reset();
+        $this->setUser($otherteacher);
+
+        // Retrieve all contexts - only this context should be returned.
+        $contextlist = $this->get_contexts_for_userid($otherteacher->id, 'mod_forum');
+        $this->assertCount(0, $contextlist);
+
+        // Export all of the data for the context.
+        $this->export_context_data_for_user($otherteacher->id, $context, 'mod_forum');
+        $writer = \core_privacy\local\request\writer::with_context($context);
+
+        // The user has none of the discussion.
+        $this->assertEmpty($writer->get_data($this->get_subcontext($forum, $discussion)));
+
+        // Testing as user $otherstudent.
+        // The user was not involved in any of the conversation.
+        \core_privacy\local\request\writer::reset();
+        $this->setUser($otherstudent);
+
+        // Retrieve all contexts - only this context should be returned.
+        $contextlist = $this->get_contexts_for_userid($otherstudent->id, 'mod_forum');
+        $this->assertCount(0, $contextlist);
+
+        // Export all of the data for the context.
+        $this->export_context_data_for_user($otherstudent->id, $context, 'mod_forum');
+        $writer = \core_privacy\local\request\writer::with_context($context);
+
+        // The user has none of the discussion.
+        $this->assertEmpty($writer->get_data($this->get_subcontext($forum, $discussion)));
     }
 
     /**
@@ -1383,10 +1470,13 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
         // 5 users * 2 forums * 1 file in each forum
         // Original total: 10
         // One post with file removed.
-        $this->assertCount(0, $DB->get_records_select('files', "itemid {$postinsql}", $postinparams));
+        $componentsql = "component = 'mod_forum' AND ";
+        $this->assertCount(0, $DB->get_records_select('files',
+            "{$componentsql} itemid {$postinsql}", $postinparams));
 
         // Files for the other posts should remain.
-        $this->assertCount(18, $DB->get_records_select('files', "filename <> '.' AND itemid {$otherpostinsql}", $otherpostinparams));
+        $this->assertCount(18, $DB->get_records_select('files',
+            "{$componentsql} filename <> '.' AND itemid {$otherpostinsql}", $otherpostinparams));
     }
 
     /**
@@ -1591,11 +1681,14 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
         // 5 users * 2 forums * 1 file in each forum
         // Original total: 10
         // One post with file removed.
-        $this->assertCount(0, $DB->get_records_select('files', "itemid {$postinsql}", $postinparams));
+        $componentsql = "component = 'mod_forum' AND ";
+        $this->assertCount(0, $DB->get_records_select('files',
+            "{$componentsql} itemid {$postinsql}", $postinparams));
 
         // Files for the other posts should remain.
         $this->assertCount(18,
-                $DB->get_records_select('files', "filename <> '.' AND itemid {$otherpostinsql}", $otherpostinparams));
+                $DB->get_records_select('files',
+                    "{$componentsql} filename <> '.' AND itemid {$otherpostinsql}", $otherpostinparams));
     }
 
     /**
@@ -1902,5 +1995,56 @@ class mod_forum_privacy_provider_testcase extends \core_privacy\tests\provider_t
         sort($actual);
 
         $this->assertEquals($expected, $actual);
+    }
+
+    /**
+     * Test exporting plugin user preferences
+     */
+    public function test_export_user_preferences(): void {
+        $this->setAdminUser();
+
+        // Create a user with some forum preferences.
+        $user = $this->getDataGenerator()->create_user([
+            'maildigest' => 2,
+            'autosubscribe' => 1,
+            'trackforums' => 0,
+        ]);
+
+        set_user_preference('markasreadonnotification', 0, $user);
+        set_user_preference('forum_discussionlistsortorder', \mod_forum\local\vaults\discussion_list::SORTORDER_STARTER_ASC,
+            $user);
+
+        // Export test users preferences.
+        provider::export_user_preferences($user->id);
+
+        $writer = \core_privacy\local\request\writer::with_context(\context_system::instance());
+        $this->assertTrue($writer->has_any_data());
+
+        $preferences = (array) $writer->get_user_preferences('mod_forum');
+
+        $this->assertEquals((object) [
+            'value' => 2,
+            'description' => get_string('emaildigestsubjects'),
+        ], $preferences['maildigest']);
+
+        $this->assertEquals((object) [
+            'value' => 1,
+            'description' => get_string('autosubscribeyes'),
+        ], $preferences['autosubscribe']);
+
+        $this->assertEquals((object) [
+            'value' => 0,
+            'description' => get_string('trackforumsno'),
+        ], $preferences['trackforums']);
+
+        $this->assertEquals((object) [
+            'value' => 0,
+            'description' => get_string('markasreadonnotificationno', 'mod_forum'),
+        ], $preferences['markasreadonnotification']);
+
+        $this->assertEquals((object) [
+            'value' => \mod_forum\local\vaults\discussion_list::SORTORDER_STARTER_ASC,
+            'description' => get_string('discussionlistsortbystarterasc', 'mod_forum'),
+        ], $preferences['forum_discussionlistsortorder']);
     }
 }

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-global $DB, $PAGE, $OUTPUT;
-
 require_once("../../config.php");
+
+global $DB, $PAGE, $OUTPUT;
 
 // Input params.
 $courseid = required_param('courseid', PARAM_INT);
@@ -36,16 +36,13 @@ require_once('dedication_lib.php');
 $action = optional_param('action', 'all', PARAM_ALPHANUM);
 $id = optional_param('id', 0, PARAM_INT);
 $download = optional_param('download', false, PARAM_BOOL);
-$csv = optional_param('csv', false, PARAM_BOOL);
-
-$actionurl = ($action != 'firstaccess' ? $action : '');
 
 // Current url.
 $pageurl = new moodle_url('/blocks/dedication/dedication.php');
 $pageurl->params(array(
     'courseid' => $courseid,
     'instanceid' => $instanceid,
-    'action' => $actionurl,
+    'action' => $action,
     'id' => $id,
 ));
 
@@ -93,7 +90,6 @@ $view->table = new html_table();
 $view->table->attributes = array('class' => $tablestyles['table_class'] . " table-$action");
 
 switch ($action) {
-    case 'firstaccess': break;
     case 'user':
         $userid = required_param('id', PARAM_INT);
 
@@ -104,7 +100,7 @@ switch ($action) {
 
         $dm = new block_dedication_manager($course, $mintime, $maxtime, $limit);
         if ($download) {
-            $dm->download_user_dedication($user, $csv);
+            $dm->download_user_dedication($user);
             exit;
         }
 
@@ -152,7 +148,7 @@ switch ($action) {
                     $members = groups_get_members($group->id);
                     $students = array_replace($students, $members);
                 }
-                // Empty groups or missconfigured, get all students anyway
+                // Empty groups or missconfigured, get all students anyway.
                 if (!$students) {
                     $students = get_enrolled_users(context_course::instance($course->id));
                 }
@@ -165,7 +161,7 @@ switch ($action) {
         $dm = new block_dedication_manager($course, $mintime, $maxtime, $limit);
         $rows = $dm->get_students_dedication($students);
         if ($download) {
-            $dm->download_students_dedication($rows, $csv);
+            $dm->download_students_dedication($rows);
             exit;
         }
 
@@ -215,9 +211,9 @@ foreach ($view->header as $header) {
 
 // Download button.
 echo html_writer::start_tag('div', array('class' => 'download-dedication'));
+echo html_writer::start_tag('p');
 echo $OUTPUT->single_button(new moodle_url($pageurl, array('download' => true)), get_string('downloadexcel'), 'get');
-echo $OUTPUT->single_button(new moodle_url($pageurl, array('download' => true, 'csv' => true)),
-                                get_string('downloadcsv', 'block_dedication'), 'get');
+echo html_writer::end_tag('p');
 echo html_writer::end_tag('div');
 
 // Format table headers if they exists.
