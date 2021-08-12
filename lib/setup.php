@@ -545,7 +545,7 @@ $CFG->httpswwwroot = $CFG->wwwroot;
 
 require_once($CFG->libdir .'/setuplib.php');        // Functions that MUST be loaded first
 
-// @PATCH IOC siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
+// @PATCH IOC018 siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
 // Admin site performance
 require_once($CFG->dirroot . '/admin/tool/siteperf/lib.php');
 tool_siteperf::init();
