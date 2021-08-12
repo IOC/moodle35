@@ -1325,7 +1325,7 @@ class core_renderer extends renderer_base {
 
         // If this theme version is below 2.4 release and this is a course view page
         if ((!isset($this->page->theme->settings->version) || $this->page->theme->settings->version < 2012101500) &&
-                $this->page->pagelayout === 'course' && $this->page->url->compare(new moodle_url('/course/view.php'), URL_MATCH_BASE)) {
+                    $this->page->pagelayout === 'course' && $this->page->url->compare(new moodle_url('/course/view.php'), URL_MATCH_BASE)) {
             // check if course content header/footer have not been output during render of theme layout
             $coursecontentheader = $this->course_content_header(true);
             $coursecontentfooter = $this->course_content_footer(true);
@@ -1414,6 +1414,11 @@ class core_renderer extends renderer_base {
                 $performanceinfo = $perf['html'];
             }
         }
+
+        // @PATCH IOC018 siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
+        //Admin site performance
+        tool_siteperf::shutdown();
+        // Fi
 
         // We always want performance data when running a performance test, even if the user is redirected to another page.
         if (MDL_PERF_TEST && strpos($footer, $this->unique_performance_info_token) === false) {
