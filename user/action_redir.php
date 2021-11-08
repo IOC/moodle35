@@ -48,6 +48,13 @@ if (!confirm_sesskey()) {
     print_error('confirmsesskeybad');
 }
 
+// @PATCH IOC016: new action expert CSV
+$url = new moodle_url(required_param('formaction', PARAM_URL));
+if ('csv' == $url->param('dataformat')) {
+    $formaction = 'exportcsv.php';
+}
+// Fi
+
 if ($formaction == 'bulkchange.php') {
     // Backwards compatibility for enrolment plugins bulk change functionality.
     // This awful code is adapting from the participant page with it's param names and values
