@@ -52,13 +52,15 @@ class calc_formula {
      * @param array $params associative array of parameters used in formula. All parameter names must be lowercase!
      */
     public function __construct($formula, $params=false) {
+        // @PATCH IOC014: new formulari engine
+        /*
         $this->_em = new EvalMath();
         $this->_em->suppress_errors = true; // no PHP errors!
         if (strpos($formula, '=') !== 0) {
             $this->_error = "missing leading '='";
             return;
         }
-        // @PATCH IOC014: new formulari engine
+        */
         try {
             $this->_formula = new FormulaParser($formula);
         } catch (FormulaException $e) {
