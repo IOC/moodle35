@@ -109,8 +109,13 @@ class restore_qtype_multianswer_plugin extends restore_qtype_plugin {
 
             foreach ($sequencearr as $key => $question) {
                 $sequencearr[$key] = $this->get_mappingid('question', $question);
-            }
-            $sequence = implode(',', $sequencearr);
+	    }
+	    /** PATCH IOC019: https://tracker.moodle.org/browse/MDL-54724 */
+	    // Codi original
+	    //$sequence = implode(',', $sequencearr);
+	    // Codi modificat
+	    $sequence = implode(',', array_filter($sequencearr));
+	    /** FI PATCH */
             $DB->set_field('question_multianswer', 'sequence', $sequence,
                     array('id' => $rec->id));
             if (!empty($sequence)) {
