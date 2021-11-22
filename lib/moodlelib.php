@@ -247,7 +247,7 @@ define('PARAM_URL',      'url');
  */
 define('PARAM_USERNAME',    'username');
 
-// @PATCH IOC
+// @PATCH IOC020: Afegir tipus PARAM_USERNAME_IOC per WebService Secretaria
 /**
  * PARAM_USERNAME_IOC - Clean username to only contains allowed characters. This is to be used ONLY when manually creating user
  * accounts, do NOT use when syncing with external systems!!
@@ -1227,8 +1227,7 @@ function clean_param($param, $type) {
                 $param = preg_replace('/[^-\.@_a-z0-9]/', '', $param);
             }
             return $param;
-
-        // @PATCH IOC:
+        // @PATCH IOC020: Afegir tipus PARAM_USERNAME_IOC per WebService Secretaria
         case PARAM_USERNAME_IOC:
             $param = fix_utf8($param);
             $param = trim($param);
