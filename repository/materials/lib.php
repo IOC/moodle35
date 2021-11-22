@@ -166,7 +166,7 @@ class repository_materials extends repository {
      */
     public function get_file($file, $title = '') {
         global $CFG;
-        if ($file{0} == '/') {
+        if ($file[0] == '/') {
             $file = $this->root_path.substr($file, 1, strlen($file)-1);
         } else {
             $file = $this->root_path.$file;
@@ -297,7 +297,7 @@ class repository_materials extends repository {
      */
     public function get_file_by_reference($reference) {
         $ref = $reference->reference;
-        if ($ref{0} == '/') {
+        if ($ref[0] == '/') {
             $filepath = $this->root_path.substr($ref, 1, strlen($ref)-1);
         } else {
             $filepath = $this->root_path.$ref;
@@ -331,7 +331,7 @@ class repository_materials extends repository {
      */
     public function send_file($storedfile, $lifetime=86400 , $filter=0, $forcedownload=false, array $options = null) {
         $reference = $storedfile->get_reference();
-        if ($reference{0} == '/') {
+        if ($reference[0] == '/') {
             $file = $this->root_path.substr($reference, 1, strlen($reference)-1);
         } else {
             $file = $this->root_path.$reference;
