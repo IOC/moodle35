@@ -6266,10 +6266,10 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
     }
 
     // Check if the email should be sent in an other charset then the default UTF-8.
-    // @PATCH IOC
+    // @PATCH IOC021: Enviament correu via Xtec
     if ((!empty($CFG->sitemailcharset) || !empty($CFG->allowusermailcharset))
         && empty($CFG->local_xtecmail_app)) {
-    // Original
+    // Original.
     /*
     if ((!empty($CFG->sitemailcharset) || !empty($CFG->allowusermailcharset))) {
     */
@@ -6322,7 +6322,7 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
         }
     }
 
-    // @PATCH IOC
+    // @PATCH IOC021: Enviament correu via Xtec
     if (!empty($CFG->local_xtecmail_app)) {
         require_once("$CFG->dirroot/lib/soaplib.php");
         require_once("$CFG->dirroot/lib/xtecmail/lib.php");
