@@ -3890,6 +3890,11 @@ abstract class lesson_page extends lesson_base {
         $newpage->display = (isset($properties->display))?1:0;
         $newpage->prevpageid = 0; // this is a first page
         $newpage->nextpageid = 0; // this is the only page
+        //@PATCH IOC034: Configure whether shuffle multiple choice answers
+        if (isset($properties->shuffle)) {
+            $newpage->shuffle = $properties->shuffle;
+        }
+        //Fi
 
         if ($properties->pageid) {
             $prevpage = $DB->get_record("lesson_pages", array("id" => $properties->pageid), 'id, nextpageid');
@@ -4513,6 +4518,11 @@ abstract class lesson_page extends lesson_base {
         if ($maxbytes === null) {
             $maxbytes = get_user_max_upload_file_size($context);
         }
+        //@PATCH IOC034: Configure whether shuffle multiple choice answers
+        if (!isset($properties->shuffle)) {
+            $properties->shuffle = '1';
+        }
+        //Fi
         $properties->timemodified = time();
         $properties = file_postupdate_standard_editor($properties, 'contents', array('noclean'=>true, 'maxfiles'=>EDITOR_UNLIMITED_FILES, 'maxbytes'=>$maxbytes), $context, 'mod_lesson', 'page_contents', $properties->id);
         $DB->update_record("lesson_pages", $properties);

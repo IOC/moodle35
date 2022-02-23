@@ -46,7 +46,12 @@ class mod_assign_grading_options_form extends moodleform {
 
         $mform->addElement('header', 'general', get_string('gradingoptions', 'assign'));
         // Visible elements.
-        $options = array(10 => '10', 20 => '20', 50 => '50', 100 => '100', -1 => get_string('all'));
+        //@PATCH IOC032: Límit del nombre d'elements a la llista d'enviaments
+        //Old Code:
+        //$options = array(10 => '10', 20 => '20', 50 => '50', 100 => '100', -1 => get_string('all'));
+        $options = array(10 => '10', 20 => '20', 50 => '50', 100 => '100');
+        //Fi
+
         $maxperpage = get_config('assign', 'maxperpage');
         if (isset($maxperpage) && $maxperpage != -1) {
             unset($options[-1]);
@@ -61,7 +66,10 @@ class mod_assign_grading_options_form extends moodleform {
                          ASSIGN_FILTER_NOT_SUBMITTED => get_string('filternotsubmitted', 'assign'),
                          ASSIGN_FILTER_SUBMITTED => get_string('filtersubmitted', 'assign'),
                          ASSIGN_FILTER_REQUIRE_GRADING => get_string('filterrequiregrading', 'assign'),
-                         ASSIGN_FILTER_GRANTED_EXTENSION => get_string('filtergrantedextension', 'assign'));
+                         ASSIGN_FILTER_GRANTED_EXTENSION => get_string('filtergrantedextension', 'assign'),
+                         //@PATCH IOC029: Filtre d'esborranys a la llista d'enviaments
+                         ASSIGN_FILTER_DRAFTS => get_string('numberofdraftsubmissions', 'assign'));
+                         //Fi
         if ($instance['submissionsenabled']) {
             $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $dirtyclass);
         }

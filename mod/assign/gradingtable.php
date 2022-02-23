@@ -321,6 +321,11 @@ class assign_grading_table extends table_sql implements renderable {
             } else if ($filter == ASSIGN_FILTER_GRANTED_EXTENSION) {
                 $where .= ' AND uf.extensionduedate > 0 ';
 
+            //@PATCH IOC029: Filtre d'esborranys a la llista d'enviaments
+            } else if ($filter == ASSIGN_FILTER_DRAFTS) {
+                $where .= ' AND s.status = :draft';
+                $params['draft'] = ASSIGN_SUBMISSION_STATUS_DRAFT;
+            //Fi
             } else if (strpos($filter, ASSIGN_FILTER_SINGLE_USER) === 0) {
                 $userfilter = (int) array_pop(explode('=', $filter));
                 $where .= ' AND (u.id = :userid)';
@@ -1104,9 +1109,28 @@ class assign_grading_table extends table_sql implements renderable {
         }
 
         if ($this->assignment->is_any_submission_plugin_enabled()) {
+            //@PATCH IOC027: Show a message when a student removes their own submission
+            //Old Code:
+            //$o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign'),
+            //                               array('class' => 'submissionstatus' .$displaystatus));
+            $deletedsubmission = $deletedclass = '';
+            if ($status === ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                if ($this->assignment->get_instance()->teamsubmission) {
+                    $group = false;
+                    $submission = false;
+                    $this->get_group_and_submission($row->id, $group, $submission, -1);
+                } else {
+                    $submission = $this->assignment->get_user_submission($row->id, false);
+                }
+                if (!$submission or $this->assignment->submission_empty($submission)) {
+                    $deletedsubmission = html_writer::tag('div', get_string('submissionstatus_submitted_deleted', 'assign'));
+                    $deletedclass = 'deleted';
+                }
+            }
 
-            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign'),
-                                           array('class' => 'submissionstatus' .$displaystatus));
+            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign') . $deletedsubmission,
+                                           array('class' => 'submissionstatus' .$displaystatus . $deletedclass));
+            //Fi
             if ($due && $timesubmitted > $due && $status != ASSIGN_SUBMISSION_STATUS_NEW) {
                 $usertime = format_time($timesubmitted - $due);
                 $latemessage = get_string('submittedlateshort',

@@ -370,11 +370,19 @@ class assign_submission_onlinetext extends assign_submission_plugin {
 
         if ($onlinetextsubmission) {
             // This contains the shortened version of the text plus an optional 'Export to portfolio' button.
-            $text = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+            //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
+            //Old Code:
+            //$text = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+            //                                            $onlinetextsubmission->submission,
+            //                                            $this->get_type(),
+            //                                            'onlinetext',
+            //                                            'assignsubmission_onlinetext', true);
+            list($text, ) = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
                                                              $onlinetextsubmission->submission,
                                                              $this->get_type(),
                                                              'onlinetext',
                                                              'assignsubmission_onlinetext', true);
+            //Fi
 
             // The actual submission text.
             $onlinetext = trim($onlinetextsubmission->onlinetext);
@@ -461,12 +469,19 @@ class assign_submission_onlinetext extends assign_submission_plugin {
         if ($onlinetextsubmission) {
 
             // Render for portfolio API.
-            $result .= $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
-                                                                $onlinetextsubmission->submission,
-                                                                $this->get_type(),
-                                                                'onlinetext',
-                                                                'assignsubmission_onlinetext');
-
+            //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
+            //Old Code:
+            //$result .= $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+            //                                                    $onlinetextsubmission->submission,
+            //                                                    $this->get_type(),
+            //                                                    'onlinetext',
+            //                                                    'assignsubmission_onlinetext');
+            list(, $result) = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+                                                                       $onlinetextsubmission->submission,
+                                                                       $this->get_type(),
+                                                                       'onlinetext',
+                                                                       'assignsubmission_onlinetext');
+            //Fi
             $plagiarismlinks = '';
 
             if (!empty($CFG->enableplagiarism)) {

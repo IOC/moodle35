@@ -39,6 +39,9 @@ define('ASSIGN_FILTER_NOT_SUBMITTED', 'notsubmitted');
 define('ASSIGN_FILTER_SINGLE_USER', 'singleuser');
 define('ASSIGN_FILTER_REQUIRE_GRADING', 'requiregrading');
 define('ASSIGN_FILTER_GRANTED_EXTENSION', 'grantedextension');
+//@PATCH IOC029: Filtre d'esborranys a la llista d'enviaments
+define('ASSIGN_FILTER_DRAFTS', 'drafts');
+//Fi
 
 // Marker filter for grading page.
 define('ASSIGN_MARKER_FILTER_NO_MARKER', -1);
@@ -2778,7 +2781,11 @@ class assign {
         if ($flags->mailed != 1 || $mailedoverride) {
             $flags->mailed = 0;
         }
-
+        //@PATCH IOC031: Permet qualificar "sense qualificació" a les tasques
+        if ($grade->grade === null) {
+            $flags->mailed = 1;
+        }
+        //Fi
         return $this->update_user_flags($flags);
     }
 
@@ -2853,11 +2860,31 @@ class assign {
         } else {
             $submission = $this->get_user_submission($grade->userid, false);
         }
+        //@PATCH IOC025: Modify previous attempt grade, update assign and gradebook
+        $gradeattempt = false;
+        if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+            $lastsqlgrade = 'SELECT g.grade, g.attemptnumber
+                                FROM {assign_grades} g
+                                LEFT JOIN {assign_grades} gg
+                                ON (g.userid = gg.userid AND g.assignment = gg.assignment
+                                    AND g.attemptnumber < gg.attemptnumber)
+                                WHERE gg.userid is NULL AND g.assignment = :assignid AND g.userid = :userid';
+            $params = array(
+                'assignid' => $submission->assignment,
+                'userid' => $submission->userid,
+            );
+
+            if ($lastgrade = $DB->get_record_sql($lastsqlgrade, $params)) {
+                $gradeattempt = ( $lastgrade->attemptnumber == $grade->attemptnumber ||
+                    (($lastgrade->attemptnumber - 1) == $grade->attemptnumber && (is_null($lastgrade->grade) || $lastgrade->grade < 0 )));
+            }
+        }
 
         // Only push to gradebook if the update is for the most recent attempt.
-        if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+        if ($submission && $submission->attemptnumber != $grade->attemptnumber && !$gradeattempt) {
             return true;
         }
+        //Fi
 
         if ($this->gradebook_item_update(null, $grade)) {
             \mod_assign\event\submission_graded::create_from_grade($this, $grade)->trigger();
@@ -3395,7 +3422,12 @@ class assign {
                                                   $filearea,
                                                   $submissionid);
         $params = array('overflowdiv' => true, 'context' => $this->get_context());
-        $result .= format_text($finaltext, $format, $params);
+        
+        //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
+        //Old Code:
+        //$result .= format_text($finaltext, $format, $params);
+        $portfoliohtml = $result;
+        //Fi
 
         if ($CFG->enableportfolios && has_capability('mod/assign:exportownsubmission', $this->context)) {
             require_once($CFG->libdir . '/portfoliolib.php');
@@ -3419,9 +3451,17 @@ class assign {
             } else {
                 $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
             }
-            $result .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+            //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
+            //Old Code:
+            //$result .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+            $portfoliohtml .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+            //Fi
         }
-        return $result;
+        //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
+        //Old Code:
+        //return $result;
+        return array($result, $portfoliohtml);
+        //Fi
     }
 
     /**
@@ -3627,9 +3667,14 @@ class assign {
                     $prefix = str_replace('_', ' ', $groupname . get_string('participant', 'assign'));
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 } else {
-                    $fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
-                    $prefix = str_replace('_', ' ', $groupname . $fullname);
+                    //@PATCH IOC028: Changed lastname firstname order on downloaded filename
+                    //Old Code:
+                    //$fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
+                    //$prefix = str_replace('_', ' ', $groupname . $fullname);
+                    $prefix = str_replace('_', ' ', $groupname . $student->lastname .' '. $student->firstname);
+                    //Fi
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
+
                 }
 
                 if ($submission) {
@@ -7710,7 +7755,10 @@ class assign {
                     $mform->addHelpButton('gradedisabled', 'gradeoutofhelp', 'assign');
                 }
             } else {
-                $grademenu = array(-1 => get_string("nograde")) + make_grades_menu($this->get_instance()->grade);
+                //@PATCH IOC031: Permet qualificar "sense qualificació" a les tasques
+                $grademenu = array(-1 => get_string('nograde'));
+                $grademenu += make_grades_menu($this->get_instance()->grade);
+                //Fi
                 if (count($grademenu) > 1) {
                     $gradingelement = $mform->addElement('select', 'grade', get_string('grade') . ':', $grademenu);
 
@@ -7898,6 +7946,16 @@ class assign {
         $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
 
+        //@PATCH IOC030: Opció de revertir a esborrany els enviaments en qualificar
+        if ($this->get_instance()->submissiondrafts) {
+            $submission = $this->get_user_submission($userid, false);
+            if ($submission and $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                $mform->addElement('checkbox', 'reverttodraft', '',
+                                   get_string('reverttodraftshort', 'assign'));
+                $mform->closeHeaderBefore('reverttodraft');
+            }
+        }
+        //Fi
         if (!$gradingpanel) {
 
             $buttonarray = array();
@@ -8400,6 +8458,11 @@ class assign {
                 // Handle the case when grade is set to No Grade.
                 if (isset($formdata->grade)) {
                     $grade->grade = grade_floatval(unformat_float($formdata->grade));
+                    //@PATCH IOC031: Permet qualificar "sense qualificació" a les tasques
+                    if ($formdata->grade == -1) {
+                        $grade->grade = null;
+                    }
+                    //Fi
                 }
             }
             if (isset($formdata->workflowstate) || isset($formdata->allocatedmarker)) {
