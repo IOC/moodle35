@@ -96,7 +96,7 @@ class mod_assign_grade_form extends moodleform {
             if ($scale = $DB->get_record('scale', array('id'=>-($instance->grade)))) {
                 $scaleoptions = make_menu_from_list($scale->scale);
 
-                // @PATCH IOC
+                // @PATCH IOC031: Permet qualificar "sense qualificació" a les tasques.
                 if ((int)$data['grade'] != -1 && !array_key_exists((int)$data['grade'], $scaleoptions)) {
                 // Original.
                 /*

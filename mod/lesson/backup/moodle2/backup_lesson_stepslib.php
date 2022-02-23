@@ -88,7 +88,8 @@ class backup_lesson_activity_structure_step extends backup_activity_structure_st
         $page = new backup_nested_element('page', array('id'), array(
             'prevpageid','nextpageid','qtype','qoption','layout',
             'display','timecreated','timemodified','title','contents',
-            // @PATCH IOC
+
+            // @PATCH IOC034: Configure whether shuffle multiple choice answers.
             'contentsformat','shuffle'
             // Original.
             /*

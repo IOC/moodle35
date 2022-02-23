@@ -100,6 +100,12 @@ function forum_add_instance($forum, $mform = null) {
         $forum->assesstimefinish = 0;
     }
 
+    // @PATCH IOC023: Forced FORUM_DISALLOWSUBSCRIBE
+    if (!isset($forum->forcesubscribe)) {
+        $forum->forcesubscribe = FORUM_DISALLOWSUBSCRIBE;
+    }  
+    // Fi
+
     $forum->id = $DB->insert_record('forum', $forum);
     $modcontext = context_module::instance($forum->coursemodule);
 
@@ -2048,12 +2054,20 @@ function forum_get_discussions_count($cm) {
             $timelimit .= ")";
         }
     }
-
+    //@PATCH IOC040: Optimització de diverses consultes
+    //Old Code:
+    /*
     $sql = "SELECT COUNT(d.id)
               FROM {forum_discussions} d
                    JOIN {forum_posts} p ON p.discussion = d.id
              WHERE d.forum = ? AND p.parent = 0
                    $groupselect $timelimit";
+    */
+    $sql = "SELECT COUNT(d.id)
+              FROM {forum_discussions} d
+               WHERE d.forum = ?
+                   $groupselect $timelimit";
+    //Fi
 
     return $DB->get_field_sql($sql, $params);
 }
@@ -3295,8 +3309,13 @@ function forum_delete_discussion($discussion, $fulldelete, $course, $cm, $forum)
             }
         }
     }
-
-    forum_tp_delete_read_records(-1, -1, $discussion->id);
+    //@PATCH IOC039: Optimització de la neteja dels registres de missatges llegits
+    //Old Code:
+    //forum_tp_delete_read_records(-1, -1, $discussion->id);
+    if (!$fulldelete) {
+        forum_tp_delete_read_records(-1, -1, $discussion->id);
+    }
+    //Fi
 
     // Discussion subscriptions must be removed before discussions because of key constraints.
     $DB->delete_records('forum_discussion_subs', array('discussion' => $discussion->id));
@@ -3384,9 +3403,13 @@ function forum_delete_post($post, $children, $course, $cm, $forum, $skipcompleti
     }
 
     if ($DB->delete_records("forum_posts", array("id" => $post->id))) {
-
-        forum_tp_delete_read_records(-1, $post->id);
-
+        //@PATCH IOC039: Optimització de la neteja dels registres de missatges llegits
+        //Old Code:
+        //forum_tp_delete_read_records(-1, $post->id);
+        if (!$skipcompletion) {
+            forum_tp_delete_read_records(-1, $post->id);
+        }
+        //Fi
     // Just in case we are deleting the last post
         forum_discussion_update_last_post($post->discussion);
 
@@ -4937,6 +4960,9 @@ function forum_tp_clean_read_records() {
 // Look for records older than the cutoffdate that are still in the forum_read table.
     $cutoffdate = time() - ($CFG->forum_oldpostdays*24*60*60);
 
+    //@PATCH IOC040: Optimització de diverses consultes
+    //Old Code:
+    /*
     //first get the oldest tracking present - we need tis to speedup the next delete query
     $sql = "SELECT MIN(fp.modified) AS first
               FROM {forum_posts} fp
@@ -4953,6 +4979,12 @@ function forum_tp_clean_read_records() {
                                 FROM {forum_posts} fp
                                WHERE fp.modified >= ? AND fp.modified < ?)";
     $DB->execute($sql, array($first, $cutoffdate));
+    */
+    $sql = "DELETE r.* FROM {forum_read} r"
+        . " JOIN {forum_posts} p ON p.id = r.postid"
+        . " WHERE p.modified < ?";
+    $DB->execute($sql, array($cutoffdate));
+    //Fi
 }
 
 /**

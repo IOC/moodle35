@@ -88,7 +88,7 @@ class lesson_page_type_multichoice extends lesson_page {
         global $CFG, $PAGE;
         $answers = $this->get_used_answers();
 
-        // @PATCH IOC
+        // @PATCH IOC034: Configure whether shuffle multiple choice answers.
         if ($this->properties->shuffle) {
             shuffle($answers);
         }
@@ -134,7 +134,7 @@ class lesson_page_type_multichoice extends lesson_page {
 
         $answers = $this->get_used_answers();
 
-        // @PATCH IOC
+        // @PATCH IOC034: Configure whether shuffle multiple choice answers.
         if ($this->properties->shuffle) {
             shuffle($answers);
         }
@@ -464,7 +464,7 @@ class lesson_add_page_form_multichoice extends lesson_add_page_form_base {
         $this->_form->setDefault('qoption', 0);
         $this->_form->addHelpButton('qoption', 'multianswer', 'lesson');
 
-        // @PATCH IOC
+        // @PATCH IOC034: Configure whether shuffle multiple choice answers.
         $this->_form->addElement('selectyesno', 'shuffle', get_string('shuffle', 'lesson'), get_string('shuffle', 'lesson'));
         $this->_form->setDefault('shuffle', 1);
         $this->_form->addHelpButton('shuffle', 'shuffle', 'lesson');
