@@ -52,7 +52,7 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_lesson_upgrade($oldversion) {
     global $CFG;
 
-    // @PATCH IOC
+    // @PATCH IOC034: Configure whether shuffle multiple choice answers.
     {
         // Define field shuffle to be added to lesson_pages.
         $table = new xmldb_table('lesson_pages');

@@ -168,12 +168,13 @@ class assign_submission_comments extends assign_submission_plugin {
         return false;
     }
 
+    // @PATCH IOC026: Submission comments setting is configurable.
+    /*
     /**
      * Automatically enable or disable this plugin based on "$CFG->commentsenabled"
      *
      * @return bool
      */
-    // @PATCH IOC
     /*
     public function is_enabled() {
         global $CFG;
@@ -183,12 +184,12 @@ class assign_submission_comments extends assign_submission_plugin {
     */
     // Fi.
 
+    // @PATCH IOC026: Submission comments setting is configurable.
     /**
      * Automatically hide the setting for the submission plugin.
      *
      * @return bool
      */
-    // @PATCH IOC
     /*
     public function is_configurable() {
         return false;

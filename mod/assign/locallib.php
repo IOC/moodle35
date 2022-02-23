@@ -41,7 +41,7 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'requiregrading');
 define('ASSIGN_FILTER_GRANTED_EXTENSION', 'grantedextension');
 define('ASSIGN_FILTER_DRAFT', 'draft');
 
-// @PATCH IOC
+// @PATCH IOC029: Filtre d'esborranys a la llista d'enviaments.
 define('ASSIGN_FILTER_DRAFTS', 'drafts');
 // Fi.
 
@@ -2794,7 +2794,7 @@ class assign {
             $flags->mailed = 0;
         }
 
-        // @PATCH IOC
+        // @PATCH IOC031: Permet qualificar "sense qualificació" a les tasques.
         if ($grade->grade === null) {
             $flags->mailed = 1;
         }
@@ -2875,7 +2875,7 @@ class assign {
             $submission = $this->get_user_submission($grade->userid, false);
         }
 
-        // @PATCH IOC
+        // @PATCH IOC025: Modify previous attempt grade, update assign and gradebook.
         $gradeattempt = false;
         if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
             $lastsqlgrade = 'SELECT g.grade, g.attemptnumber
@@ -3447,7 +3447,7 @@ class assign {
         $params = array('overflowdiv' => true, 'context' => $this->get_context());
         $result .= format_text($finaltext, $format, $params);
 
-        // @PATCH IOC
+        // @PATCH IOC024: Fixed word count when portfolio exporting is enabled.
         $portfoliohtml = $result;
         // Fi.
 
@@ -3474,7 +3474,7 @@ class assign {
                 $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
             }
 
-            // @PATCH IOC
+            // @PATCH IOC024: Fixed word count when portfolio exporting is enabled.
             $portfoliohtml .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             // Original.
             /*
@@ -3483,7 +3483,7 @@ class assign {
             // Fi.
         }
 
-        // @PATCH IOC
+        // @PATCH IOC024: Fixed word count when portfolio exporting is enabled.
         return array($result, $portfoliohtml);
         // Original.
         /*
@@ -3696,7 +3696,8 @@ class assign {
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 } else {
                     $fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
-                    // @PATCH IOC
+
+                    // @PATCH IOC028: Changed lastname firstname order on downloaded filename
                     $prefix = str_replace('_', ' ', $groupname . $student->lastname .' '. $student->firstname);
                     // Original.
                     /*
@@ -7807,7 +7808,7 @@ class assign {
                     $mform->addHelpButton('gradedisabled', 'gradeoutofhelp', 'assign');
                 }
             } else {
-                // @PATCH IOC
+                // @PATCH IOC031: Permet qualificar "sense qualificació" a les tasques.
                 $grademenu = array(-1 => get_string('nograde'));
                 $grademenu += make_grades_menu($this->get_instance()->grade);
                 /*
@@ -8000,7 +8001,7 @@ class assign {
         $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
 
-        // @PATCH IOC
+        // @PATCH IOC030: Opció de revertir a esborrany els enviaments en qualificar.
         if ($this->get_instance()->submissiondrafts) {
             $submission = $this->get_user_submission($userid, false);
             if ($submission and $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
@@ -8530,7 +8531,7 @@ class assign {
                 if (isset($formdata->grade)) {
                     $grade->grade = grade_floatval(unformat_float($formdata->grade));
 
-                    // @PATCH IOC
+                    // @PATCH IOC031: Permet qualificar "sense qualificació" a les tasques.
                     if ($formdata->grade == -1) {
                         $grade->grade = null;
                     }

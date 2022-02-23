@@ -799,7 +799,7 @@ function groups_print_activity_menu($cm, $urlroot, $return=false, $hideallpartic
 
     $groupsmenu += groups_sort_menu_options($allowedgroups, $usergroups);
 
-    // @PATCH IOC004: forum specific group filter :-(
+    // @PATCH IOC033: Mostrar els missatges no llegits en el selector de grup
     $unread = false;
     if ($allowedgroups and $DB->record_exists('modules', array('id' => $cm->module, 'name' => 'forum'))) {
         $forum = $DB->get_record('forum', array('id' => $cm->instance));
@@ -857,7 +857,7 @@ function groups_print_activity_menu($cm, $urlroot, $return=false, $hideallpartic
             }
         }
     }
-    // Fi
+    // Fi.
 
     if ($groupmode == VISIBLEGROUPS) {
         $grouplabel = get_string('groupsvisible');
