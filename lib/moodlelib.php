@@ -5134,7 +5134,7 @@ function remove_course_contents($courseid, $showfeedback = true, array $options 
     remove_course_grades($courseid, $showfeedback);
     remove_grade_letters($coursecontext, $showfeedback);
 
-    // @PATCH IOC . Remove grades history
+    // @PATCH IOC036: Suprimeix l'històric de qualificacions en suprimir un curs.
     $DB->execute('DELETE gg.* ' .
                  'FROM {grade_grades_history} gg ' .
                  'JOIN {grade_items_history} gi ON gi.oldid = gg.itemid ' .
