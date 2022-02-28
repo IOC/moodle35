@@ -1,6 +1,10 @@
 # Modificacions en els desplegaments del campus de l'IOC
+### IOC_CAMPUS_V5.1.0
+  *  Upgrade ćampus version 3.11.5
+
 ### IOC_CAMPUS_V5.0.0
   * Upgrade ćampus version 3.10.4
+
 ### IOC_CAMPUS_V4.0.2
   * mod/assign/locallib.php : doc and fix PATCH IOC015
 

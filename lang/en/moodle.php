@@ -1117,6 +1117,7 @@ $string['indicator:readactions_help'] = 'This indicator represents the number of
 $string['indicator:userforumstracking'] = 'User is tracking forums';
 $string['indicator:userforumstracking_help'] = 'This indicator represents whether or not the student has tracking turned on in the forums.';
 $string['info'] = 'Information';
+$string['inprogress'] = 'In progress';
 $string['institution'] = 'Institution';
 $string['instudentview'] = 'in student view';
 $string['interests'] = 'Interests';

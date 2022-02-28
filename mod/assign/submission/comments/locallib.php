@@ -191,6 +191,7 @@ class assign_submission_comments extends assign_submission_plugin {
     public function is_configurable() {
         return false;
     }
+    */
     //Fi
 
     /**

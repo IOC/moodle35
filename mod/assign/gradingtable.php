@@ -1135,9 +1135,10 @@ class assign_grading_table extends table_sql implements renderable {
                     $deletedclass = 'deleted';
                 }
             }
-
-            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign'),
-                                           array('class' => 'submissionstatus' .$displaystatus));
+            
+            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign') . $deletedsubmission,
+                array('class' => 'submissionstatus' .$displaystatus . $deletedclass));
+            //Fi
             if ($due && $timesubmitted > $due && $status != ASSIGN_SUBMISSION_STATUS_NEW) {
                 $usertime = format_time($timesubmitted - $due);
                 $latemessage = get_string('submittedlateshort',
