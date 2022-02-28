@@ -1352,7 +1352,7 @@ class core_renderer extends renderer_base {
 
         // If this theme version is below 2.4 release and this is a course view page
         if ((!isset($this->page->theme->settings->version) || $this->page->theme->settings->version < 2012101500) &&
-                    $this->page->pagelayout === 'course' && $this->page->url->compare(new moodle_url('/course/view.php'), URL_MATCH_BASE)) {
+                $this->page->pagelayout === 'course' && $this->page->url->compare(new moodle_url('/course/view.php'), URL_MATCH_BASE)) {
             // check if course content header/footer have not been output during render of theme layout
             $coursecontentheader = $this->course_content_header(true);
             $coursecontentfooter = $this->course_content_footer(true);
