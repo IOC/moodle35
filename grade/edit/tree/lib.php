@@ -57,7 +57,7 @@ class grade_edit_tree {
     /**
      * Constructor
      */
-    public function __construct($gtree, $moving=false, $gpr) {
+    public function __construct($gtree, $moving, $gpr) {
         global $USER, $OUTPUT, $COURSE;
 
         $systemdefault = get_config('moodle', 'grade_report_showcalculations');
@@ -687,11 +687,15 @@ class grade_edit_tree {
                 $gradeitem->grademin, $gradeitem->grademax, 'gradebook');
         }
 
-        // Update hiding flag.
-        if ($hiddenuntil) {
-            $gradeitem->set_hidden($hiddenuntil, false);
-        } else {
-            $gradeitem->set_hidden($hidden, false);
+        // Only update the category's 'hidden' status if it has changed. Leaving a category as 'unhidden' (checkbox left
+        // unmarked) and submitting the form without this conditional check will result in displaying any grade items that
+        // are in the category, including those that were previously 'hidden'.
+        if (($gradecategory->get_hidden() != $hiddenuntil) || ($gradecategory->get_hidden() != $hidden)) {
+            if ($hiddenuntil) {
+                $gradecategory->set_hidden($hiddenuntil, true);
+            } else {
+                $gradecategory->set_hidden($hidden, true);
+            }
         }
 
         $gradeitem->set_locktime($locktime); // Locktime first - it might be removed when unlocking.
@@ -1021,7 +1025,7 @@ class grade_edit_tree_column_select extends grade_edit_tree_column {
         $masterlabel = get_string('all');
         // Use category name if available.
         if ($category->fullname !== '?') {
-            $masterlabel = format_string($category->fullname);
+            $masterlabel = format_string($category->fullname, true, ['escape' => false]);
             // Limit the displayed category name to prevent the Select column from getting too wide.
             if (core_text::strlen($masterlabel) > 20) {
                 $masterlabel = get_string('textellipsis', 'core', core_text::substr($masterlabel, 0, 12));
@@ -1089,43 +1093,5 @@ class grade_edit_tree_column_select extends grade_edit_tree_column {
         $togglegroup = implode(' ', $levels);
 
         return $togglegroup;
-    }
-}
-
-/**
- * Class grade_edit_tree_column_idnumber @PATCH IOC011
- *
- * @package   core_grades
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class grade_edit_tree_column_idnumber extends grade_edit_tree_column {
-
-    public function __construct($params) {
-        parent::__construct();
-    }
-
-    public function get_header_cell() {
-        $headercell = clone($this->headercell);
-        $headercell->text = get_string('idnumber');
-        return $headercell;
-    }
-
-    public function get_category_cell($category, $levelclass, $params) {
-
-        if (empty($params['actions'])) {
-            throw new Exception('Array key (actions) missing from 3rd param of grade_edit_tree_column_idnumber::get_category_actions($category, $levelclass, $params)');
-        }
-
-        $categorycell = parent::get_category_cell($category, $levelclass, $params);
-        return $categorycell;
-    }
-
-    public function get_item_cell($item, $params) {
-        if (empty($params['actions'])) {
-            throw new Exception('Array key (actions) missing from 2nd param of grade_edit_tree_column_idnumber::get_item_cell($item, $params)');
-        }
-        $itemcell = parent::get_item_cell($item, $params);
-        $itemcell->text = $item->idnumber;
-        return $itemcell;
     }
 }

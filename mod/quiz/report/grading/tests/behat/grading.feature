@@ -57,6 +57,10 @@ Feature: Basic use of the Manual grading report
     And I set the field "Order attempts" to "By student ID number"
     And I press "Change options"
 
+    # General feedback for Short answer 001 displays.
+    And I should see "That is a bad answer."
+    And I should see "The correct answer is: frog"
+
     # Adjust the mark for Student1.
     And I set the field "Comment" to "I have adjusted your mark to 0.6"
     And I set the field "Mark" to "0.6"
@@ -95,16 +99,16 @@ Feature: Basic use of the Manual grading report
     When I set the following fields to these values:
       | Questions per page | 0 |
     And I press "Change options"
-    Then I should see "You must enter a number that greater than 0 here"
+    Then I should see "You must enter a number that is greater than 0."
     And I set the following fields to these values:
       | Questions per page | -1 |
     And I press "Change options"
-    And I should see "You must enter a number that greater than 0 here"
+    And I should see "You must enter a number that is greater than 0."
     And I set the following fields to these values:
       | Questions per page | abc |
     And I press "Change options"
-    And I should see "You must enter a number that greater than 0 here"
+    And I should see "You must enter a number that is greater than 0."
     And I set the following fields to these values:
       | Questions per page | 1 |
     And I press "Change options"
-    And I should not see "You must enter a number that greater than 0 here"
+    And I should not see "You must enter a number that is greater than 0."

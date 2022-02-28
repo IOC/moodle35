@@ -82,7 +82,9 @@ class assign_grading_table extends table_sql implements renderable {
                                 $quickgrading,
                                 $downloadfilename = null) {
         global $CFG, $PAGE, $DB, $USER;
-        parent::__construct('mod_assign_grading');
+
+        parent::__construct('mod_assign_grading-' . $assignment->get_context()->id);
+
         $this->is_persistent(true);
         $this->assignment = $assignment;
 
@@ -132,9 +134,11 @@ class assign_grading_table extends table_sql implements renderable {
         $params['assignmentid3'] = (int)$this->assignment->get_instance()->id;
         $params['newstatus'] = ASSIGN_SUBMISSION_STATUS_NEW;
 
-        $extrauserfields = get_extra_user_fields($this->assignment->get_context());
-
-        $fields = user_picture::fields('u', $extrauserfields) . ', ';
+        // TODO Does not support custom user profile fields (MDL-70456).
+        $userfieldsapi = \core_user\fields::for_identity($this->assignment->get_context(), false)->with_userpic();
+        $userfields = $userfieldsapi->get_sql('u', false, '', '', false)->selects;
+        $extrauserfields = $userfieldsapi->get_required_fields([\core_user\fields::PURPOSE_IDENTITY]);
+        $fields = $userfields . ', ';
         $fields .= 'u.id as userid, ';
         $fields .= 's.status as status, ';
         $fields .= 's.id as submissionid, ';
@@ -330,6 +334,10 @@ class assign_grading_table extends table_sql implements renderable {
                 $userfilter = (int) array_pop(explode('=', $filter));
                 $where .= ' AND (u.id = :userid)';
                 $params['userid'] = $userfilter;
+            } else if ($filter == ASSIGN_FILTER_DRAFT) {
+                $where .= ' AND (s.timemodified IS NOT NULL AND
+                                 s.status = :draft) ';
+                $params['draft'] = ASSIGN_SUBMISSION_STATUS_DRAFT;
             }
         }
 
@@ -405,7 +413,7 @@ class assign_grading_table extends table_sql implements renderable {
 
             foreach ($extrauserfields as $extrafield) {
                 $columns[] = $extrafield;
-                $headers[] = get_user_field_name($extrafield);
+                $headers[] = \core_user\fields::get_display_name($extrafield);
             }
         } else {
             // Record ID.
@@ -446,7 +454,7 @@ class assign_grading_table extends table_sql implements renderable {
         }
         // Grade.
         $columns[] = 'grade';
-        $headers[] = get_string('grade');
+        $headers[] = get_string('gradenoun');
         if ($this->is_downloading()) {
             $gradetype = $this->assignment->get_instance()->grade;
             if ($gradetype > 0) {
@@ -995,7 +1003,7 @@ class assign_grading_table extends table_sql implements renderable {
             }
 
             $url = new moodle_url('/mod/assign/view.php', $urlparams);
-            $link = '<a href="' . $url . '" class="btn btn-primary">' . get_string('grade') . '</a>';
+            $link = '<a href="' . $url . '" class="btn btn-primary">' . get_string('gradeverb') . '</a>';
             $grade .= $link . $separator;
         }
 
@@ -1128,9 +1136,8 @@ class assign_grading_table extends table_sql implements renderable {
                 }
             }
 
-            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign') . $deletedsubmission,
-                                           array('class' => 'submissionstatus' .$displaystatus . $deletedclass));
-            //Fi
+            $o .= $this->output->container(get_string('submissionstatus_' . $displaystatus, 'assign'),
+                                           array('class' => 'submissionstatus' .$displaystatus));
             if ($due && $timesubmitted > $due && $status != ASSIGN_SUBMISSION_STATUS_NEW) {
                 $usertime = format_time($timesubmitted - $due);
                 $latemessage = get_string('submittedlateshort',
@@ -1257,7 +1264,7 @@ class assign_grading_table extends table_sql implements renderable {
         $noimage = null;
 
         if (!$row->grade) {
-            $description = get_string('grade');
+            $description = get_string('gradeverb');
         } else {
             $description = get_string('updategrade', 'assign');
         }

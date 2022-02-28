@@ -16,7 +16,7 @@
 /**
  * Contain the logic for a drawer.
  *
- * @package    theme_boost
+ * @module theme_boost/drawer
  * @copyright  2016 Damyon Wiese
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -37,8 +37,6 @@ define(['jquery', 'core/custom_interaction_events', 'core/log', 'core/pubsub', '
 
     /**
      * Constructor for the Drawer.
-     *
-     * @param {object} root The root jQuery element for the modal
      */
     var Drawer = function() {
 

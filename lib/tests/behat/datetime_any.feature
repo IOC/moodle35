@@ -12,14 +12,13 @@ Feature: Any day / month / year combination in date form elements works ok.
     And the following "activity" exist:
       | activity   | name          | intro                              | course | idnumber |
       | assign     | Assignment 01 | Assign activity to test some dates | C1     | assign01 |
-    Given I am on the "C1" "Course" page logged in as "admin"
-    And I follow "Assignment 01"
-    And I navigate to "Edit settings" in current page administration
+    And I am on the "Assignment 01" "assign activity editing" page logged in as admin
     And I expand all fieldsets
     And I set the field "Due date" to "<initial_date>"
     And I set the field "Due date" to "<final_date>"
     When I press "Save and display"
-    Then I should see "<date_result>" in the "Due date" "table_row"
+    Then the activity date in "Assignment 01" should contain "Due:"
+    And the activity date in "Assignment 01" should contain "<date_result>"
 
     Examples:
       | initial_date | final_date        | date_result                            | case_explanation (times Australia/Perth)   |

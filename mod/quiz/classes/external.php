@@ -413,10 +413,21 @@ class mod_quiz_external extends external_api {
             require_capability('mod/quiz:viewreports', $context);
         }
 
+        // Update quiz with override information.
+        $quiz = quiz_update_effective_access($quiz, $params['userid']);
         $attempts = quiz_get_user_attempts($quiz->id, $user->id, $params['status'], $params['includepreviews']);
-
+        $attemptresponse = [];
+        foreach ($attempts as $attempt) {
+            $reviewoptions = quiz_get_review_options($quiz, $attempt, $context);
+            if (!has_capability('mod/quiz:viewreports', $context) &&
+                    ($reviewoptions->marks < question_display_options::MARK_AND_MAX || $attempt->state != quiz_attempt::FINISHED)) {
+                // Blank the mark if the teacher does not allow it.
+                $attempt->sumgrades = null;
+            }
+            $attemptresponse[] = $attempt;
+        }
         $result = array();
-        $result['attempts'] = $attempts;
+        $result['attempts'] = $attemptresponse;
         $result['warnings'] = $warnings;
         return $result;
     }
@@ -495,7 +506,8 @@ class mod_quiz_external extends external_api {
      * @since Moodle 3.1
      */
     public static function get_user_best_grade($quizid, $userid = 0) {
-        global $DB, $USER;
+        global $DB, $USER, $CFG;
+        require_once($CFG->libdir . '/gradelib.php');
 
         $warnings = array();
 
@@ -545,6 +557,17 @@ class mod_quiz_external extends external_api {
             $result['hasgrade'] = true;
             $result['grade'] = $grade;
         }
+
+        // Inform user of the grade to pass if non-zero.
+        $gradinginfo = grade_get_grades($course->id, 'mod', 'quiz', $quiz->id, $user->id);
+        if (!empty($gradinginfo->items)) {
+            $item = $gradinginfo->items[0];
+
+            if ($item && grade_floats_different($item->gradepass, 0)) {
+                $result['gradetopass'] = $item->gradepass;
+            }
+        }
+
         $result['warnings'] = $warnings;
         return $result;
     }
@@ -560,6 +583,7 @@ class mod_quiz_external extends external_api {
             array(
                 'hasgrade' => new external_value(PARAM_BOOL, 'Whether the user has a grade on the given quiz.'),
                 'grade' => new external_value(PARAM_FLOAT, 'The grade (only if the user has a grade).', VALUE_OPTIONAL),
+                'gradetopass' => new external_value(PARAM_FLOAT, 'The grade to pass the quiz (only if set).', VALUE_OPTIONAL),
                 'warnings' => new external_warnings(),
             )
         );

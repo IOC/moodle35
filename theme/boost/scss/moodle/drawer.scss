@@ -6,13 +6,8 @@ $drawer-padding-x: 20px !default;
 $drawer-padding-y: 20px !default;
 $drawer-offscreen-gutter: 20px !default;
 
-:target::before {
-    content: " ";
-    display: block;
-    height: ($fixed-header-y + 10px); /* fixed header height*/
-    margin-top: -($fixed-header-y + 10px); /* negative fixed header height */
-    width: 1px;
-    pointer-events: none;
+:target {
+    scroll-margin-top: $fixed-header-y + 10px;
 }
 
 .pagelayout-embedded :target {
@@ -124,10 +119,6 @@ $right-drawer-width: 320px;
         opacity: 1;
     }
 
-    .closewidget {
-        display: none;
-    }
-
     &.hidden {
         display: block;
         right: $right-drawer-width * -1;
@@ -146,10 +137,6 @@ $right-drawer-width: 320px;
             top: 0;
             height: 100%;
             z-index: $zindex-fixed;
-        }
-        .closewidget {
-            display: block;
-            padding: 0 0.2rem;
         }
     }
     body.drawer-open-left,

@@ -622,7 +622,26 @@ class manager {
      * @return  array
      */
     public static function get_matching_tours(\moodle_url $pageurl): array {
-        global $PAGE;
+        global $PAGE, $USER;
+
+        // The following three checks make sure that the user is fully ready to use the site. If not, we do not show any tours.
+        // We need the user to get properly set up so that all require_login() and other bits work as expected.
+
+        if (user_not_fully_set_up($USER)) {
+            return [];
+        }
+
+        if (get_user_preferences('auth_forcepasswordchange', false)) {
+            return [];
+        }
+
+        if (empty($USER->policyagreed) && !is_siteadmin()) {
+            $manager = new \core_privacy\local\sitepolicy\manager();
+
+            if ($manager->is_defined(isguestuser())) {
+                return [];
+            }
+        }
 
         $tours = cache::get_matching_tourdata($pageurl);
 
@@ -854,6 +873,10 @@ class manager {
         // the format filename => version. The version value needs to
         // be increased if the tour has been updated.
         $shippedtours = [
+            '311_activity_information_activity_page_student.json' => 2,
+            '311_activity_information_activity_page_teacher.json' => 2,
+            '311_activity_information_course_page_student.json' => 2,
+            '311_activity_information_course_page_teacher.json' => 2
         ];
 
         // These are tours that we used to ship but don't ship any longer.
