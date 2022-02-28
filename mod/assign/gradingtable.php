@@ -1119,7 +1119,7 @@ class assign_grading_table extends table_sql implements renderable {
 
         if ($this->assignment->is_any_submission_plugin_enabled()) {
 
-            // @PATCH IOC
+            // @PATCH IOC027: Show a message when a student removes their own submission.
             $deletedsubmission = $deletedclass = '';
             if ($status === ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
                 if ($this->assignment->get_instance()->teamsubmission) {
