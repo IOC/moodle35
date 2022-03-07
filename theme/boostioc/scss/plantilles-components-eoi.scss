@@ -725,3 +725,82 @@
     left: 0;
     margin-right: 10px;
   }
+  .eoi-work-plan {
+    filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.17)); 
+    padding: 18px;
+}
+.eoi-work-plan-header {
+    background-color: #2A84F9; 
+    border-top-left-radius: 13px; 
+    border-top-right-radius: 13px; 
+    color: #202735; 
+    font-family: Lato, 
+    'sans-serif'; padding: 18px 24px;
+}
+.eoi-work-plan-header h1 {
+    color: #fff; 
+    font-family: Montserrat, Lato, 'sans-serif'; 
+    font-weight: 600; 
+    font-size: 19px;
+}
+.eoi-work-plan-header-spacing {
+    height: 12px; 
+    width: 12px;
+}
+.eoi-work-plan-header-duration {
+    background-color: #fff; 
+    border-radius: 18px; 
+    display: inline-block; 
+    padding: 0 12px 4px 12px;
+}
+.eoi-work-plan-header-duration-icon {
+    display: inline-block;
+    margin-right: 6px;
+}
+.eoi-work-plan-header-duration-icon::before {
+    content: url([[pix:theme|eoi-work-plan-header-duration-icon-image]]);
+    position: relative;
+    top: 3px;
+}
+.eoi-work-plan-header-duration span {
+    font-weight: bold; 
+    font-size: 12px; 
+    color: #2A84F9;
+}
+.eoi-work-plan-body {
+    background-color: #fff; 
+    padding: 24px 18px;
+}
+.eoi-work-plan-weeks-description {
+    font-style: italic; 
+    width: 80%;
+}
+.eoi-work-plan-collapsible {
+    width: 80%;
+}
+.eoi-work-plan-collapsible h4 {
+    margin-top: 12px;
+}
+.eoi-work-plan-footer {
+    background-color: #F1F5FE; 
+    border-bottom-left-radius: 13px; 
+    border-bottom-right-radius: 13px; 
+    padding: 24px;
+}
+.eoi-work-plan-footer-image {
+    content: url([[pix:theme|eoi-work-plan-footer-image]]);
+    margin-right: 24px;
+}
+.eoi-work-plan-footer ul {
+    margin-bottom: 0;
+}
+.eoi-work-plan-deadline-date {
+    color: #1571e6; 
+    background-color: #fff; 
+    border-radius: 6px; 
+    padding: 2px 6px; 
+    font-size: 13px; 
+    font-weight: 700;
+    border: 1px solid #dbdee0;
+    white-space: nowrap;
+}
