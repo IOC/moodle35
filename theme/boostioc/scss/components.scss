@@ -623,6 +623,7 @@ margin-bottom: 0;
 }
 .figura img {
     width: 100% !important;
+    height: auto;
 }
 .figura figcaption {
     font-size: 13px;
@@ -951,7 +952,7 @@ content: url([[pix:theme|ioc-caret]]);
 .icones-ioc {
     display: inline-block;
     height: 24px;
-    background-color: #fff;
+    background-color: transparent !important;
     margin-left: 4px;
     margin-right: 4px;
     position: relative;
@@ -1068,6 +1069,7 @@ content: url([[pix:theme|ioc-caret]]);
 }
 .icones-ioc.esborra-format::after {
   content: url([[pix:theme|icones-ioc/icones-ioc-esborra-format]]);
+    margin-left: -4px !important;
 }
 .icones-ioc.cursor.boto::after {
     margin-left: -4px;
