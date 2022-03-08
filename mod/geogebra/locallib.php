@@ -58,11 +58,11 @@ function geogebra_after_add_or_update($geogebra, $mform) {
         }
     }
 
-    if ($geogebra->timedue) {
+    if (isset($geogebra->timedue) && $geogebra->timedue) {
         $event = new stdClass();
         if ($event->id = $DB->get_field('event', 'id', array('modulename' => 'geogebra', 'instance' => $geogebra->id))) {
             $event->name        = $geogebra->name;
-            $event->description = format_module_intro('geogebra', $geogebra, $geogebra->coursemodule);
+            $event->description = format_module_intro('geogebra', $geogebra, $geogebra->coursemodule, false);
             $event->timestart   = $geogebra->timedue;
 
             $calendarevent = calendar_event::load($event->id);
@@ -70,7 +70,7 @@ function geogebra_after_add_or_update($geogebra, $mform) {
         } else {
             $event = new stdClass();
             $event->name        = $geogebra->name;
-            $event->description = format_module_intro('geogebra', $geogebra, $geogebra->coursemodule);
+            $event->description = format_module_intro('geogebra', $geogebra, $geogebra->coursemodule, false);
             $event->courseid    = $geogebra->course;
             $event->groupid     = 0;
             $event->userid      = 0;
@@ -278,10 +278,19 @@ function geogebra_print_content($geogebra, $context) {
         'showToolBarHelp', 'enableLabelDrags', 'showResetIcon', 'useBrowserForJS');
 
     $attribs = array(
+        'randomSeed' => $geogebra->seed,
         'width' => $geogebra->width,
         'height' => $geogebra->height,
         'language' => $attributes['language']
         );
+
+    // If seed is 0 or not set (default is 0) then all random elements in the
+    // GGB activity will be randomly assigned for every access to the GGB activity
+    // set seed to have all instances with the same random values.
+    if ((int)$geogebra->seed === 0) {
+        unset($attribs['randomSeed']);
+    }
+
     if (geogebra_is_valid_external_url($geogebra->url)) {
         // Get contents if specified GGB is external
         $materialid = geogebra_get_id($geogebra->url);
@@ -309,7 +318,18 @@ function geogebra_print_content($geogebra, $context) {
         return false;
     }
 
-    echo '<script type="text/javascript" src="//www.geogebratube.org/scripts/deployggb.js"></script>';
+    // Add loading of fflate
+    echo '<script type="text/javascript" src="' . get_config('geogebra', 'fflate') . '"></script>';
+
+    // Check if the activity has a custom URL for deploy ggb
+    $deployggburl = !empty($geogebra->urlggb) ? $geogebra->urlggb : get_config('geogebra', 'deployggb');
+
+    // Add loading of GeoGebra
+    echo '<script type="text/javascript" src="' . $deployggburl . '"></script>';
+
+    // Get activity width
+    $width = $geogebra->width === 0 ? '100%' : $geogebra->width . 'px';
+
     echo '<script>window.onload = function() {
         var applet = new GGBApplet({';
     foreach ($attribnames as $name) {
@@ -322,12 +342,11 @@ function geogebra_print_content($geogebra, $context) {
         applet.inject("applet_container", "preferHTML5");
     }
     </script>
-    <div id="applet_container" style="width: 100%; height: '.$geogebra->height.'px;"></div>';
+    <div id="applet_container" style="width: ' . $width .'; height: ' . $geogebra->height . 'px;"></div>';
 
     // Include also javascript code from GGB file
     geogebra_get_js_from_geogebra($context, $geogebra);
 
-    return;
 }
 
 /**
@@ -396,11 +415,13 @@ function geogebra_get_js_from_geogebra($context, $geogebra) {
         return;
     }
 
+    // Modified: 20/10/2021
+    // Global variable `ggbApplet` not yet used
     echo '<script type="text/javascript">
     if (typeof ggbApplet == \'undefined\') {
         ggbApplet = document.ggbApplet;
     }
-    ' .$content . '</script>';
+    ' . $content . '</script>';
 }
 
 /**
@@ -1121,7 +1142,7 @@ function geogebra_update_attributes(&$geogebra) {
         'showToolBarHelp' => isset($geogebra->showToolBarHelp) && $geogebra->showToolBarHelp,
         'showAlgebraInput' => isset($geogebra->showAlgebraInput) && $geogebra->showAlgebraInput,
         'useBrowserForJS' => isset($geogebra->useBrowserForJS) && $geogebra->useBrowserForJS,
-        'language' => isset($geogebra->language) && $geogebra->language
+        'language' => isset($geogebra->language) && $geogebra->language ? $geogebra->language : false
             ), '', '&');
 
     $geogebra->showsubmit = isset($geogebra->showsubmit);
