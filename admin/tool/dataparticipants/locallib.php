@@ -28,7 +28,7 @@ define('WEEKLY', 1);
 define('QUARTERLY', 2);
 
 require_once($CFG->libdir . '/filelib.php');
-require_once($CFG->dirroot . '/course/category.php');
+require_once($CFG->dirroot . '/course/classes/category.php');
 require_once($CFG->libdir . '/xtecmail/lib.php');
 
 class tool_dataparticipants_utils {

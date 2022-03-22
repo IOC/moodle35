@@ -93,7 +93,7 @@ $PAGE->navbar->add($strheading, new moodle_url('/local/materials/edit.php',
     array('id' => $id, 'delete' => $delete, 'confirm' => $confirm)));
 
 if ($categoryid) {
-    require_once($CFG->dirroot . '/course/category.php');
+    require_once($CFG->dirroot . '/course/classes/category.php');
     $category = core_course_category::get($categoryid);
     // Subcategories courses must be showed
     $courses = $category->get_courses(array('recursive' => true));

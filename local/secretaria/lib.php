@@ -16,7 +16,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/course/category.php');
+require_once($CFG->dirroot . '/course/classes/category.php');
 
 function local_secretaria_extend_navigation($root) {
     $categories = core_course_category::make_categories_list('moodle/category:manage');

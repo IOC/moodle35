@@ -25,7 +25,7 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-require_once($CFG->dirroot . '/course/category.php');
+require_once($CFG->dirroot . '/course/classes/category.php');
 require_once($CFG->libdir . '/badgeslib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 
