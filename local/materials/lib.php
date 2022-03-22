@@ -26,7 +26,7 @@ function search_courses($searchquery = '') {
     if (!empty($searchquery)) {
         $searchcoursesparams = array();
         $searchcoursesparams['search'] = $searchquery;
-        $courses = coursecat::search_courses($searchcoursesparams);
+        $courses = core_course_category::search_courses($searchcoursesparams);
         return $courses;
     } else {
         return false;
@@ -72,7 +72,7 @@ function get_materials($searchquery, $page) {
 }
 
 function create_category_list($categoryid) {
-    $list = coursecat::make_categories_list();
+    $list = core_course_category::make_categories_list();
     $select = new single_select(new moodle_url('./edit.php', array()), 'categoryid', $list, $categoryid, null, 0);
     $select->nothing = array();
     $select->set_label(get_string('isactive', 'filters'), array('class' => 'accesshide'));

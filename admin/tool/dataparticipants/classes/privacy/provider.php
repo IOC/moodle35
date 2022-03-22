@@ -14,15 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Privacy Subsystem implementation for tool_dataparticipants.
+ *
+ * @package    tool_dataparticipants
+ * @copyright  2019 Institut Obert de Catalunya
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+namespace tool_dataparticipants\privacy;
+
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/course/category.php');
+class provider implements \core_privacy\local\metadata\null_provider {
 
-function local_secretaria_extend_navigation($root) {
-    $categories = core_course_category::make_categories_list('moodle/category:manage');
-    if (!empty($categories)) {
-        $node = navigation_node::create(get_string('allcategories'), new moodle_url('/'), navigation_node::TYPE_SETTING);
-        $node->action->param('redirect', '0');
-        $root->add_node($node, 'home');
+    /**
+     * Get the language string identifier with the component's language
+     * file to explain why this plugin stores no data.
+     *
+     * @return  string
+     */
+    public static function get_reason() : string {
+        return 'privacy:metadata';
     }
 }

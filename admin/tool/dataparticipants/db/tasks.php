@@ -14,15 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Definition of Data participants.
+ *
+ * @package   tool_dataparticipants
+ * @category  task
+ * @copyright 2019 Institut Obert de Catalunya
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/course/category.php');
-
-function local_secretaria_extend_navigation($root) {
-    $categories = core_course_category::make_categories_list('moodle/category:manage');
-    if (!empty($categories)) {
-        $node = navigation_node::create(get_string('allcategories'), new moodle_url('/'), navigation_node::TYPE_SETTING);
-        $node->action->param('redirect', '0');
-        $root->add_node($node, 'home');
-    }
-}
+$tasks = array(
+    array(
+        'classname' => 'tool_dataparticipants\task\dataparticipants_task',
+        'blocking' => 0,
+        'minute' => '0',
+        'hour' => '3',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*'
+    )
+);

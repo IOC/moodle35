@@ -25,7 +25,7 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
-require_once($CFG->libdir . '/coursecatlib.php');
+require_once($CFG->dirroot . '/course/category.php');
 require_once($CFG->libdir . '/badgeslib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 
@@ -184,7 +184,7 @@ class batch_queue {
         }
         if ($category) {
             $cat = batch_get_category($category);
-            $categories = coursecat::make_categories_list('moodle/category:manage', $cat);
+            $categories = core_course_category::make_categories_list('moodle/category:manage', $cat);
             $cats = array_keys($categories);
             $select .= ' AND category IN(' . implode(',', $cats) . ')';
         }
@@ -414,7 +414,7 @@ function batch_get_courses($category) {
 
     $categoryids = array();
 
-    if ($courses = coursecat::get($category)->get_courses(array('recursive' => true))) {
+    if ($courses = core_course_category::get($category)->get_courses(array('recursive' => true))) {
         foreach ($courses as $course) {
             if ($course->id == SITEID) {
                 continue;

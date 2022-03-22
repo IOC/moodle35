@@ -14,15 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Navigation node
+ *
+ * @package    tool
+ * @subpackage dataparticipants
+ * @copyright  2019 Institut Obert de Catalunya
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-require_once($CFG->dirroot . '/course/category.php');
+defined('MOODLE_INTERNAL') || die;
 
-function local_secretaria_extend_navigation($root) {
-    $categories = core_course_category::make_categories_list('moodle/category:manage');
-    if (!empty($categories)) {
-        $node = navigation_node::create(get_string('allcategories'), new moodle_url('/'), navigation_node::TYPE_SETTING);
-        $node->action->param('redirect', '0');
-        $root->add_node($node, 'home');
-    }
+if ($hassiteconfig) {
+
+    $ADMIN->add('server', new admin_externalpage('tooldataparticipants',
+            get_string('pluginname', 'tool_dataparticipants'),
+            new moodle_url('/admin/tool/dataparticipants/index.php')));
 }

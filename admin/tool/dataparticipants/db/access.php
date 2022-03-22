@@ -16,13 +16,10 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot . '/course/category.php');
-
-function local_secretaria_extend_navigation($root) {
-    $categories = core_course_category::make_categories_list('moodle/category:manage');
-    if (!empty($categories)) {
-        $node = navigation_node::create(get_string('allcategories'), new moodle_url('/'), navigation_node::TYPE_SETTING);
-        $node->action->param('redirect', '0');
-        $root->add_node($node, 'home');
-    }
-}
+$capabilities = array(
+    'tool/dataparticipants:manage' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array('manager' => CAP_ALLOW),
+    ),
+);

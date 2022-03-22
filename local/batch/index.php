@@ -43,7 +43,7 @@ if ($category) {
         print_error('unknowcategory');
     }
     $context = context_coursecat::instance($category);
-    $categoryname = coursecat::get($category)->get_formatted_name();
+    $categoryname = core_course_category::get($category)->get_formatted_name();
     $PAGE->navbar->add(get_string('pluginname', 'local_batch'), new moodle_url('/local/batch/index.php', array('category' => $category)));
     $PAGE->navbar->add($categoryname);
 } else if (has_capability('moodle/category:manage', $context)) {
