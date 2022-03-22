@@ -40,7 +40,7 @@ class tool_dataparticipants_utils {
 
         $coursenames = array();
 
-        if ($courses = core_course_category::::get(0)->get_courses(array('recursive' => true, 'sort' => array('shortname' => 1)))) {
+        if ($courses = core_course_category::get(0)->get_courses(array('recursive' => true, 'sort' => array('shortname' => 1)))) {
             foreach ($courses as $course) {
                 if ($course->id == SITEID) {
                     continue;
