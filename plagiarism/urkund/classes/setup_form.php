@@ -22,8 +22,6 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Class lagiarism_urkund_setup_form
  *
@@ -43,7 +41,7 @@ class plagiarism_urkund_setup_form extends moodleform {
         $mform->addElement('text', 'api', get_string('urkund_api', 'plagiarism_urkund'));
         $mform->addHelpButton('api', 'urkund_api', 'plagiarism_urkund');
         $mform->addRule('api', null, 'required', null, 'client');
-        $mform->setDefault('api', 'https://secure.urkund.com');
+        $mform->setDefault('api', '');
         $mform->setType('api', PARAM_URL);
 
         $mform->addElement('text', 'username', get_string('urkund_username', 'plagiarism_urkund'));
@@ -54,7 +52,7 @@ class plagiarism_urkund_setup_form extends moodleform {
         $mform->addElement('passwordunmask', 'password', get_string('urkund_password', 'plagiarism_urkund'));
         $mform->addHelpButton('password', 'urkund_password', 'plagiarism_urkund');
         $mform->addRule('password', null, 'required', null, 'client');
-        $mform->setType('password', PARAM_TEXT);
+        $mform->setType('password', PARAM_RAW);
 
         $mform->addElement('text', 'unitid', get_string('urkund_unitid', 'plagiarism_urkund'));
         $mform->addHelpButton('unitid', 'urkund_unitid', 'plagiarism_urkund');
@@ -105,6 +103,14 @@ class plagiarism_urkund_setup_form extends moodleform {
             $mform->addElement('checkbox', 'assignforcesubmissionstatement',
                 get_string('assignforcesubmissionstatement', 'plagiarism_urkund').
                 '<br/>'.get_string('assignforcesubmissionstatement_desc', 'plagiarism_urkund'));
+
+            $mform->addElement('checkbox', 'assignpreventexistingenable',
+                get_string('assignpreventexistingenable', 'plagiarism_urkund').
+                '<br/>'.get_string('assignpreventexistingenable_desc', 'plagiarism_urkund'));
+
+            $mform->addElement('checkbox', 'assignforcedisclosureagreement',
+                get_string('assignforcedisclosureagreement', 'plagiarism_urkund').
+                '<br/>'.get_string('assignforcedisclosureagreement_desc', 'plagiarism_urkund'));
         }
 
         $this->add_action_buttons(true);

@@ -25,9 +25,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-if (!defined('MOODLE_INTERNAL')) {
-    die('Direct access to this script is forbidden.'); // It must be included from a Moodle page.
-}
+defined('MOODLE_INTERNAL') || die();
 
 // Get global class.
 global $CFG;
@@ -85,7 +83,7 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
      *
      * @return mixed - false if not enabled, or returns an array of relevant settings.
      */
-    static public function get_settings() {
+    public static function get_settings() {
         static $plagiarismsettings;
         if (!empty($plagiarismsettings) || $plagiarismsettings === false) {
             return $plagiarismsettings;
@@ -536,7 +534,7 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
      * @return string
      */
     public function print_disclosure($cmid) {
-        global $OUTPUT;
+        global $OUTPUT, $USER, $SESSION;
 
         $outputhtml = '';
 
@@ -544,11 +542,40 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
         $plagiarismsettings = $this->get_settings();
         if (!empty($plagiarismsettings['student_disclosure']) &&
             !empty($urkunduse)) {
-                $outputhtml .= $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
-                $formatoptions = new stdClass;
-                $formatoptions->noclean = true;
-                $outputhtml .= format_text($plagiarismsettings['student_disclosure'], FORMAT_MOODLE, $formatoptions);
-                $outputhtml .= $OUTPUT->box_end();
+            $cm = get_coursemodule_from_id('', $cmid);
+            if ($cm->modname == 'assign' && !empty($plagiarismsettings['assignforcedisclosureagreement'])) {
+                $confirmdisclosure = optional_param('ouriginalagreement', false, PARAM_BOOL);
+                $userid = optional_param('userid', false, PARAM_INT);
+                if (!empty($userid) && $userid <> $USER->id) {
+
+                    // Add the notification directly to the session.
+                    // We can't use redirect/notify here because we are mid-state.
+                    if (!isset($SESSION->notifications) || !array($SESSION->notifications)) {
+                        // Initialise $SESSION if necessary.
+                        if (!is_object($SESSION)) {
+                            $SESSION = new stdClass();
+                        }
+                        $SESSION->notifications = [];
+                    }
+                    $SESSION->notifications[] = (object) array(
+                        'message'   => get_string('cannotsubmitonbehalf', 'plagiarism_urkund'),
+                        'type'      => null,
+                    );
+
+                    $url = new moodle_url('/mod/assign/view.php', ['id' => $cmid]);
+                    redirect($url);
+                }
+                if (!$confirmdisclosure) {
+                    $url = new moodle_url('/plagiarism/urkund/agreement.php', ['id' => $cmid]);
+                    redirect($url);
+                }
+            }
+
+            $outputhtml .= $OUTPUT->box_start('generalbox boxaligncenter', 'intro');
+            $formatoptions = new stdClass;
+            $formatoptions->noclean = true;
+            $outputhtml .= format_text($plagiarismsettings['student_disclosure'], FORMAT_MOODLE, $formatoptions);
+            $outputhtml .= $OUTPUT->box_end();
         }
         return $outputhtml;
     }
@@ -715,6 +742,10 @@ class plagiarism_plugin_urkund extends plagiarism_plugin {
      * @param string $receiver
      */
     public function validate_receiver($receiver) {
+        if (defined('BEHAT_SITE_RUNNING')) {
+            // If running behat tests/ fake a failure.
+            return false;
+        }
         $plagiarismsettings = $this->get_settings();
         $url = get_config('plagiarism_urkund', 'api') .'/api/receivers'.'/'. trim($receiver);;
 
@@ -1023,6 +1054,7 @@ function plagiarism_urkund_coursemodule_standard_elements($formwrapper, $mform) 
         return;
     }
     $context = context_course::instance($formwrapper->get_course()->id);
+    $canenable = true;
     if (!empty($cmid)) {
         $plagiarismvalues = $DB->get_records_menu('plagiarism_urkund_config', array('cm' => $cmid), '', 'name, value');
         // If this is an older assignment, it may not have a resubmit_on_close setting in place.
@@ -1030,6 +1062,17 @@ function plagiarism_urkund_coursemodule_standard_elements($formwrapper, $mform) 
         // without being specified.
         if (!empty($plagiarismvalues) && !isset($plagiarismvalues['urkund_resubmit_on_close'])) {
             $plagiarismvalues['urkund_resubmit_on_close'] = 0;
+        }
+
+        // If preventexisting is set, only Site admins can enable urkund when submissions exist.
+        if ($modulename = 'mod_assign' && !is_siteadmin() &&
+            get_config('plagiarism_urkund', 'assignpreventexistingenable')) {
+            require_once($CFG->dirroot . '/mod/assign/locallib.php');
+            $cm = get_coursemodule_from_id('assign', $cmid);
+            if ($DB->record_exists_select('assign_submission', "assignment = ? AND status <> ?",
+                [$cm->instance, ASSIGN_SUBMISSION_STATUS_NEW])) {
+                $canenable = false;
+            }
         }
     }
     // Get Defaults - cmid(0) is the default list.
@@ -1041,7 +1084,7 @@ function plagiarism_urkund_coursemodule_standard_elements($formwrapper, $mform) 
         }
     }
 
-    if (has_capability('plagiarism/urkund:enable', $context)) {
+    if (has_capability('plagiarism/urkund:enable', $context) && $canenable) {
         urkund_get_form_elements($mform);
         if ($mform->elementExists('urkund_draft_submit') && $mform->elementExists('submissiondrafts')) {
             $mform->hideif('urkund_draft_submit', 'submissiondrafts', 'eq', 0);
@@ -1066,6 +1109,11 @@ function plagiarism_urkund_coursemodule_standard_elements($formwrapper, $mform) 
         foreach ($plagiarismelements as $element) {
             $mform->addElement('hidden', $element);
         }
+        $mform->setType('urkund_storedocuments', PARAM_INT);
+        $mform->setType('urkund_restrictcontent', PARAM_INT);
+        $mform->setType('urkund_selectfiletypes', PARAM_TAGLIST);
+        $mform->setType('urkund_allowallfile', PARAM_INT);
+        $mform->setType('urkund_resubmit_on_close', PARAM_INT);
     }
     $mform->setType('use_urkund', PARAM_INT);
     $mform->setType('urkund_show_student_score', PARAM_INT);
@@ -1476,9 +1524,14 @@ function urkund_send_file_to_urkund($plagiarismfile, $plagiarismsettings, $file)
             $plagiarismfile->statuscode = $status;
             if ($status == URKUND_STATUSCODE_ACCEPTED) {
                 $plagiarismfile->attempt = 0; // Reset attempts for status checks.
+                $plagiarismfile->errorcode = ''; // Reset errorcode, successful.
                 plagiarism_urkund_fix_temp_hash($plagiarismfile); // Fix hash if temp file used and delete temp file.
             } else {
                 $plagiarismfile->errorresponse = $response;
+                $errorcode = plagiarism_get_errorcode_from_jsonresponse($response);
+                if (!empty($errorcode)) {
+                    $plagiarismfile->errorcode = $errorcode;
+                }
             }
 
             mtrace("URKUND fileid:".$plagiarismfile->id. ' returned status: '.$status);
@@ -1490,6 +1543,10 @@ function urkund_send_file_to_urkund($plagiarismfile, $plagiarismsettings, $file)
     // Invalid response returned - increment attempt value and return false to allow this to be called again.
     $plagiarismfile->statuscode = URKUND_STATUSCODE_INVALID_RESPONSE;
     $plagiarismfile->errorresponse = $response;
+    $errorcode = plagiarism_get_errorcode_from_jsonresponse($response);
+    if (!empty($errorcode)) {
+        $plagiarismfile->errorcode = $errorcode;
+    }
     $plagiarismfile->attempt = $plagiarismfile->attempt + 1;
     $DB->update_record('plagiarism_urkund_files', $plagiarismfile);
     return false;
@@ -1649,6 +1706,7 @@ function urkund_get_score($plagiarismsettings, $plagiarismfile, $force = false) 
                     $plagiarismfile->reporturl = (string) $last->Report->ReportUrl;
                     $plagiarismfile->similarityscore = (int) $last->Report->Significance;
                     $plagiarismfile->optout = (string) $last->Document->OptOutInfo->Url;
+                    $plagiarismfile->errorcode = '';
                     // Now send e-mail to user.
                     $emailstudents = $DB->get_field('plagiarism_urkund_config', 'value',
                                                     array('cm' => $plagiarismfile->cm, 'name' => 'urkund_studentemail'));
@@ -1658,6 +1716,10 @@ function urkund_get_score($plagiarismsettings, $plagiarismfile, $force = false) 
                     }
                 } else {
                     $plagiarismfile->errorresponse = $response;
+                    $errorcode = plagiarism_get_errorcode_from_jsonresponse($response);
+                    if (!empty($errorcode)) {
+                        $plagiarismfile->errorcode = $errorcode;
+                    }
                 }
             } else {
                 $plagiarismfile->statuscode = $httpstatus;
@@ -2378,7 +2440,7 @@ function plagiarism_urkund_checkcronhealth() {
  *
  * @throws dml_exception
  */
-function plagiarism_urkund_errorcodes() {
+function plagiarism_urkund_statuscodes() {
     global $DB;
     $codes = array();
     $sql = "SELECT DISTINCT statuscode FROM {plagiarism_urkund_files} WHERE statuscode <> 'Analyzed' ORDER BY statuscode";
@@ -2388,6 +2450,24 @@ function plagiarism_urkund_errorcodes() {
             $codes[$code->statuscode] = get_string('status_'.$code->statuscode, 'plagiarism_urkund');
         } else {
             $codes[$code->statuscode] = $code->statuscode;
+        }
+    }
+    return $codes;
+}
+
+/**
+ * Helper function to get list of current errorcodes.
+ *
+ * @throws dml_exception
+ */
+function plagiarism_urkund_error_codes() {
+    global $DB;
+    $codes = array();
+    $sql = "SELECT DISTINCT errorcode FROM {plagiarism_urkund_files} ORDER BY errorcode";
+    $statuscodes = $DB->get_records_sql($sql);
+    foreach ($statuscodes as $code) {
+        if (!empty($code->errorcode)) {
+            $codes[$code->errorcode] = plagiarism_urkund_get_error_string($code->errorcode). " ($code->errorcode)";
         }
     }
     return $codes;
@@ -2413,4 +2493,22 @@ function plagiarism_urkund_get_error_string($errorcode) {
             return get_string('errorcode_unknown', 'plagiarism_urkund', $errorcode);
         }
     }
+}
+
+/**
+ * Get code from JSON response.
+ *
+ * @param string $errorresponse - errorresponse from URKUND API.
+ * @return lang_string|string|void|null
+ * @throws coding_exception
+ */
+function plagiarism_get_errorcode_from_jsonresponse($errorresponse) {
+    $json = json_decode($errorresponse);
+    if (json_last_error() == JSON_ERROR_NONE) {
+        $last = end($json); // When multiple results, the last one is the important one.
+        if (!empty($last->Status->ErrorCode)) {
+            return (int)$last->Status->ErrorCode;
+        }
+    }
+    return null;
 }
