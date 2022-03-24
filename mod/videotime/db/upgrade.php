@@ -22,8 +22,6 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Uggrede plugin
  *
@@ -502,6 +500,62 @@ function xmldb_videotime_upgrade($oldversion) {
 
         // Videotime savepoint reached.
         upgrade_mod_savepoint(true, 2021081000, 'videotime');
+    }
+
+    if ($oldversion < 2022022100) {
+
+        // Changing the default of field controls on table videotime to 1.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('controls', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'background');
+
+        // Launch change of default for field controls.
+        $dbman->change_field_default($table, $field);
+
+        $DB->set_field('videotime', 'controls', 1, array('controls' => 1));
+
+        // Videotime savepoint reached.
+        upgrade_mod_savepoint(true, 2022022100, 'videotime');
+    }
+
+    if ($oldversion < 2022022800) {
+
+        // Changing nullability of field height on table videotime to not null.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('height', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'color');
+
+        // Launch change of nullability for field height.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing nullability of field maxheight on table videotime to not null.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('maxheight', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'height');
+
+        // Launch change of nullability for field maxheight.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing nullability of field maxwidth on table videotime to not null.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('maxwidth', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'maxheight');
+
+        // Launch change of nullability for field maxwidth.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing nullability of field width on table videotime to not null.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('width', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null, 'dnt');
+
+        // Launch change of nullability for field width.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing the default of field autopause on table videotime to 1.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('autopause', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'transparent');
+
+        // Launch change of default for field autopause.
+        $dbman->change_field_default($table, $field);
+
+        // Videotime savepoint reached.
+        upgrade_mod_savepoint(true, 2022022800, 'videotime');
     }
 
     return true;
