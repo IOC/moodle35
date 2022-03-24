@@ -754,14 +754,8 @@ function bigbluebuttonbn_process_pre_save_checkboxes(&$bigbluebuttonbn) {
     if (!isset($bigbluebuttonbn->hideuserlist)) {
         $bigbluebuttonbn->hideuserlist = 0;
     }
-    if (!isset($bigbluebuttonbn->lockedlayout)) {
-        $bigbluebuttonbn->lockedlayout = 0;
-    }
     if (!isset($bigbluebuttonbn->lockonjoin)) {
         $bigbluebuttonbn->lockonjoin = 0;
-    }
-    if (!isset($bigbluebuttonbn->lockonjoinconfigurable)) {
-        $bigbluebuttonbn->lockonjoinconfigurable = 0;
     }
     if (!isset($bigbluebuttonbn->recordings_validate_url)) {
         $bigbluebuttonbn->recordings_validate_url = 1;
@@ -1020,7 +1014,7 @@ function bigbluebuttonbn_default_presentation_get_file($course, $cm, $context, $
         // The nonce value is actually used twice because BigBlueButton reads the file two times.
         $noncecounter += 1;
         $cache->set($noncekey, array('value' => $noncevalue, 'counter' => $noncecounter));
-        if ($noncecounter == 2) {
+        if ($noncecounter > 1) {
             $cache->delete($noncekey);
         }
         return($args['1']);

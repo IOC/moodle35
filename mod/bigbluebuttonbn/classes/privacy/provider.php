@@ -27,11 +27,11 @@ namespace mod_bigbluebuttonbn\privacy;
 
 use \core_privacy\local\metadata\collection;
 use \core_privacy\local\request\approved_contextlist;
-use core_privacy\local\request\approved_userlist;
+use \core_privacy\local\request\approved_userlist;
 use \core_privacy\local\request\contextlist;
 use \core_privacy\local\request\helper;
 use \core_privacy\local\request\transform;
-use core_privacy\local\request\userlist;
+use \core_privacy\local\request\userlist;
 use \core_privacy\local\request\writer;
 
 defined('MOODLE_INTERNAL') || die();
@@ -137,7 +137,7 @@ class provider implements
     public static function _get_contexts_for_userid(int $userid) {
         // If user was already deleted, do nothing.
         if (!\core_user::get_user($userid)) {
-            return;
+            return new contextlist();
         }
         // Fetch all bigbluebuttonbn logs.
         $sql = "SELECT c.id

@@ -114,8 +114,6 @@ $string['config_recording_default'] = 'Recording feature enabled by default';
 $string['config_recording_default_description'] = 'If enabled the sessions created in BigBlueButton will have recording capabilities.';
 $string['config_recording_editable'] = 'Recording feature can be edited';
 $string['config_recording_editable_description'] = 'If checked the interface includes an option for enable and disable the recording feature.';
-$string['config_recording_icons_enabled'] = 'Icons for recording management';
-$string['config_recording_icons_enabled_description'] = 'When enabled, the recording management panel shows icons for the publish/unpublish and delete actions.';
 $string['config_recording_all_from_start_default'] = 'Record all from start';
 $string['config_recording_all_from_start_default_description'] = 'If checked the meeting will record to start';
 $string['config_recording_all_from_start_editable'] = 'Record all from start can be edited';
@@ -175,8 +173,8 @@ $string['config_voicebridge_editable_description'] = 'Conference voice bridge nu
 
 $string['config_preuploadpresentation'] = 'Configuration for "Pre-upload presentation" feature';
 $string['config_preuploadpresentation_description'] = 'These settings enable or disable options in the UI and also define default values for these options. The feature works only if the Moodle server is accessible to BigBlueButton..';
-$string['config_preuploadpresentation_enabled'] = 'Pre-uploading presentation enabled';
-$string['config_preuploadpresentation_enabled_description'] = 'Preupload presentation feature is enabled in the UI when the room or conference is added or updated.';
+$string['config_preuploadpresentation_editable'] = 'Pre-uploading presentation editable';
+$string['config_preuploadpresentation_editable_description'] = 'Preupload presentation feature is editable in the UI when the room or conference is added or updated.';
 
 $string['config_presentation_default'] = 'Default file for "Pre-upload presentation" feature';
 $string['config_presentation_default_description'] = 'This setting allow to select a file to use as default in all BBB instances if "Pre-upload presentation" is enabled.';
@@ -227,6 +225,9 @@ $string['config_muteonstart_editable'] = 'Mute on start can be edited';
 $string['config_muteonstart_editable_description'] = 'Mute on start by default can be edited when the instance is added or updated.';
 $string['config_welcome_default'] = 'Default welcome message';
 $string['config_welcome_default_description'] = 'Replaces the default message set up for the BigBlueButton server. The message can includes keywords  (%%CONFNAME%%, %%DIALNUM%%, %%CONFNUM%%) which will be substituted automatically, and also html tags like <b>...</b> or <i></i> ';
+$string['config_welcome_editable'] = 'Default welcome message is editable by teachers';
+$string['config_welcome_editable_description'] = 'Welcome message can be edited when the instance is added or updated';
+
 $string['config_default_messages'] = 'Default messages';
 $string['config_default_messages_description'] = 'Set message defaults for activities';
 
@@ -263,20 +264,10 @@ $string['config_hideuserlist_default_description'] = 'If enabled the session use
 $string['config_hideuserlist_editable'] = 'Hide user list can be edited';
 $string['config_hideuserlist_editable_description'] = 'Hide user list by default can be edited when the instance is added or updated.';
 
-$string['config_lockedlayout_default'] = 'Locked layout enabled by default';
-$string['config_lockedlayout_default_description'] = 'If enabled the session layout will be locked.';
-$string['config_lockedlayout_editable'] = 'Locked layout can be edited';
-$string['config_lockedlayout_editable_description'] = 'Locked layout by default can be edited when the instance is added or updated.';
-
-$string['config_lockonjoin_default'] = 'Ignore lock on join enabled by default';
-$string['config_lockonjoin_default_description'] = 'If enabled the lock settings will be ignored. Lock configuration must be enabled for this to apply.';
-$string['config_lockonjoin_editable'] = 'Ignore lock on join can be edited';
-$string['config_lockonjoin_editable_description'] = 'Ignore lock on join by default can be edited when the instance is added or updated.';
-
-$string['config_lockonjoinconfigurable_default'] = 'Lock configuration enabled by default';
-$string['config_lockonjoinconfigurable_default_description'] = 'If enabled the session lock settings can be enabled or disabled from the above control.';
-$string['config_lockonjoinconfigurable_editable'] = 'Lock configuration can be edited';
-$string['config_lockonjoinconfigurable_editable_description'] = 'Lock configuration by default can be edited when the instance is added or updated.';
+$string['config_lockonjoin_default'] = 'Lock on join enabled by default';
+$string['config_lockonjoin_default_description'] = 'If enabled the settings locked by configuration are applied to the user when they join. Lock configuration must be enabled for this to apply.';
+$string['config_lockonjoin_editable'] = 'Lock on join can be edited';
+$string['config_lockonjoin_editable_description'] = 'Lock on join by default can be edited when the instance is added or updated.';
 
 $string['config_experimental_features'] = 'Configuration for experimental features';
 $string['config_experimental_features_description'] = 'Configuration for experimental features.';
@@ -362,9 +353,7 @@ $string['mod_form_field_disableprivatechat'] = 'Disable private chat';
 $string['mod_form_field_disablepublicchat'] = 'Disable public chat';
 $string['mod_form_field_disablenote'] = 'Disable shared notes';
 $string['mod_form_field_hideuserlist'] = 'Hide user list';
-$string['mod_form_field_lockedlayout'] = 'Lock room layout';
-$string['mod_form_field_lockonjoin'] = 'Ignore lock settings';
-$string['mod_form_field_lockonjoinconfigurable'] = 'Allow ignore locking settings';
+$string['mod_form_field_lockonjoin'] = 'Lock settings on join';
 $string['mod_form_locksettings'] = 'Lock settings';
 
 

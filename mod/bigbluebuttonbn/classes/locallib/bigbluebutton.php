@@ -211,8 +211,12 @@ class bigbluebutton {
             $bbbsession['recordhidebutton'] = $bbbsession['bigbluebuttonbn']->recordhidebutton;
         }
         $bbbsession['welcome'] = $bbbsession['bigbluebuttonbn']->welcome;
-        if (!isset($bbbsession['welcome']) || $bbbsession['welcome'] == '') {
-            $bbbsession['welcome'] = get_string('mod_form_field_welcome_default', 'bigbluebuttonbn');
+        if (!isset($bbbsession['welcome']) || $bbbsession['welcome'] == '' || !config::get('welcome_editable')) {
+            // CONTRIB-8573: default to the config and if empty, then the default string.
+            $bbbsession['welcome'] = config::get('welcome_default');
+            if (!$bbbsession['welcome']) {
+                $bbbsession['welcome'] = get_string('mod_form_field_welcome_default', 'bigbluebuttonbn');
+            }
         }
         if ($bbbsession['bigbluebuttonbn']->record) {
             // Check if is enable record all from start.
@@ -233,9 +237,7 @@ class bigbluebutton {
         $bbbsession['disablepublicchat'] = $bbbsession['bigbluebuttonbn']->disablepublicchat;
         $bbbsession['disablenote'] = $bbbsession['bigbluebuttonbn']->disablenote;
         $bbbsession['hideuserlist'] = $bbbsession['bigbluebuttonbn']->hideuserlist;
-        $bbbsession['lockedlayout'] = $bbbsession['bigbluebuttonbn']->lockedlayout;
         $bbbsession['lockonjoin'] = $bbbsession['bigbluebuttonbn']->lockonjoin;
-        $bbbsession['lockonjoinconfigurable'] = $bbbsession['bigbluebuttonbn']->lockonjoinconfigurable;
         // Additional info related to the course.
         $bbbsession['context'] = $context;
         // Metadata (origin).
@@ -300,7 +302,6 @@ class bigbluebutton {
      * @param $course
      * @param $cm
      * @return bool
-     * @throws \coding_exception
      */
     public static function user_can_access_groups($groupid, $user, $course, $cm) {
         $groupmode = groups_get_activity_groupmode($cm);

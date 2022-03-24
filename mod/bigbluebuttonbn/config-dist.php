@@ -88,11 +88,6 @@ $CFG->bigbluebuttonbn['shared_secret'] = '8cd8ef52e8e101574e400365b55e11a6';
  *  $CFG->bigbluebuttonbn['recording_editable'] = 0;
  */
 
-/* When the value is set to 1 (checked) the list of recordings in both
- * bigbluebuttonbn and recordingbn are generated using icons.
- * $CFG->bigbluebuttonbn['recording_icons_enabled'] = 1;
- */
-
 /*
  * 1.3. CONFIGURATION FOR "IMPORT RECORDINGS" FEATURE
  *
@@ -175,7 +170,7 @@ $CFG->bigbluebuttonbn['shared_secret'] = '8cd8ef52e8e101574e400365b55e11a6';
  * Moodle file repository and vinculate it to the BigBlueButtonBN room or
  * activity in one step. This file will be pulled by the BigBluebutton server
  * when the meeting session is accessed for the first time.
- * $CFG->bigbluebuttonbn['preuploadpresentation_enabled'] = 1;
+ * $CFG->bigbluebuttonbn['preuploadpresentation_editable'] = 1;
  */
 
 /*
@@ -414,40 +409,15 @@ $CFG->bigbluebuttonbn['shared_secret'] = '8cd8ef52e8e101574e400365b55e11a6';
 
  /*
  * When the value is set to 1 (checked) the bigbluebuttonbn rooms or
- * activities will have a locked layout.
+ * activities will use the lock settings on join.
  * default.
- * $CFG->bigbluebuttonbn['lockedlayout_default'] = 0;
+ * $CFG->bigbluebuttonbn['lockonjoin_default'] = 1;
  */
 /*
- * When the value is set to 1 (checked) the locked layout
- * capability can be enabled/disabled by the user creating or editing
- * the room or activity.
- * $CFG->bigbluebuttonbn['lockedlayout_editable'] = 0;
- */
-
- /*
- * When the value is set to 1 (checked) the bigbluebuttonbn rooms or
- * activities will ignore the locking settings.
- * default.
- * $CFG->bigbluebuttonbn['lockonjoin_default'] = 0;
- */
-/*
- * When the value is set to 1 (checked) the ignore locking
+ * When the value is set to 1 (checked) the lock on join
  * capability can be enabled/disabled by the user creating or editing
  * the room or activity.
  * $CFG->bigbluebuttonbn['lockonjoin_editable'] = 0;
- */
-
- /*
- * When the value is set to 1 (checked) the capability to ignore
- * locking settings is enabled.
- * $CFG->bigbluebuttonbn['lockonjoinconfigurable_default'] = 0;
- */
-/*
- * When the value is set to 1 (checked) the ignore locking
- * capability can be enabled/disabled by the user creating or editing
- * the room or activity.
- * $CFG->bigbluebuttonbn['lockonjoinconfigurable_editable'] = 0;
  */
 
 /*
