@@ -24,8 +24,6 @@
 
 namespace mod_videotime\plugininfo;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\update\info;
 
 /**
@@ -53,16 +51,16 @@ class videotimeplugin extends \core\plugininfo\base {
         switch ($this->name) {
             case 'pro':
                 $info = array(
-                    'maturity' => MATURITY_RC,
+                    'maturity' => MATURITY_STABLE,
                     'release' => '1.5',
-                    'version' => 2022010400,
+                    'version' => 2022022800,
                 );
                 break;
             case 'repository':
                 $info = array(
-                    'maturity' => MATURITY_RC,
+                    'maturity' => MATURITY_STABLE,
                     'release' => '1.5',
-                    'version' => 2022010400,
+                    'version' => 2022022800,
                 );
                 break;
         }
