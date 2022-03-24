@@ -178,6 +178,15 @@ class qtype_wq_question extends question_graded_automatically {
         if (isset($this->wirisquestioninstance)) {
             $text = $this->wirisquestioninstance->expandVariables($text);
         }
+        return $this->filtercodes_compatibility($text);
+    }
+
+    private function filtercodes_compatibility($text) {
+        $configfiltercodes = get_config('qtype_wq', 'filtercodes_compatibility');
+        if (isset($configfiltercodes) && $configfiltercodes == '1') {
+            $text = str_replace('[{', '[[{', $text);
+            $text = str_replace('}]', '}]]', $text);
+        }
         return $text;
     }
 
@@ -331,6 +340,13 @@ class qtype_wq_question extends question_graded_automatically {
 
         $service = $builder->getQuizzesService();
 
+        $isdebugmodeenabled = get_config('qtype_wq', 'debug_mode_enabled') == '1';
+
+        if ($isdebugmodeenabled) {
+            // @codingStandardsIgnoreLine
+            print_object($request->serialize());
+        }
+
         try {
             $response = $service->execute($request);
         } catch (Exception $e) {
@@ -345,9 +361,18 @@ class qtype_wq_question extends question_graded_automatically {
                 $link = $CFG->wwwroot . '/mod/quiz/view.php?id=' . $cmid;
             }
 
+            if ($isdebugmodeenabled) {
+                // @codingStandardsIgnoreLine
+                print_object($e);
+            }
+
             throw new moodle_exception('wirisquestionincorrect', 'qtype_wq', $link, $a, '');
         }
 
+        if ($isdebugmodeenabled) {
+            // @codingStandardsIgnoreLine
+            print_object($response->serialize());
+        }
         return $response;
     }
 }

@@ -10,6 +10,55 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 		$this->checks = null;
 		$this->compoundChecks = null;
 	}}
+	public function cloneCheckStructureIntoQuestion($question) {
+		if(!$this->hasEvaluation()) {
+			return;
+		}
+		$q = $question->getImpl();
+		if($q->correctAnswers === null) {
+			$q->correctAnswers = new _hx_array(array());
+		}
+		if($q->assertions === null) {
+			$q->assertions = new _hx_array(array());
+		}
+		$studentAnswers = $this->checks->keys();
+		while($studentAnswers->hasNext()) {
+			$studentAnswer = $studentAnswers->next();
+			$assertionChecks = $this->checks->get($studentAnswer);
+			{
+				$_g = 0;
+				while($_g < $assertionChecks->length) {
+					$check = $assertionChecks[$_g];
+					++$_g;
+					$name = $check->getAssertionName();
+					if(!com_wiris_quizzes_impl_Assertion::isSyntacticName($name)) {
+						$ca = $check->getCorrectAnswer();
+						$cai = Std::parseInt($ca);
+						while($cai >= $q->correctAnswers->length) {
+							$newCA = new com_wiris_quizzes_impl_CorrectAnswer();
+							$newCA->id = _hx_string_rec($q->correctAnswers->length, "") . "";
+							$newCA->set("");
+							$q->correctAnswers->push($newCA);
+							unset($newCA);
+						}
+						if($q->getAssertionIndex($check->getAssertionName(), $check->getCorrectAnswer(), $check->getAnswer()) === -1) {
+							$a = new com_wiris_quizzes_impl_Assertion();
+							$a->name = $check->getAssertionName();
+							$a->answer = $check->getAnswers();
+							$a->correctAnswer = $check->getCorrectAnswers();
+							$q->assertions->push($a);
+							unset($a);
+						}
+						unset($cai,$ca);
+					}
+					unset($name,$check);
+				}
+				unset($_g);
+			}
+			unset($studentAnswer,$assertionChecks);
+		}
+		$q->updateSlots();
+	}
 	public function getChecks($slot, $authorAnswer) {
 		$slotIndex = Std::parseInt($slot->id);
 		$authorAnswerIndex = Std::parseInt($authorAnswer->id);
@@ -171,7 +220,7 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 	}
 	public function serializeHandConstraints() {
 		if($this->handConstraints !== null) {
-			$this->setLocalData(com_wiris_quizzes_impl_LocalData::$KEY_OPENANSWER_HANDWRITING_CONSTRAINTS, $this->handConstraints->toJSON());
+			$this->setLocalDataImpl(com_wiris_quizzes_impl_LocalData::$KEY_OPENANSWER_HANDWRITING_CONSTRAINTS, $this->handConstraints->toJSON(), false);
 		}
 	}
 	public function areVariablesReady() {
@@ -365,7 +414,7 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 					$authorAnswerValue = _hx_array_get($authorAnswers, 0)->getValue();
 					$mathContent = new com_wiris_quizzes_impl_MathContent();
 					$mathContent->set($authorAnswerValue);
-					$compoundAnswer = com_wiris_quizzes_impl_HTMLTools::parseCompoundAnswer($mathContent);
+					$compoundAnswer = com_wiris_quizzes_impl_CompoundAnswerParser::parseCompoundAnswer($mathContent);
 					{
 						$_g2 = 0; $_g1 = $compoundAnswer->length;
 						while($_g2 < $_g1) {
@@ -1255,6 +1304,8 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 		}
 		$h = new com_wiris_quizzes_impl_HTMLTools();
 		$h->setAnswerKeyword($this->getAnswerParameterName());
+		$h->setPlotterLoadingSrc(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getResourceUrl("plotter_loading.png"));
+		$h->setProxyUrl(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getConfiguration()->get(com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL));
 		if(com_wiris_quizzes_impl_MathContent::getMathType($text) === com_wiris_quizzes_impl_MathContent::$TYPE_MATHML) {
 			$text = $h->mathMLToText($text);
 		}
@@ -1279,6 +1330,8 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 	}
 	public function expandVariablesMathMLEval($equation) {
 		$h = new com_wiris_quizzes_impl_HTMLTools();
+		$h->setPlotterLoadingSrc(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getResourceUrl("plotter_loading.png"));
+		$h->setProxyUrl(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getConfiguration()->get(com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL));
 		if($this->variables === null || $this->variables->get(com_wiris_quizzes_impl_MathContent::$TYPE_MATHML_EVAL) === null) {
 			return $this->expandVariablesMathML($equation);
 		} else {
@@ -1299,7 +1352,7 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 		}
 		$keyword = $this->question->getProperty(com_wiris_quizzes_api_PropertyName::$STUDENT_ANSWER_PARAMETER_NAME);
 		if($keyword === $this->question->getImpl()->defaultOption(com_wiris_quizzes_api_QuizzesConstants::$OPTION_STUDENT_ANSWER_PARAMETER_NAME)) {
-			$lang = com_wiris_quizzes_impl_HTMLTools::casSessionLang($this->question->getAlgorithm());
+			$lang = com_wiris_quizzes_impl_CalcDocumentTools::casSessionLang($this->question->getAlgorithm());
 			if($lang !== null && !($lang === com_wiris_quizzes_impl_QuestionInstanceImpl::$DEF_ALGORITHM_LANGUAGE)) {
 				$keyword = com_wiris_quizzes_impl_QuizzesTranslator::getInstance($lang)->t($keyword);
 			}
@@ -1308,6 +1361,8 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 	}
 	public function expandVariablesMathML($equation) {
 		$h = new com_wiris_quizzes_impl_HTMLTools();
+		$h->setPlotterLoadingSrc(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getResourceUrl("plotter_loading.png"));
+		$h->setProxyUrl(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getConfiguration()->get(com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL));
 		if(com_wiris_quizzes_impl_MathContent::getMathType($equation) === com_wiris_quizzes_impl_MathContent::$TYPE_TEXT) {
 			$equation = $h->textToMathML($equation);
 		}
@@ -1321,11 +1376,23 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 			return null;
 		}
 		$h = new com_wiris_quizzes_impl_HTMLTools();
-		$h->setItemSeparator($this->getLocalData(com_wiris_quizzes_impl_LocalData::$KEY_ITEM_SEPARATOR));
+		$h->setItemSeparator($this->getItemSeparator());
+		$h->setAnswerKeyword($this->getAnswerParameterName());
+		$h->setPlotterLoadingSrc(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getResourceUrl("plotter_loading.png"));
+		$h->setProxyUrl(com_wiris_quizzes_impl_QuizzesImpl::getInstance()->getConfiguration()->get(com_wiris_quizzes_api_ConfigurationKeys::$PROXY_URL));
 		$text = $h->expandVariables($text, $this->variables);
 		$h->setAnswerKeyword($this->getAnswerParameterName());
 		$text = $h->expandAnswers($text, $this->userData->answers, $this->isCompoundAnswer());
 		return $text;
+	}
+	public function getItemSeparator() {
+		if($this->question !== null) {
+			$itemSeparator = $this->question->getImpl()->getItemSeparator();
+			if($itemSeparator !== null) {
+				return $itemSeparator;
+			}
+		}
+		return ",";
 	}
 	public function defaultLocalData($name) {
 		return null;
@@ -1366,7 +1433,7 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 		}
 		return $this->getLocalDataImpl($name);
 	}
-	public function setLocalData($name, $value) {
+	public function setLocalDataImpl($name, $value, $parseHandwritingConstraints) {
 		if($this->localData === null) {
 			$this->localData = new _hx_array(array());
 		}
@@ -1389,9 +1456,12 @@ class com_wiris_quizzes_impl_QuestionInstanceImpl extends com_wiris_util_xml_Ser
 		if(!$found) {
 			$this->localData->push($data);
 		}
-		if($name === com_wiris_quizzes_impl_LocalData::$KEY_OPENANSWER_HANDWRITING_CONSTRAINTS) {
+		if($parseHandwritingConstraints && $name === com_wiris_quizzes_impl_LocalData::$KEY_OPENANSWER_HANDWRITING_CONSTRAINTS) {
 			$this->handConstraints = com_wiris_quizzes_impl_HandwritingConstraints::readHandwritingConstraints($value);
 		}
+	}
+	public function setLocalData($name, $value) {
+		$this->setLocalDataImpl($name, $value, true);
 	}
 	public function newInstance() {
 		return new com_wiris_quizzes_impl_QuestionInstanceImpl();

@@ -17,7 +17,6 @@
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/question/type/essay/renderer.php');
 
-
 class qtype_wq_renderer extends qtype_renderer {
 
     protected $base;
@@ -34,7 +33,7 @@ class qtype_wq_renderer extends qtype_renderer {
         $slots = $qa->get_question()->wirisquestion->question->getSlots();
         if (isset($slots[0])) {
             $showauxiliartextinput = $slots[0]->getProperty(com_wiris_quizzes_api_PropertyName::$SHOW_AUXILIARY_TEXT_INPUT); // @codingStandardsIgnoreLine
-        } else  {
+        } else {
             $showauxiliartextinput = $qa->get_question()->wirisquestion->question->getProperty(com_wiris_quizzes_api_PropertyName::$SHOW_AUXILIARY_TEXT_INPUT); // @codingStandardsIgnoreLine
         }
 
@@ -69,9 +68,10 @@ class qtype_wq_renderer extends qtype_renderer {
         $question = $qa->get_question();
         $wirisquestion = $question->wirisquestion;
         $studentquestion = $wirisquestion->getStudentQuestion();
+        $sq = $studentquestion->serialize();
         $wirisquestionattributes = array(
             'type' => 'hidden',
-            'value' => $studentquestion->serialize(),
+            'value' => $sq,
             'class' => 'wirisquestion',
         );
         return html_writer::empty_tag('input', $wirisquestionattributes);
