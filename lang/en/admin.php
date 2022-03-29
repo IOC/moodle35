@@ -252,6 +252,7 @@ $string['configfilterall'] = 'Filter all strings, including headings, titles, na
 $string['configfiltermatchoneperpage'] = 'Automatic linking filters will only generate a single link for the first matching text instance found on the complete page. All others are ignored.';
 $string['configfiltermatchonepertext'] = 'Automatic linking filters will only generate a single link for the first matching text instance found in each item of text on the page. All others are ignored. This setting has no effect if \'Filter match once per page\' is enabled.';
 $string['configfilteruploadedfiles'] = 'Process all uploaded HTML and text files with the filters before displaying them, only uploaded HTML files or none at all.';
+$string['configforcedefaultmymoodle'] = 'Disable "Customize this page" for My Moodle and use the default page.'; // @PATCH IOC012
 $string['configforcelogin'] = 'Normally, the front page and the course listings (but not courses) can be read by people without logging in to the site. If you want to force people to log in before they do ANYTHING on the site, then you should enable this setting.';
 $string['configforceloginforprofiles'] = 'This setting forces people to log in as a real (non-guest) account before viewing any user\'s profile. If you disabled this setting, you may find that some users post advertising (spam) or other inappropriate content in their profiles, which is then visible to the whole world.';
 $string['configfrontpage'] = 'The items selected above will be displayed on the site\'s front page.';
