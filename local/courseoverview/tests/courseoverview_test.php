@@ -16,6 +16,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+const USERID = 'userid';
+
 // Load helper functions.
 require_once(dirname(__DIR__, 3) . '/mod/forum/tests/generator_trait.php');
 require_once(dirname(__DIR__, 3) . '/mod/assign/tests/generator.php');
@@ -54,8 +56,8 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Create a group and add both users to it.
         $group = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
-        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, 'userid' => $this->student->id]);
-        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, 'userid' => $this->teacher->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, USERID => $this->student->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, USERID => $this->student->id]);
 
     }
 
@@ -110,7 +112,7 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Simulate user student reading teacher's post.
         $DB->insert_record('forum_read', [
-            'userid' => $this->student->id,
+            USERID => $this->student->id,
             'forumid' => $forum->id,
             'discussionid' => $discussionteacher->id,
             'postid' => $postteacher->id,
@@ -146,7 +148,7 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Check the number of assignments submitted by user student.
         $submits = $DB->count_records('assign_submission', [
-            'userid' => $this->student->id,
+            USERID => $this->student->id,
             'status' => ASSIGN_SUBMISSION_STATUS_SUBMITTED,
         ]);
 

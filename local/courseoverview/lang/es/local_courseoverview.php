@@ -29,3 +29,5 @@ $string['pendingassignments'] = 'Tareas pendientes';
 $string['pendingassignmentsteacher'] = 'Tareas pendientes de evaluar';
 $string['pendingquizzes'] = 'Qüestionaris pendents';
 $string['pendingquizzesteacher'] = 'Cuestionarios pendientes de evaluar';
+$string['one_post_unread'] = 'no leído en';
+$string['many_posts_unread'] = 'no leídos en';
