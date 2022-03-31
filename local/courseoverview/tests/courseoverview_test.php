@@ -16,6 +16,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Constant to avoid repeated use of 'userid' literal.
+ */
+const USERID = 'userid';
+
 // Load helper functions.
 require_once(dirname(__DIR__, 3) . '/mod/forum/tests/generator_trait.php');
 require_once(dirname(__DIR__, 3) . '/mod/assign/tests/generator.php');
@@ -54,8 +59,8 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Create a group and add both users to it.
         $group = $this->getDataGenerator()->create_group(['courseid' => $this->course->id]);
-        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, 'userid' => $this->student->id]);
-        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, 'userid' => $this->teacher->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, USERID => $this->student->id]);
+        $this->getDataGenerator()->create_group_member(['groupid' => $group->id, USERID => $this->student->id]);
 
     }
 
@@ -74,8 +79,8 @@ class local_courseoverview_testcase extends advanced_testcase {
         $forum = $this->getDataGenerator()->create_module('forum', ['course' => $this->course->id]);
 
         // Check initial state.
-        $this->assertEquals(0, count_pending_forum($this->teacher->id, $this->course, true));
-        $this->assertEquals(0, count_pending_forum($this->student->id, $this->course, true));
+        $this->assertEquals(0, get_pending_forums($this->teacher->id, $this->course, true)['totalunread']);
+        $this->assertEquals(0, get_pending_forums($this->student->id, $this->course, true)['totalunread']);
 
         // Add a discussion to the activity forum, done by the student.
         [, $poststudent] = $this->helper_post_to_forum($forum, $this->student);
@@ -84,33 +89,33 @@ class local_courseoverview_testcase extends advanced_testcase {
         // when a new discussion is created in the web, it is automatically added to table 'forum_read'
         // for the creator. But in this case, it is not added to the table 'forum_read'.
         $this->setUser($this->teacher);
-        $this->assertEquals(1, count_pending_forum($this->teacher->id, $this->course, true));
+        $this->assertEquals(1, get_pending_forums($this->teacher->id, $this->course, true)['totalunread']);
         $this->setUser($this->student);
-        $this->assertEquals(1, count_pending_forum($this->student->id, $this->course, true));
+        $this->assertEquals(1, get_pending_forums($this->student->id, $this->course, true)['totalunread']);
 
         // Add a post to the discussion.
         $this->helper_reply_to_post($poststudent, $this->student);
 
         // Now the teacher and the student should have 2 unread messages.
         $this->setUser($this->teacher);
-        $this->assertEquals(2, count_pending_forum($this->teacher->id, $this->course, true));
+        $this->assertEquals(2, get_pending_forums($this->teacher->id, $this->course, true)['totalunread']);
         $this->setUser($this->student);
-        $this->assertEquals(2, count_pending_forum($this->student->id, $this->course, true));
+        $this->assertEquals(2, get_pending_forums($this->student->id, $this->course, true)['totalunread']);
 
         // Add a second discussion to the activity forum, done by the teacher.
         [$discussionteacher, $postteacher] = $this->helper_post_to_forum($forum, $this->teacher);
 
         // Now the teacher should have 2 unread messages and the student should have 3.
         $this->setUser($this->teacher);
-        $this->assertEquals(2, count_pending_forum($this->teacher->id, $this->course, true));
+        $this->assertEquals(2, get_pending_forums($this->teacher->id, $this->course, true)['totalunread']);
         $this->setUser($this->student);
-        $this->assertEquals(3, count_pending_forum($this->student->id, $this->course, true));
+        $this->assertEquals(3, get_pending_forums($this->student->id, $this->course, true)['totalunread']);
 
         global $DB;
 
         // Simulate user student reading teacher's post.
         $DB->insert_record('forum_read', [
-            'userid' => $this->student->id,
+            USERID => $this->student->id,
             'forumid' => $forum->id,
             'discussionid' => $discussionteacher->id,
             'postid' => $postteacher->id,
@@ -119,7 +124,7 @@ class local_courseoverview_testcase extends advanced_testcase {
         ]);
 
         // Now the student should have 2 unread messages.
-        $this->assertEquals(2, count_pending_forum($this->student->id, $this->course, true));
+        $this->assertEquals(2, get_pending_forums($this->student->id, $this->course, true)['totalunread']);
 
     }
 
@@ -146,20 +151,21 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Check the number of assignments submitted by user student.
         $submits = $DB->count_records('assign_submission', [
-            'userid' => $this->student->id,
+            USERID => $this->student->id,
             'status' => ASSIGN_SUBMISSION_STATUS_SUBMITTED,
         ]);
 
         $this->assertEquals(1, $submits);
 
         // Check the number of assignments pending grading by user teacher.
-        $this->assertEquals(1, count_teacher_pending_assign($this->course, $this->teacher->id));
+        $assignments = get_all_instances_in_course(MODULE_ASSIGN_NAME, $this->course, $this->teacher->id);
+        $this->assertEquals(1, count_teacher_pending_assign($this->course, $assignments));
 
         // Grade the submission.
         $this->mark_submission($this->teacher, $assign, $this->student);
 
         // Check the assignment has been graded.
-        $this->assertEquals(0, count_teacher_pending_assign($this->course, $this->teacher->id));
+        $this->assertEquals(0, count_teacher_pending_assign($this->course, $assignments));
 
     }
 
@@ -185,7 +191,9 @@ class local_courseoverview_testcase extends advanced_testcase {
         $assign1 = $this->create_instance($this->course, $params);
         $assign2 = $this->create_instance($this->course, $params);
 
-        $this->assertEquals(2, count_student_pending_assign($this->course, $this->student->id));
+        $assignments = get_all_instances_in_course(MODULE_ASSIGN_NAME, $this->course, $this->teacher->id);
+
+        $this->assertEquals(2, count_student_pending_assign($this->course, $assignments));
 
         // Add a submission to both tasks.
         $this->add_submission($this->student, $assign1);
@@ -206,11 +214,11 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Submit one assignment and check that there is only 1 pending task.
         $this->submit_for_grading($this->student, $assign1);
-        $this->assertEquals(1, count_student_pending_assign($this->course, $this->student->id));
+        $this->assertEquals(1, count_student_pending_assign($this->course, $assignments));
 
         // Submit the other assignment and check that there are none pending tasks.
         $this->submit_for_grading($this->student, $assign2);
-        $this->assertEquals(0, count_student_pending_assign($this->course, $this->student->id));
+        $this->assertEquals(0, count_student_pending_assign($this->course, $assignments));
 
     }
 
@@ -225,8 +233,10 @@ class local_courseoverview_testcase extends advanced_testcase {
     public function test_quizz_pending_tasks(): void {
         $this->resetAfterTest();
 
+        $quizzes = get_all_instances_in_course(MODULE_QUIZ_NAME, $this->course, $this->student->id);
+
         // In the beginning, there are no quizzes ready to be responded to.
-        $this->assertEquals(0, count_student_pending_quiz($this->course, $this->student->id));
+        $this->assertEquals(0, count_student_pending_quiz($this->student->id, $quizzes));
 
         // Create the quiz.
         $quizgenerator = $this->getDataGenerator()->get_plugin_generator('mod_quiz');
@@ -243,9 +253,12 @@ class local_courseoverview_testcase extends advanced_testcase {
         $question = $questiongenerator->create_question('essay', 'plain', ['category' => $cat->id]);
         quiz_add_quiz_question($question->id, $quiz, 0, 10);
 
+        // After the creation of the quiz, the list of quizzes must be updated.
+        $quizzes = get_all_instances_in_course(MODULE_QUIZ_NAME, $this->course, $this->student->id);
+
         // At this point, there should be a quiz with an essay question in, which can be responded to.
-        $this->assertEquals(1, count_student_pending_quiz($this->course, $this->student->id));
-        $this->assertEquals(0, count_teacher_pending_quiz($this->course, $this->teacher->id));
+        $this->assertEquals(1, count_student_pending_quiz($this->student->id, $quizzes));
+        $this->assertEquals(0, count_teacher_pending_quiz($this->course, $this->teacher->id, $quizzes));
 
         // Create and start the attempt.
         $quizobj = quiz::create($quiz->id);
@@ -276,7 +289,7 @@ class local_courseoverview_testcase extends advanced_testcase {
 
         // Now, there should be a quiz with an essay question in, which has been responded to,
         // so the teacher can grade it.
-        $this->assertEquals(1, count_teacher_pending_quiz($this->course, $this->teacher->id));
+        $this->assertEquals(1, count_teacher_pending_quiz($this->course, $this->teacher->id, $quizzes));
 
     }
 
