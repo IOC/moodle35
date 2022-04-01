@@ -424,13 +424,13 @@ function format_unreadforums(array $unreadforums): string {
 
     foreach ($unreadforums as $key => $value) {
         if (is_numeric($key)) {
-            $unreadtext = ((int)$value === 1) ? get_string('one_post_unread', 'local_courseoverview')
-                : get_string('many_posts_unread', 'local_courseoverview');
+            $unreadtext = ((int)$value === 1) ? get_string('onepostunread', 'local_courseoverview')
+                : get_string('manypostsunread', 'local_courseoverview');
 
             $content .= '<li><strong>' . $value['count'] . '</strong>'
                 . ' ' . $unreadtext . ' '
                 . '<a href="' . $CFG->wwwroot . '/mod/forum/view.php?id=' . $value['id'] . '" target="_blank">'
-                . $value['name']
+                . addslashes($value['name'])
                 . '</a></li>';
         }
     }
