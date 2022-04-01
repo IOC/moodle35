@@ -61,6 +61,9 @@ if (!empty($CFG->cronclionly)) {
     print_error('cronerrorclionly', 'admin');
     exit;
 }
+
+// @PATCH IOC041: ByPass Cron via web a via CLI
+$cronWebOk = false;
 // This script is being called via the web, so check the password if there is one.
 if (!empty($CFG->cronremotepassword)) {
     $pass = optional_param('password', '', PARAM_RAW);
@@ -69,6 +72,7 @@ if (!empty($CFG->cronremotepassword)) {
         print_error('cronerrorpassword', 'admin');
         exit;
     }
+    $cronWebOk = true;
 }
 
 // send mime type and encoding
@@ -77,5 +81,15 @@ if (!empty($CFG->cronremotepassword)) {
 // we do not want html markup in emulated CLI
 @ini_set('html_errors', 'off');
 
-// execute the cron
-cron_run();
+if (!$cronWebOk) {
+    // execute the cron
+    cron_run();
+} else {
+    $fileLogName = 'logCron_'.time().'.log';
+    $command = 'nohup /usr/bin/php7.4 ';
+    $command .= $CFG->dirroot . '/admin/cli/cron.php >> ';
+    $command .= $CFG->dataroot.'/temp/'.$fileLogName.' ';
+    $command .= '2>&1 & echo $!';
+    exec($command);
+}
+// Fi
