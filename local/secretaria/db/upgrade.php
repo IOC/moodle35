@@ -29,7 +29,7 @@ function xmldb_local_secretaria_upgrade($oldversion) {
         // Migrate from "forum_favourite" to moodle favourite API.
         $favs = $DB->get_records_sql("SELECT * FROM {forum_favourite}", array());
         foreach ($favs as $fav) {
-            $usercontext = context_user::instance($fav->userid);
+            $usercontext = \context_user::instance($fav->userid);
 
             // Get the discussion vault and the corresponding discussion entity.
             $vaultfactory = \mod_forum\local\container::get_vault_factory();
