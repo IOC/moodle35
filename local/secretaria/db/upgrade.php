@@ -29,6 +29,10 @@ function xmldb_local_secretaria_upgrade($oldversion) {
         // Migrate from "forum_favourite" to moodle favourite API.
         $favs = $DB->get_records_sql("SELECT * FROM {forum_favourite}", array());
         foreach ($favs as $fav) {
+            $user = $DB->get_record('user', array('id' => $fav->userid, 'deleted' => 0));
+            if (!$user) {
+                continue;
+            }
             $usercontext = \context_user::instance($fav->userid);
 
             // Get the discussion vault and the corresponding discussion entity.
@@ -38,11 +42,19 @@ function xmldb_local_secretaria_upgrade($oldversion) {
 
             if ($usercontext && $discussion && $discussion->get_id() > 0) {
                 $forumvault = $vaultfactory->get_forum_vault();
-                $forum = $forumvault->get_from_id($discussion->get_forum_id());
-                $forumcontext = $forum->get_context();
+                $forum_id = $discussion->get_forum_id();
+
+                $forum = $DB->get_record('forum', array('id' => $forum_id));
+                $cm = \get_coursemodule_from_instance('forum', $forum->id, $forum->course);
+
+                $forumcontext = \context_module::instance($cm->id);
                 $ufservice = \core_favourites\service_factory::get_service_for_user_context($usercontext);
-                $ufservice->create_favourite('mod_forum', 'discussions', $discussion->get_id(), $forumcontext);
-                mtrace("Favourite created in discussion with ID ".$discussion->get_id()." for user with ID ".$fav->userid);
+
+                $isfavourited = $ufservice->favourite_exists('mod_forum', 'discussions', $discussion->get_id(), $forumcontext);
+                if (!$isfavourited) {
+                    $ufservice->create_favourite('mod_forum', 'discussions', $discussion->get_id(), $forumcontext);
+                    mtrace("Favourite created in discussion with ID ".$discussion->get_id()." for user with ID ".$fav->userid);
+                }
             }
         }
 
