@@ -1,8 +1,8 @@
-@editor @editor_atto @atto @atto_wiris @_bug_phantomjs @wiris_mathtype @atto_wiris_latex @atto_wiris_compatibility
-Feature: Check empty LaTeX edition
-In order to check the edition of a formula in LaTeX
+@editor @editor_atto @atto @atto_wiris @_bug_phantomjs @wiris_mathtype @3.x
+Feature: Test I double struck (UTF-32)
+In order to create formulas with UTF-32 characters
 As an admin
-I need to edit an empty LaTeX with MathType
+I need to see a formula with a UTF-32 character
 
   Background:
     Given the following "courses" exist:
@@ -12,40 +12,32 @@ I need to edit an empty LaTeX with MathType
       | user     | course | role           |
       | admin  | C1     | editingteacher |
     And the "wiris" filter is "on"
-    And the "mathjaxloader" filter is "disabled"
     And the "urltolink" filter is "off"
+    And the "mathjaxloader" filter is "off"
     And I log in as "admin"
 
   @javascript
-  Scenario: Insert MathType formula to an empty LaTeX
-    And I navigate to "General > Security > Site security settings" in site administration
-    And I check enable trusted content
-    And I press "Save changes"
+  Scenario: Insert double struck using UTF-32
     And I navigate to "Plugins > Text editors > Atto toolbar settings" in site administration
     And I set the field "Toolbar config" to multiline:
     """
-    other = html
     math = wiris
+    other = html
     """
     And I press "Save changes"
     And I am on "Course 1" course homepage with editing mode on
     And I add a "Page" to section "0"
     And I set the following fields to these values:
       | Name | Test MathType for Atto on Moodle |
-      | Page content | $$$$ |
-    And I click on "Page content" field
-    And I place caret at position "2" in "Page content" field
     And I press "MathType" in "Page content" field in Atto editor
-    And I set MathType formula to '<math><mfrac><mn>1</mn><msqrt><mn>2</mn><mi>&#x3c0;</mi></msqrt></mfrac></math>'
+    And I set MathType formula to '<math><mi mathvariant="normal">&#x1D540;</mi></math>'
     And I wait "1" seconds
     And I press accept button in MathType Editor
-    Then "$$\frac1{\sqrt{2\pi}}$$" "text" should exist
     And I press "HTML" in "Page content" field in Atto editor
     And I press "HTML pressed" in "Page content" field in Atto editor
-    Then "$$\frac1{\sqrt{2\pi}}$$" "text" should exist
     And I press "Save and display"
+    # Then a Wirisformula containing html entity '&#x1D540;' should exist
+    # And Wirisformula should has height 19 with error of 2
     Then I wait until Wirisformula formula exists
-    Then a Wirisformula containing 'square root' should exist
-    And Wirisformula should has height 48 with error of 2
-    And I navigate to "Settings" in current page administration
-    Then "$$\frac1{\sqrt{2\pi}}$$" "text" should exist
+    # And a Wirisformula containing html entity '&#x1D540;' should exist
+    And Wirisformula should has height 19 with error of 2
