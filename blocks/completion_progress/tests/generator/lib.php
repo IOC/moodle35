@@ -15,17 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * block_completion_progress data generator
  *
- * @package     mod_videotime
- * @copyright   2021 bdecent gmbh <https://bdecent.de>
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    block_completion_progress
+ * @category   test
+ * @copyright  2018 Michael Aherne
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'mod_videotime';
-$plugin->release = '1.5.1';
-$plugin->version = 2022022803;
-$plugin->requires = 2015111610;
-$plugin->maturity = MATURITY_STABLE;
+
+/**
+ * Completion progress block data generator class
+ *
+ * @package    block_completion_progress
+ * @category   test
+ * @copyright  2018 Michael Aherne
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class block_completion_progress_generator extends testing_block_generator {
+
+}
