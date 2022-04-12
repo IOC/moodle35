@@ -1,29 +1,23 @@
 @block @block_completion_progress @javascript
-Feature: Using Completion Progress block overview
-  In order to see full class progress
-  As a teacher
-  I can view the overview page
+Feature: Using block completion progress for a quiz
+  In order to know what quizzes are due
+  As a student
+  I can visit my dashboard
 
   Background:
     Given the following "users" exist:
       | username | firstname | lastname | email |
       | student1 | Student | 1 | student1@example.com |
-      | student2 | Student | 2 | student2@example.com |
-      | student3 | Student | 3 | student3@example.com |
       | teacher1 | Teacher | 1 | teacher1@example.com |
     And the following config values are set as admin:
       | enablecompletion | 1 |
       | enableavailability | 1 |
-      | enablenotes | 1 |
-      | messaging | 1 |
     And the following "courses" exist:
       | fullname | shortname | category | enablecompletion |
       | Course 1 | C1        | 0        | 1                |
     And the following "course enrolments" exist:
       | user     | course | role           |
       | student1 | C1     | student        |
-      | student2 | C1     | student        |
-      | student3 | C1     | student        |
       | teacher1 | C1     | editingteacher |
     # 2 = Show activity as complete when conditions are met.
     And the following "activities" exist:
@@ -49,36 +43,27 @@ Feature: Using Completion Progress block overview
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     And I add the "Completion Progress" block
+    And I configure the "Completion Progress" block
+    And I set the following fields to these values:
+      | Show percentage to students | Yes |
+    And I press "Save changes"
     And I log out
 
-  Scenario: Select all selects all
-    Given I log in as "teacher1"
+  Scenario: Basic functioning of the block
+    Given I log in as "student1"
     And I am on "Course 1" course homepage
-    And I click on "Overview of students" "button" in the "Completion Progress" "block"
-    When I click on "Select all" "checkbox"
-    Then the following fields match these values:
-      | Select 'Student 1' | Yes |
-      | Select 'Student 2' | Yes |
-      | Select 'Student 3' | Yes |
+    When I hover ".block_completion_progress .progressBarCell:first-child" "css_element"
+    Then I should see "Progress: 0%" in the "Completion Progress" "block"
+    And I should see "Quiz 1A No deadline" in the "Completion Progress" "block"
+    And I should see "Not completed" in the "Completion Progress" "block"
 
-  Scenario: Messaging works
-    Given I log in as "teacher1"
+  Scenario: Submit the quizzes
+    Given I am on the "Quiz 1A No deadline" "mod_quiz > View" page logged in as "student1"
+    And I click on "Attempt quiz" "link_or_button"
+    And I follow "Finish attempt ..."
+    And I press "Submit all and finish"
     And I am on "Course 1" course homepage
-    And I click on "Overview of students" "button" in the "Completion Progress" "block"
-    When I click on "Select 'Student 1'" "checkbox"
-    And I click on "Select 'Student 2'" "checkbox"
-    And I select "Send a message" from the "With selected users..." singleselect
-    And I set the field "Message" to "Message"
-    And I click on "Send message to 2 people" "button"
-    Then I should see "Message sent to 2 people"
-
-  Scenario: Notes work
-    Given I log in as "teacher1"
-    And I am on "Course 1" course homepage
-    And I click on "Overview of students" "button" in the "Completion Progress" "block"
-    When I click on "Select 'Student 1'" "checkbox"
-    And I click on "Select 'Student 2'" "checkbox"
-    And I select "Add a new note" from the "With selected users..." singleselect
-    And I set the field "Note" to "Note"
-    And I click on "Add a new note to 2 people" "button"
-    Then I should see "Note added to 2 people"
+    When I hover ".block_completion_progress .progressBarCell:first-child" "css_element"
+    Then I should see "Progress: 100%" in the "Completion Progress" "block"
+    And I should see "Quiz 1A No deadline" in the "Completion Progress" "block"
+    And I should see "Completed" in the "Completion Progress" "block"
