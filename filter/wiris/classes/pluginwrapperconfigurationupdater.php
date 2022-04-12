@@ -13,9 +13,11 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+//
 
 /**
- * Version details.
+ * This class implements WIRIS com_wiris_plugin_configuration_ConfigurationUpdater interface
+ * to use a custom Moodle configuration.
  *
  * @package    filter
  * @subpackage wiris
@@ -25,9 +27,26 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022040800;
-$plugin->release = '7.28.0';
-$plugin->requires = 2011120511;
-$plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'filter_wiris';
-$plugin->dependencies = array();
+require_once($CFG->dirroot . '/filter/wiris/integration/lib/com/wiris/plugin/configuration/ConfigurationUpdater.interface.php');
+
+class filter_wiris_pluginwrapperconfigurationupdater implements com_wiris_plugin_configuration_ConfigurationUpdater {
+
+    private $customconfig;
+
+    public function __construct($config) {
+        $this->customconfig = $config;
+    }
+
+    // @codingStandardsIgnoreStart
+    // Can't change implemented interface method name.
+    public function updateConfiguration(&$configuration) {
+        if (isset($this->customconfig)) {
+            foreach ($this->customconfig as $key => $value) {
+                $configuration[$key] = $value;
+            }
+        }
+
+    }
+    public function init($obj) {
+    }
+}
