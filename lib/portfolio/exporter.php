@@ -810,7 +810,7 @@ class portfolio_exporter {
     public function zip_tempfiles($filename='portfolio-export.zip', $filepath='/final/') {
         $zipper = new zip_packer();
 
-        // @PATCH IOC portfolio_wordpress (https://github.com/IOC/moodle-portfolio_wordpress)
+        // @PATCH IOC043: Export whole forum using portfolio
         if (method_exists($this->caller, 'get_filename')) {
             $filename = $this->caller->get_filename();
         }

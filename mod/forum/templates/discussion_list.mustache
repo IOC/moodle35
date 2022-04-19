@@ -182,6 +182,11 @@
                     </tr>
                 </thead>
                 {{/discussion_list_header}}
+
+                {{! @PATCH IOC043: Export whole forum using portfolio. }}
+                {{{exportbutton}}}
+                {{! Fi }}
+
                 {{$discussion_list_body}}
                 <tbody>
                     {{#summaries}}
