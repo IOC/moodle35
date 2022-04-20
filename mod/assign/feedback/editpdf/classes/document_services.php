@@ -187,7 +187,7 @@ EOD;
         $converter = new \core_files\converter();
         // Ask each plugin for it's list of files.
         foreach ($assignment->get_submission_plugins() as $plugin) {
-            // @PATCH IOC
+            // @PATCH IOC045: Only submission file plugin is allowed to create pdf files.
             if ($plugin->is_enabled() && $plugin->is_visible() && $plugin->is_convertible()) {
             // Original.
             /*

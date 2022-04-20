@@ -625,8 +625,7 @@ class assign_submission_file extends assign_submission_plugin {
         }
         return (array) $configs;
     }
-
-    // @PATCH IOC
+    // @PATCH IOC045: Only submission file plugin is allowed to create pdf files.
     public function is_convertible() {
         return true;
     }
