@@ -297,7 +297,7 @@ abstract class assign_plugin {
         return $this->visiblecache;
     }
 
-    // @PATCH IOC
+    // @PATCH IOC045: Only submission file plugin is allowed to create pdf files.
     /**
      * Is this plugin convertible?
      *
