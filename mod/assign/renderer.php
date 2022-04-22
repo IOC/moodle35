@@ -712,7 +712,7 @@ class mod_assign_renderer extends plugin_renderer_base {
                     $deletedsubmission = get_string('submissionstatus_submitted_deleted', 'assign');
                     $deletedclass = 'deleted';
                 }
-                $cell2content = get_string('submissionstatus_' . $status->submission->status, 'assign'. ' ' . $deletedsubmission);
+                $cell2content = get_string('submissionstatus_' . $status->submission->status, 'assign');
                 $cell2attributes = array('class' => 'submissionstatus' . $status->submission->status . $deletedclass);
             //Fi
             } else {
