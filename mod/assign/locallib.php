@@ -3414,10 +3414,10 @@ class assign {
                                                   $filearea,
                                                   $submissionid);
         $params = array('overflowdiv' => true, 'context' => $this->get_context());
-        
+
+        $result .= format_text($finaltext, $format, $params);
+
         //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
-        //Old Code:
-        //$result .= format_text($finaltext, $format, $params);
         $portfoliohtml = $result;
         //Fi
 
@@ -3443,9 +3443,9 @@ class assign {
             } else {
                 $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
             }
+            $result .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+
             //@PATCH IOC024: Fixed word count when portfolio exporting is enabled
-            //Old Code:
-            //$result .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             $portfoliohtml .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
             //Fi
         }
