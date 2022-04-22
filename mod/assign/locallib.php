@@ -3707,6 +3707,7 @@ class assign {
                     */
                     // Fi.
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
+
                 }
 
                 if ($submission) {
