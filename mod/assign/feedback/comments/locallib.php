@@ -457,7 +457,10 @@ class assign_feedback_comments extends assign_feedback_plugin {
                 $text,
                 $feedbackcomments->commentformat,
                 [
-                    'context' => $this->assignment->get_context()
+                    'context' => $this->assignment->get_context(),
+                    // @PATCH IOC047: Parches Assign
+                    'noclean' => true
+                    // Fi
                 ]
             );
 

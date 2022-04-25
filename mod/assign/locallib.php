@@ -2186,6 +2186,25 @@ class assign {
                     $orderby = "COALESCE(s.timecreated, " . time() . ") ASC, COALESCE(s.id, " . PHP_INT_MAX . ") ASC, um.id ASC";
                 }
             }
+            // @PATCH IOC047: Parches Assign
+            else {
+                $filter = get_user_preferences('assign_filter', '');
+                if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
+                    $additionaljoins .= " LEFT JOIN {assign_user_mapping} um
+                              ON u.id = um.userid
+                             AND um.assignment = :assignmentid1
+                       LEFT JOIN {assign_submission} s
+                              ON u.id = s.userid
+                             AND s.assignment = :assignmentid2
+                             AND s.latest = 1
+                        ";
+                    $params['assignmentid1'] = (int) $instance->id;
+                    $params['assignmentid2'] = (int) $instance->id;
+
+                    $orderby = "COALESCE(s.timemodified, " . time() . ") ASC";
+                }
+            }
+            // Fi
 
             if ($instance->markingworkflow &&
                     $instance->markingallocation &&
@@ -2874,9 +2893,13 @@ class assign {
         //Fi
 
         // Only push to gradebook if the update is for the most recent attempt.
-        if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+        // @PATCH IOC047: Parches Assign
+        // Old Code:
+        // if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+        if ($submission && $submission->attemptnumber != $grade->attemptnumber && !$gradeattempt) {
             return true;
         }
+        // Fi
 
         if ($this->gradebook_item_update(null, $grade)) {
             \mod_assign\event\submission_graded::create_from_grade($this, $grade)->trigger();
