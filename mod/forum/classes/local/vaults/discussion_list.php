@@ -561,4 +561,5 @@ class discussion_list extends db_table_vault {
 
         return [$favsql, $favparams];
     }
+
 }
