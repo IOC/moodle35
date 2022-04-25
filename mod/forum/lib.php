@@ -2386,6 +2386,15 @@ function forum_print_discussion_header(&$post, $forum, $group = -1, $datestring 
     }
 
     echo '<a href="'.$CFG->wwwroot.'/mod/forum/discuss.php?d='.$post->discussion.'">'.$post->subject.'</a>';
+
+    // @PATCH IOC046: Show how many attachments are in each discussion
+    if (isset($post->numattachments)) {
+        $iconattach = html_writer::empty_tag('img', array('src' => $OUTPUT->image_url('t/attachment', 'mod_forum')));
+        $strattachcount = get_string('overviewnumattachments', 'forum', $post->numattachments);
+        echo html_writer::tag('span', $iconattach, array('class' => 'iconattach', 'title' => $strattachcount));
+    }
+    //Fi
+
     echo "</td>\n";
 
     // Picture
