@@ -2187,7 +2187,8 @@ class assign {
                 if (empty($tablesort)) {
                     $orderby = "COALESCE(s.timecreated, " . time() . ") ASC, COALESCE(s.id, " . PHP_INT_MAX . ") ASC, um.id ASC";
                 }
-            // @PATCH IOC
+
+            // @PATCH IOC047: Parches Assign
             } else {
                 $filter = get_user_preferences('assign_filter', '');
                 if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
@@ -2898,7 +2899,7 @@ class assign {
 
         // Only push to gradebook if the update is for the most recent attempt.
 
-        // @PATCH IOC
+        // @PATCH IOC047: Parches Assign
         if ($submission && $submission->attemptnumber != $grade->attemptnumber && !$gradeattempt) {
         // Original.
         /* 
