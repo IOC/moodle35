@@ -958,9 +958,9 @@
     left: 0;
     width: 100%;
     height: 60px;
-/* @PATCH IOC */
+    /* @PATCH IOC */
     background-color: #fff;
-/* Fi. */
+    /* Fi. */
 }
 
 .path-mod-assign [data-region="grade-actions"] {

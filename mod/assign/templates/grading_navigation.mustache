@@ -98,8 +98,8 @@
 </div>
 {{#js}}
 require(['mod_assign/grading_navigation', 'core/tooltip'], function(GradingNavigation, ToolTip) {
-    new GradingNavigation('[data-region="user-selector"]');
-    new ToolTip('[data-region="assignment-tooltip"]');
+    var nav = new GradingNavigation('[data-region="user-selector"]');
+    var tooltip = new ToolTip('[data-region="assignment-tooltip"]');
     {{! @PATCH IOC }}
     {{#filtersubmitted}}
         nav._region.find('[data-region="configure-filters"]').find('[name="filter_submitted"]').prop('checked', true).trigger('change');

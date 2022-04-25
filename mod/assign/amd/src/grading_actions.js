@@ -35,7 +35,7 @@ define(['jquery', 'mod_assign/grading_events'], function($, GradingEvents) {
 
         this.registerEventListeners();
 
-        // @PATCH IOC
+        // @PATCH IOC047: Parches Assign
         this.collapseReviewPanel();
         // Fi.
     };

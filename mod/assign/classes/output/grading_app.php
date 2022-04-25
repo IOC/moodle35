@@ -142,7 +142,7 @@ class grading_app implements templatable, renderable {
         $export->duedate = $this->assignment->get_instance()->duedate;
         $export->duedatestr = userdate($this->assignment->get_instance()->duedate);
 
-        // @PATCH IOC
+        // @PATCH IOC047: Parches Assign
         $filter = get_user_preferences('assign_filter', '');
         $export->filtersubmitted = false;
         $export->filternotsubmitted = false;
