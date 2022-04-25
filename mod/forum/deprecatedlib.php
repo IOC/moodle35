@@ -1529,14 +1529,6 @@ function forum_print_latest_discussions($course, $forum, $maxdiscussions = -1, $
         echo '<tbody>';
     }
 
-    // @PATCH IOC046: Show how many attachments are in each discussion
-    $getiddiscussions = function($discussion) {
-        return $discussion->discussion;
-    };
-    $discussionsids = array_map($getiddiscussions, $discussions);
-    $numattachments = forum_get_discussion_num_attachments($forum->id, $context->id, $discussionsids);
-    // Fi
-
     foreach ($discussions as $discussion) {
         if ($forum->type == 'qanda' && !has_capability('mod/forum:viewqandawithoutposting', $context) &&
             !forum_user_has_posted($forum->id, $discussion->discussion, $USER->id)) {
@@ -1563,11 +1555,6 @@ function forum_print_latest_discussions($course, $forum, $maxdiscussions = -1, $
                 $discussion->unread = $unreads[$discussion->discussion];
             }
         }
-        // @PATCH IOC046: Show how many attachments are in each discussion
-        if (isset($numattachments[$discussion->discussion])) {
-            $discussion->numattachments = $numattachments[$discussion->discussion]->num;
-        }
-        // Fi
 
         if (isloggedin()) {
             $ownpost = ($discussion->userid == $USER->id);
@@ -1770,47 +1757,3 @@ WHERE
 
     return $result;
 }
-
-// @PATCH IOC046: Show how many attachments are in each discussion
-/**
- * How many attachments are in each discussion
- *
- * @param  int $forumid
- * @param  int $contextid
- * @param  array $discussions
- * @return object
- */
-function forum_get_discussion_num_attachments($forumid, $contextid, $discussions = array()) {
-    global $DB;
-
-    if (empty($discussions)) {
-        return array();
-    }
-
-    list($attachsql, $attachparams) = $DB->get_in_or_equal($discussions, SQL_PARAMS_NAMED);
-
-    $sql = "SELECT fd.id, COUNT(f.id) as num
-            FROM {forum_discussions} as fd
-            JOIN {forum_posts} as fp ON fp.discussion=fd.id
-            JOIN {files} as f ON f.itemid=fp.id
-            WHERE fd.forum = :forum
-            AND f.component = :component
-            AND (f.filearea = :filearea1 OR f.filearea = :filearea2)
-            AND f.contextid = :contextid
-            AND f.filename != :filename
-            AND fd.id $attachsql
-            GROUP BY fd.id";
-    $params = array(
-        'forum' => $forumid,
-        'component' => 'mod_forum',
-        'filearea1' => 'attachment',
-        'filearea2' => 'post',
-        'contextid' => $contextid,
-        'filename' => '.'
-    );
-
-    $params = array_merge($params, $attachparams);
-
-    return $DB->get_records_sql($sql, $params);
-}
-// Fi
