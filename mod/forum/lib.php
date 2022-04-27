@@ -2459,7 +2459,13 @@ function forum_print_discussion_header(&$post, $forum, $group = -1, $datestring 
     }
 
     echo '<td class="lastpost">';
-    $usedate = (empty($post->timemodified)) ? $post->created : $post->timemodified;
+    // @PATCH IOC048: Parches Mod Forum
+    if ($post->timestart and $post->replies === 0) {
+        $usedate = $post->timestart;
+    } else {
+        $usedate = (empty($post->timemodified)) ? $post->modified : $post->timemodified;  // Just in case
+    }
+    // Fi
     $parenturl = '';
     $usermodified = new stdClass();
     $usermodified->id = $post->usermodified;
@@ -4447,6 +4453,11 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
         $groupsel = " AND (d.groupid = ? OR d.groupid = -1)";
         $params[] = $groupid;
     }
+    // @PATCH IOC048: Parches Mod Forum
+    $now = time();
+    $timedposts = ' AND (d.timestart < ? AND (d.timeend = 0 OR d.timeend > ?))';
+    $params[] = $now;
+    $params[] = $now;
 
     $sql = "SELECT p.id
               FROM {forum_posts} p
@@ -4454,8 +4465,8 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
                    LEFT JOIN {forum_read} r        ON (r.postid = p.id AND r.userid = ?)
              WHERE d.forum = ?
                    AND p.modified >= ? AND r.id is NULL
-                   $groupsel";
-
+                   $groupsel $timedposts";
+    // Fi                   
     if ($posts = $DB->get_records_sql($sql, $params)) {
         $postids = array_keys($posts);
         return forum_tp_mark_posts_read($user, $postids);
