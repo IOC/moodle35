@@ -212,7 +212,13 @@
                             </td>
                             <th scope="row" class="topic p-0 align-middle">
                                 <div class="p-3 pl-0">
+                                    {{! @PATCH IOC046: Show the number of attachments in each discussion. }}
+                                    <a class="w-100 h-100 d-block" href="{{discussion.urls.view}}" title="{{discussion.title}}" aria-label="{{discussion.title}}">
+                                    {{! Original }}
+                                    <!--
                                     <a class="w-100 h-100 d-block" href="{{discussion.urls.view}}" title="{{discussion.name}}" aria-label="{{discussion.name}}">
+                                    -->
+                                    {{! Fi }}
                                         {{#shortentext}}100, {{{discussion.name}}}{{/shortentext}}
                                     </a>
                                     <div>

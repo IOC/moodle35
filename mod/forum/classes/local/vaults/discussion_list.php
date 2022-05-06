@@ -418,6 +418,25 @@ class discussion_list extends db_table_vault {
             $includepostsforuser);
         $records = $this->get_db()->get_records_sql($sql, $params, $offset, $limit);
 
+        // @PATCH IOC046: Show the number of attachments in each discussion.
+        $getiddiscussions = static function($discussion) {
+            return $discussion->did;
+        };
+
+        $discussionsids = array_map($getiddiscussions, $records);
+        $context = forum_get_context($forumid);
+        $attachments = $this->forum_get_discussion_num_attachments($forumid, $context->id, $discussionsids);
+
+        global $OUTPUT;
+        foreach ($records as $record) {
+            if (isset($attachments[$record->did])) {
+                $src = $OUTPUT->image_url('t/attachment', 'mod_forum');
+                $title = get_string('overviewnumattachments', 'forum', $attachments[$record->did]->num);
+                $record->p_subject .= "&nbsp;<img src=\"$src\" title=\"$title\" />";
+            }
+        }
+        // Fi.
+
         return $this->transform_db_records_to_entities($records);
     }
 
@@ -561,4 +580,53 @@ class discussion_list extends db_table_vault {
 
         return [$favsql, $favparams];
     }
+
+    // @PATCH IOC046: Show the number of attachments in each discussion.
+    /**
+     * Count the number of attachments in each discussion
+     *
+     * @param int $forumid
+     * @param int $contextid
+     * @param array $discussions
+     * @return array
+     * @throws \coding_exception
+     * @throws \dml_exception
+     */
+    private function forum_get_discussion_num_attachments(int $forumid, int $contextid, array $discussions = []): array {
+
+        global $DB;
+
+        if (empty($discussions)) {
+            return [];
+        }
+
+        [$attachsql, $attachparams] = $DB->get_in_or_equal($discussions, SQL_PARAMS_NAMED);
+
+        $sql = "SELECT fd.id, COUNT(f.id) as num
+            FROM {forum_discussions} as fd
+            JOIN {forum_posts} as fp ON fp.discussion=fd.id
+            JOIN {files} as f ON f.itemid=fp.id
+            WHERE fd.forum = :forum
+            AND f.component = :component
+            AND (f.filearea = :filearea1 OR f.filearea = :filearea2)
+            AND f.contextid = :contextid
+            AND f.filename != :filename
+            AND fd.id $attachsql
+            GROUP BY fd.id";
+
+        $params = [
+            'forum' => $forumid,
+            'component' => 'mod_forum',
+            'filearea1' => 'attachment',
+            'filearea2' => 'post',
+            'contextid' => $contextid,
+            'filename' => '.',
+        ];
+
+        $params = array_merge($params, $attachparams);
+
+        return $DB->get_records_sql($sql, $params);
+    }
+    // Fi.
+
 }
