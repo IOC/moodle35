@@ -494,9 +494,9 @@ $string['numberofreplies'] = 'Number of replies: {$a}';
 $string['olderdiscussions'] = 'Older discussions';
 $string['oldertopics'] = 'Older topics';
 $string['oldpostdays'] = 'Read after days';
-// @PATCH IOC046: Show how many attachments are in each discussion
+// @PATCH IOC046: Show the number of attachments in each discussion.
 $string['overviewnumattachments'] = '{$a} attachments';
-// Fi
+// Fi.
 $string['page-mod-forum-x'] = 'Any forum module page';
 $string['page-mod-forum-view'] = 'Forum module main page';
 $string['page-mod-forum-discuss'] = 'Forum module discussion thread page';

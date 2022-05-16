@@ -169,6 +169,30 @@ class exported_discussion_summaries {
             $summary->discussion->times['modified'] = (int) $latestposts[$summary->discussion->id]->get_time_created();
         });
 
+        // @PATCH IOC043: Export whole forum using portfolio.
+        global $CFG;
+
+        $forumid = $forum->get_id();
+        $context = forum_get_context($forumid);
+
+        if (!empty($CFG->enableportfolios) && has_capability('mod/forum:exportdiscussion', $context)) {
+            require_once $CFG->libdir . '/portfoliolib.php';
+
+            $button = new \portfolio_add_button();
+            $button->set_callback_options('forum_full_portfolio_caller', ['forumid' => $forumid], 'mod_forum');
+            $button = $button->to_html(PORTFOLIO_ADD_FULL_FORM, get_string('exportforum', 'mod_forum'));
+            $buttonextraclass = '';
+
+            if (empty($button)) {
+                // No portfolio plugin available.
+                $button = '&nbsp;';
+                $buttonextraclass = ' noavailable';
+            }
+
+            $exportedposts['exportbutton'] = '<div class="add-to-portfolio-button' . $buttonextraclass . '">' . $button . '</div>';
+        }
+        // Fi.
+
         // Pass the current, preferred sort order for the discussions list.
         $discussionlistvault = $this->vaultfactory->get_discussions_in_forum_vault();
         $sortorder = get_user_preferences('forum_discussionlistsortorder',
