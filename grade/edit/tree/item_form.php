@@ -155,9 +155,6 @@ class edit_item_form extends moodleform {
                          GRADE_DISPLAY_TYPE_PERCENTAGE_LETTER  => get_string('percentageletter', 'grades'),
                          GRADE_DISPLAY_TYPE_PERCENTAGE_REAL    => get_string('percentagereal', 'grades')
                          );
-        // @PATCH IOC022: Correcció formulari element de qualificació
-        //asort($options);
-        // Fi
 
         foreach ($options as $key=>$option) {
             if ($key == $default_gradedisplaytype) {
