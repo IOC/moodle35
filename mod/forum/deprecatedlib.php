@@ -1434,22 +1434,6 @@ function forum_print_latest_discussions($course, $forum, $maxdiscussions = -1, $
         }
     }
 
-    // @PATCH IOC043: Export whole forum using portfolio
-    if (!empty($CFG->enableportfolios) && has_capability('mod/forum:exportdiscussion', $context)) {
-        require_once($CFG->libdir.'/portfoliolib.php');
-        $button = new portfolio_add_button();
-        $button->set_callback_options('forum_full_portfolio_caller', array('forumid' => $forum->id), 'mod_forum');
-        $button = $button->to_html(PORTFOLIO_ADD_FULL_FORM, get_string('exportforum', 'mod_forum'));
-        $buttonextraclass = '';
-        if (empty($button)) {
-            // no portfolio plugin available.
-            $button = '&nbsp;';
-            $buttonextraclass = ' noavailable';
-        }
-        echo html_writer::tag('div', $button, array('class' => 'discussioncontrol exporttoportfolio'.$buttonextraclass));
-    }
-    // Fi
-
     // Get all the recent discussions we're allowed to see.
 
     $getuserlastmodified = ($displayformat == 'header');
