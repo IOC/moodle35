@@ -198,7 +198,7 @@ class edit_category_form extends moodleform {
                          GRADE_DISPLAY_TYPE_PERCENTAGE_REAL    => get_string('percentagereal', 'grades')
                          );
 
-        // @PATCH IOC022 Correcció formulari element de qualificació
+        // @PATCH IOC022 Correcció formulari element de qualificació.
         /*
         asort($options);
         */
