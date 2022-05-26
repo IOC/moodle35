@@ -377,10 +377,23 @@ class restore_controller extends base_controller {
         return $this->info;
     }
 
+    //@PATCH IOC¿?:
+    public function get_logger() {
+        return $this->logger;
+    }
+    // fi
+
     public function execute_plan() {
+        //@PATCH IOC002: performance
+        global $DB;
+        // fi
         // Basic/initial prevention against time/memory limits
         core_php_time_limit::raise(1 * 60 * 60); // 1 hour for 1 course initially granted
         raise_memory_limit(MEMORY_EXTRA);
+
+        //@PATCH IOC002: performance
+        $DB->raise_timeout();
+        // fi
 
         // Release the session so other tabs in the same session are not blocked.
         if ($this->get_releasesession() === backup::RELEASESESSION_YES) {
@@ -513,13 +526,22 @@ class restore_controller extends base_controller {
      * Converts from current format to backup::MOODLE format
      */
     public function convert() {
+        // @PATCH IOC002: performance.
+        global $CFG, $DB;
+        // Original.
+        /*
         global $CFG;
+        */
+        // Fi.
         require_once($CFG->dirroot . '/backup/util/helper/convert_helper.class.php');
 
         // Basic/initial prevention against time/memory limits
         core_php_time_limit::raise(1 * 60 * 60); // 1 hour for 1 course initially granted
         raise_memory_limit(MEMORY_EXTRA);
         $this->progress->start_progress('Backup format conversion');
+        //@PATCH IOC002: performance.
+        $DB->raise_timeout();
+        // Fi.
 
         if ($this->status != backup::STATUS_REQUIRE_CONV) {
             throw new restore_controller_exception('cannot_convert_not_required_status');

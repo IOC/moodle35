@@ -43,6 +43,7 @@
       <INDEXES>
         <INDEX NAME="course" UNIQUE="false" FIELDS="course" COMMENT="The course this assignment instance belongs to."/>
         <INDEX NAME="teamsubmissiongroupingid" UNIQUE="false" FIELDS="teamsubmissiongroupingid" COMMENT="The grouping id for team submissions"/>
+        <INDEX NAME="grade" UNIQUE="false" FIELDS="grade"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="assign_submission" COMMENT="This table keeps information about student interactions with the mod/assign. This is limited to metadata about a student submission but does not include the submission itself which is stored by plugins.">

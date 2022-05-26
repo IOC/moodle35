@@ -745,7 +745,12 @@ function groups_allgroups_course_menu($course, $urlroot, $update = false, $activ
  * @return mixed void or string depending on $return param
  */
 function groups_print_activity_menu($cm, $urlroot, $return=false, $hideallparticipants=false) {
+    // @PATCH IOC004
+    global $DB, $CFG, $USER, $OUTPUT;
+    /*
     global $USER, $OUTPUT;
+    */
+    // Fi.
 
     if ($urlroot instanceof moodle_url) {
         // no changes necessary
@@ -779,6 +784,10 @@ function groups_print_activity_menu($cm, $urlroot, $return=false, $hideallpartic
         $usergroups = groups_get_all_groups($cm->course, $USER->id, $cm->groupingid);
     } else {
         $allowedgroups = groups_get_all_groups($cm->course, $USER->id, $cm->groupingid); // only assigned groups
+        // @PATCH IOC004
+        // Filter groups using availability conditions (groups and groupings)
+        $allowedgroups = groups_filter_groups_groupings_restricted_activity($cm, $allowedgroups);
+        // Fi
     }
 
     $activegroup = groups_get_activity_group($cm, true, $allowedgroups);
@@ -789,6 +798,66 @@ function groups_print_activity_menu($cm, $urlroot, $return=false, $hideallpartic
     }
 
     $groupsmenu += groups_sort_menu_options($allowedgroups, $usergroups);
+
+    // @PATCH IOC004: forum specific group filter :-(
+    $unread = false;
+    if ($allowedgroups and $DB->record_exists('modules', array('id' => $cm->module, 'name' => 'forum'))) {
+        $forum = $DB->get_record('forum', array('id' => $cm->instance));
+        if (forum_tp_can_track_forums($forum)) {
+            list ($sqlingroups, $groupids) = $DB->get_in_or_equal(array_keys($allowedgroups), SQL_PARAMS_NAMED);
+            $cutoffdate = isset($CFG->forum_oldpostdays) ? (time() - ($CFG->forum_oldpostdays * 24 * 60 * 60)) : 0;
+            $now = time();
+            $sql = "SELECT d.groupid, COUNT(p.id) AS count
+                    FROM {forum_posts} p
+                    JOIN {forum_discussions} d ON p.discussion = d.id
+                    LEFT JOIN {forum_read} r ON r.postid = p.id AND r.userid = :userid
+                    WHERE d.forum = :forumid AND d.groupid $sqlingroups
+                    AND d.timemodified >= :timemodified AND p.modified >= :modified AND r.id is NULL
+                    AND (d.timestart < :now1 AND (d.timeend = 0 OR d.timeend > :now2))
+                    GROUP BY d.groupid";
+            $params = array(
+                'userid' => $USER->id,
+                'forumid' => $cm->instance,
+                'timemodified' => $cutoffdate,
+                'modified' => $cutoffdate,
+                'now1' => $now,
+                'now2' => $now,
+            );
+            $unread = $DB->get_records_sql($sql, array_merge($params, $groupids));
+        }
+    }
+
+    if ($unread and $groupsmenu) {
+        if (empty($usergroups)) {
+            foreach ($groupsmenu as $key => $group) {
+                if (isset($unread[$key])) {
+                    if ($unread[$key]->count == 1) {
+                        $unreadstr = get_string('unreadpostsone', 'forum');
+                    } else {
+                        $unreadstr = get_string('unreadpostsnumber', 'forum', $unread[$key]->count);
+                    }
+                    $groupsmenu[$key] .= " ($unreadstr)";
+                }
+            }
+        } else {
+            foreach (array(1, 2) as $position) {
+                if (isset($groupsmenu[$position]) && is_array($groupsmenu[$position])) {
+                    list ($keytemp, ) = each($groupsmenu[$position]);
+                    foreach ($groupsmenu[$position][$keytemp] as $key => $group) {
+                        if (isset($unread[$key])) {
+                            if ($unread[$key]->count == 1) {
+                                $unreadstr = get_string('unreadpostsone', 'forum');
+                            } else {
+                                $unreadstr = get_string('unreadpostsnumber', 'forum', $unread[$key]->count);
+                            }
+                            $groupsmenu[$position][$keytemp][$key] .= " ($unreadstr)";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // Fi
 
     if ($groupmode == VISIBLEGROUPS) {
         $grouplabel = get_string('groupsvisible');
@@ -1353,4 +1422,56 @@ function groups_get_activity_shared_group_members($cm, $userid = null) {
         return [];
     }
     return groups_get_groups_members($groupsids);
+}
+
+/**
+ * Returns groups available using group and grouping restrictions.
+ * @PATCH IOC004
+ *
+ * @param stdClass|cm_info $cm course module
+ * @param array $groups groups
+ * @return array a list of groups
+ */
+function groups_filter_groups_groupings_restricted_activity($cm, $groups) {
+        if ($cm->availability) {
+            $groupcond = array();
+            $groupingcond = array();
+            $modinfo = get_fast_modinfo($cm->course);
+            $info = new \core_availability\info_module($modinfo->get_cm($cm->id));
+            $tree = $info->get_availability_tree();
+            list($innernot, $andoperator) = $tree->get_logic_flags(false);
+            $onlygroupsin = ((empty($innernot) and empty($andoperator)) or (empty($innernot) and !empty($andoperator)));
+            if ($dates = $tree->get_all_children('availability_group\condition')) {
+                $restrictedgroups = array_map(function ($g) {
+                    return $g->groupid;
+                }, $dates);
+                if (!in_array(0, $restrictedgroups)) {
+                    if ($onlygroupsin) {
+                        $groupcond = array_intersect_key($groups, array_flip($restrictedgroups));
+                    } else {
+                        $groupcond = array_diff_key($groups, array_flip($restrictedgroups));
+                    }
+                } else {
+                    $groupcond = $groups;
+                }
+            }
+            if ($dates = $tree->get_all_children('availability_grouping\condition')) {
+                $restrictedgroups = array();
+                $restrictedgroupings = array_map(function ($g) {
+                    return $g->groupingid;
+                }, $dates);
+                foreach ($restrictedgroupings as $groupingid) {
+                    $restrictedgroups += groups_get_all_groups($cm->course, 0, $groupingid);
+                }
+                if ($onlygroupsin) {
+                    $groupingcond = array_intersect_key($groups, $restrictedgroups);
+                } else {
+                    $groupingcond = array_diff_key($groups, $restrictedgroups);
+                }
+            }
+            if (!empty($groupcond) || !empty($groupingcond)) {
+                $groups = $groupcond + $groupingcond;
+            }
+        }
+        return $groups;
 }

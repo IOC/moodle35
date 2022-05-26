@@ -395,6 +395,12 @@ class quiz_overview_report extends quiz_attempts_report {
         global $DB;
         $this->unlock_session();
 
+        // @PATCH IOC
+        set_time_limit(3600);
+        raise_memory_limit(MEMORY_EXTRA);
+        $DB->raise_timeout();
+        // Fi.
+
         $userfieldsapi = \core_user\fields::for_name();
         $sql = "SELECT quiza.*, " . $userfieldsapi->get_sql('u', false, '', '', false)->selects . "
                   FROM {quiz_attempts} quiza

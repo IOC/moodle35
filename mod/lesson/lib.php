@@ -1120,7 +1120,13 @@ function lesson_get_import_export_formats($type) {
  * @return bool false if file not found, does not return if found - justsend the file
  */
 function lesson_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+    // @PATCH IOC
+    global $CFG, $DB, $USER;
+    // Original.
+    /*
     global $CFG, $DB;
+    */
+    // Fi.
 
     if ($context->contextlevel != CONTEXT_MODULE) {
         return false;
@@ -1166,6 +1172,21 @@ function lesson_pluginfile($course, $cm, $context, $filearea, $args, $forcedownl
         }
         $fullpath = "/$context->id/mod_lesson/$filearea/0/".implode('/', $args);
 
+    // @PATCH IOC
+    } else if ($filearea === 'attempt') {
+        $conditions = array(
+            'lessonid' => $lesson->id,
+            'userid' => $USER->id,
+            'id' => isset($args[0]) ? $args[0] : 0,
+        );
+
+        if (!has_capability('mod/lesson:manage', $context) and !$DB->record_exists('lesson_attempts', $conditions)) {
+            return false;
+        }
+        $fullpath = "/$context->id/mod_lesson/$filearea/".implode('/', $args);
+    // Fi.
+
+
     } else {
         return false;
     }
@@ -1194,6 +1215,9 @@ function lesson_get_file_areas() {
     $areas['page_responses'] = get_string('pageresponses', 'mod_lesson');
     $areas['essay_responses'] = get_string('essayresponses', 'mod_lesson');
     $areas['essay_answers'] = get_string('essayresponses', 'mod_lesson');
+    // @PATCH IOC
+    $areas['attempt'] = get_string('attempts', 'mod_lesson');
+    // Fi.
     return $areas;
 }
 

@@ -563,6 +563,9 @@ $string['submissionstatus_reopened'] = 'Reopened';
 $string['submissionstatus_'] = 'No submission';
 $string['submissionstatus'] = 'Submission status';
 $string['submissionstatus_submitted'] = 'Submitted for grading';
+// @PATCH IOC
+$string['submissionstatus_submitted_deleted'] = 'Submission deleted';
+// Fi.
 $string['submissionsummary'] = '{$a->status}. Last modified on {$a->timemodified}';
 $string['submissionteam'] = 'Group';
 $string['submissiontypes'] = 'Submission types';

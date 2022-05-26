@@ -173,20 +173,28 @@ class assign_submission_comments extends assign_submission_plugin {
      *
      * @return bool
      */
+    // @PATCH IOC
+    /*
     public function is_enabled() {
         global $CFG;
 
         return (!empty($CFG->usecomments));
     }
+    */
+    // Fi.
 
     /**
      * Automatically hide the setting for the submission plugin.
      *
      * @return bool
      */
+    // @PATCH IOC
+    /*
     public function is_configurable() {
         return false;
     }
+    */
+    // Fi.
 
     /**
      * Return the plugin configs for external functions.

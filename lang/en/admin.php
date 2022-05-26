@@ -215,6 +215,9 @@ $string['configdefaultuserroleid'] = 'All logged in users will be given the capa
 $string['configdeleteincompleteusers'] = 'After this period, any account without the first name, last name or email field filled in is deleted.';
 $string['configdeleteunconfirmed'] = 'For certain authentication methods, such as email-based self-registration, users must confirm their account within a certain time. After this period, any old unconfirmed accounts are deleted.';
 $string['configdenyemailaddresses'] = 'To deny email addresses from particular domains list them here in the same way.  All other domains will be accepted. To deny subdomains add the domain with a preceding \'.\'. eg <strong>hotmail.com yahoo.co.uk .live.com</strong>';
+// @PATCH IOC012
+$string['configemptytrash'] = 'After this period, old files are deleted.';
+// Fi.
 $string['configenableanalytics'] = 'Analytics models, such as \'Students at risk of dropping out\' or \'Upcoming activities due\', can generate predictions, send insight notifications and offer further actions such as messaging users.';
 $string['configenableblogs'] = 'This switch provides all site users with their own blog.';
 $string['configenabledevicedetection'] = 'Enables detection of mobiles, smartphones, tablets or default devices (desktop PCs, laptops, etc) for the application of themes and other features.';
@@ -252,6 +255,9 @@ $string['configfiltermatchoneperpage'] = 'Automatic linking filters will only ge
 $string['configfiltermatchonepertext'] = 'Automatic linking filters will only generate a single link for the first matching text instance found in each item of text on the page. All others are ignored. This setting has no effect if \'Filter match once per page\' is enabled.';
 $string['configfilternavigationwithsystemcontext'] = 'Normal use of the filtering is tied to the context in which it is used (e.g. course context), but for the site navigation, explicitly making everything filter with site context can yield performance improvements when using "content and headings" filtering.';
 $string['configfilteruploadedfiles'] = 'Process all uploaded HTML and text files with the filters before displaying them, only uploaded HTML files or none at all.';
+// @PATCH IOC012
+$string['configforcedefaultmymoodle'] = 'Disable "Customize this page" for My Moodle and use the default page.';
+// Fi.
 $string['configforcelogin'] = 'Normally, the front page and the course listings (but not courses) can be read by people without logging in to the site. If you want to force people to log in before they do ANYTHING on the site, then you should enable this setting.';
 $string['configforceloginforprofiles'] = 'This setting forces people to log in as a real (non-guest) account before viewing any user\'s profile. If you disabled this setting, you may find that some users post advertising (spam) or other inappropriate content in their profiles, which is then visible to the whole world.';
 $string['configfrontpage'] = 'The items selected above will be displayed on the site\'s front page.';
@@ -286,6 +292,9 @@ $string['configmaxbytes'] = 'This specifies a maximum size for files uploaded to
 $string['configmaxconsecutiveidentchars'] = 'Passwords must not have more than this number of consecutive identical characters. Use 0 to disable this check.';
 $string['configmaxeditingtime'] = 'This specifies the amount of time people have to re-edit forum postings, glossary comments etc.  Usually 30 minutes is a good value.';
 $string['configmaxevents'] = 'Events to Lookahead';
+// @PATCH IOC012
+$string['configmaxeventsreturned'] = 'Maximum number of events to show';
+// Fi.
 $string['configmessaging'] = 'If enabled, users can send messages to other users on the site.';
 $string['configmessagingallowemailoverride'] = 'Allow users to have email message notifications sent to an email address other than the email address in their profile';
 $string['configmessagingdefaultpressenter'] = 'Whether \'Use enter to send\' is enabled by default in users\' messaging settings.';
@@ -308,6 +317,9 @@ $string['confignotifyloginfailures'] = 'Send login failure notification messages
 $string['confignotifyloginthreshold'] = 'If notifications about failed logins are active, how many failed login attempts by one user or one IP address is it worth notifying about?';
 $string['confignotloggedinroleid'] = 'Users who are not logged in to the site will be treated as if they have this role granted to them at the site context.  Guest is almost always what you want here, but you might want to create roles that are less or more restrictive.  Things like creating posts still require the user to log in properly.';
 $string['configopentowebcrawlers'] = 'If you enable this setting, then search engines will be allowed to enter your site as a guest.  In addition, people coming in to your site via a search engine will automatically be logged in as a guest.  Note that this only provides transparent access to courses that already allow guest access.';
+// @PATCH IOC012
+$string['configoutputcompression'] = 'Compress pages if the browser sends an "Accept-Encoding: gzip" or "deflate" header. "Content-Encoding: gzip" (respectively "deflate") and "Vary: Accept-Encoding" headers are added to the output.';
+// Fi.
 $string['configoverride'] = 'Defined in config.php';
 $string['configpasswordpolicy'] = 'If enabled, user passwords will be checked against the password policy as specified in the settings below. Enabling the password policy will not affect existing users until they decide to, or are required to, change their password, or the \'Check password on login\' setting is enabled.';
 $string['configpasswordpolicycheckonlogin'] = 'If enabled, user passwords will be checked against the password policy each time users log in. If the check fails, the user will be required to change their password before proceeding.
@@ -552,6 +564,9 @@ $string['emoticons_desc'] = 'This form defines the emoticons (or smileys) used a
 * Alternative text (optional) - String identifier and component of the alternative text of the emoticon.';
 $string['emoticonsreset'] = 'Reset emoticons setting to default values';
 $string['emptysettingvalue'] = 'Empty';
+// @PATCH IOC012
+$string['emptytrash'] = 'Empty trash';
+// Fi.
 $string['enableanalytics'] = 'Analytics';
 $string['enableblogs'] = 'Enable blogs';
 $string['enablecalendarexport'] = 'Enable calendar export';
@@ -625,6 +640,9 @@ $string['filtersettingsgeneral'] = 'General filter settings';
 $string['filteruploadedfiles'] = 'Filter uploaded files';
 $string['forceclean'] = 'Content cleaning everywhere';
 $string['forceclean_desc'] = 'Content added to the site is normally cleaned before being displayed, to remove anything which might be a security threat. However, content is not cleaned in certain places such as activity descriptions, page resources or HTML blocks to allow scripts, media, inline frames etc. to be added. If this setting is enabled, ALL content will be cleaned. This may result in existing content no longer displaying correctly.';
+// @PATCH IOC012
+$string['forcedefaultmymoodle'] = 'Force default My Moodle';
+// Fi.
 $string['forcelogin'] = 'Force users to log in';
 $string['forceloginforprofileimage'] = 'Force users to log in to view user pictures';
 $string['forceloginforprofileimage_help'] = 'If enabled, users must log in in order to view user profile pictures and the default user picture will be used in all notification emails.';
@@ -666,6 +684,9 @@ $string['helpcalendarcustomexport'] = 'Enable custom date range export option in
 $string['helpexportlookahead'] = 'How many days in the future does the calendar look for events during export for the custom export option?';
 $string['helpexportlookback'] = 'How many days in the past does the calendar look for events during export for the custom export option?';
 $string['helpforcetimezone'] = 'You can allow users to individually select their timezone, or force a timezone for everyone.';
+// @PATCH IOC012
+$string['helpmaxeventsreturned'] = 'How many (maximum) events are shown to users?';
+// Fi.
 $string['helpshowicalsource'] = 'If enabled, the subscription name and link will be shown for iCal-imported events.';
 $string['helpsitemaintenance'] = 'For upgrades and other work';
 $string['helpstartofweek'] = 'Which day starts the week in the calendar?';
@@ -938,6 +959,9 @@ $string['passwordchangelogout'] = 'Log out after password change';
 $string['passwordchangelogout_desc'] = 'If enabled, when a password is changed, all browser sessions are terminated, apart from the one in which the new password is specified. (This setting does not affect password changes via bulk user upload.)';
 $string['passwordchangetokendeletion'] = 'Remove web service access tokens after password change';
 $string['passwordchangetokendeletion_desc'] = 'If enabled, when a password is changed, all the user web service access tokens are deleted.';
+// @PATCH IOC012
+$string['outputcompression'] = 'PHP output compression';
+// Fi.
 $string['passwordpolicy'] = 'Password policy';
 $string['passwordpolicycheckonlogin'] = 'Check password on login';
 $string['passwordresettime'] = 'Maximum time to validate password reset request';

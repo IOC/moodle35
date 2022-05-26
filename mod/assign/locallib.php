@@ -41,6 +41,10 @@ define('ASSIGN_FILTER_REQUIRE_GRADING', 'requiregrading');
 define('ASSIGN_FILTER_GRANTED_EXTENSION', 'grantedextension');
 define('ASSIGN_FILTER_DRAFT', 'draft');
 
+// @PATCH IOC
+define('ASSIGN_FILTER_DRAFTS', 'drafts');
+// Fi.
+
 // Marker filter for grading page.
 define('ASSIGN_MARKER_FILTER_NO_MARKER', -1);
 
@@ -2183,6 +2187,24 @@ class assign {
                 if (empty($tablesort)) {
                     $orderby = "COALESCE(s.timecreated, " . time() . ") ASC, COALESCE(s.id, " . PHP_INT_MAX . ") ASC, um.id ASC";
                 }
+            // @PATCH IOC
+            } else {
+                $filter = get_user_preferences('assign_filter', '');
+                if ($filter == ASSIGN_FILTER_REQUIRE_GRADING) {
+                    $additionaljoins .= " LEFT JOIN {assign_user_mapping} um
+                              ON u.id = um.userid
+                             AND um.assignment = :assignmentid1
+                       LEFT JOIN {assign_submission} s
+                              ON u.id = s.userid
+                             AND s.assignment = :assignmentid2
+                             AND s.latest = 1
+                        ";
+                    $params['assignmentid1'] = (int) $instance->id;
+                    $params['assignmentid2'] = (int) $instance->id;
+
+                    $orderby = "COALESCE(s.timemodified, " . time() . ") ASC";
+                }
+            // Fi.
             }
 
             if ($instance->markingworkflow &&
@@ -2772,6 +2794,12 @@ class assign {
             $flags->mailed = 0;
         }
 
+        // @PATCH IOC
+        if ($grade->grade === null) {
+            $flags->mailed = 1;
+        }
+        // Fi.
+
         return $this->update_user_flags($flags);
     }
 
@@ -2847,8 +2875,37 @@ class assign {
             $submission = $this->get_user_submission($grade->userid, false);
         }
 
-        // Only push to gradebook if the update is for the most recent attempt.
+        // @PATCH IOC
+        $gradeattempt = false;
         if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+            $lastsqlgrade = 'SELECT g.grade, g.attemptnumber
+                                FROM {assign_grades} g
+                                LEFT JOIN {assign_grades} gg
+                                ON (g.userid = gg.userid AND g.assignment = gg.assignment
+                                    AND g.attemptnumber < gg.attemptnumber)
+                                WHERE gg.userid is NULL AND g.assignment = :assignid AND g.userid = :userid';
+            $params = array(
+                'assignid' => $submission->assignment,
+                'userid' => $submission->userid,
+            );
+
+            if ($lastgrade = $DB->get_record_sql($lastsqlgrade, $params)) {
+                $gradeattempt = ( $lastgrade->attemptnumber == $grade->attemptnumber ||
+                    (($lastgrade->attemptnumber - 1) == $grade->attemptnumber && (is_null($lastgrade->grade) || $lastgrade->grade < 0 )));
+            }
+        }
+        // Fi.
+
+        // Only push to gradebook if the update is for the most recent attempt.
+
+        // @PATCH IOC
+        if ($submission && $submission->attemptnumber != $grade->attemptnumber && !$gradeattempt) {
+        // Original.
+        /* 
+        if ($submission && $submission->attemptnumber != $grade->attemptnumber) {
+        */
+        // Fi.
+
             return true;
         }
 
@@ -3390,6 +3447,10 @@ class assign {
         $params = array('overflowdiv' => true, 'context' => $this->get_context());
         $result .= format_text($finaltext, $format, $params);
 
+        // @PATCH IOC
+        $portfoliohtml = $result;
+        // Fi.
+
         if ($CFG->enableportfolios && has_capability('mod/assign:exportownsubmission', $this->context)) {
             require_once($CFG->libdir . '/portfoliolib.php');
 
@@ -3412,9 +3473,23 @@ class assign {
             } else {
                 $button->set_formats(PORTFOLIO_FORMAT_PLAINHTML);
             }
+
+            // @PATCH IOC
+            $portfoliohtml .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+            // Original.
+            /*
             $result .= $button->to_html(PORTFOLIO_ADD_TEXT_LINK);
+            */
+            // Fi.
         }
+
+        // @PATCH IOC
+        return array($result, $portfoliohtml);
+        // Original.
+        /*
         return $result;
+        */
+        // Fi.
     }
 
     /**
@@ -3621,7 +3696,13 @@ class assign {
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 } else {
                     $fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
+                    // @PATCH IOC
+                    $prefix = str_replace('_', ' ', $groupname . $student->lastname .' '. $student->firstname);
+                    // Original.
+                    /*
                     $prefix = str_replace('_', ' ', $groupname . $fullname);
+                    */
+                    // Fi.
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 }
 
@@ -7726,7 +7807,13 @@ class assign {
                     $mform->addHelpButton('gradedisabled', 'gradeoutofhelp', 'assign');
                 }
             } else {
+                // @PATCH IOC
+                $grademenu = array(-1 => get_string('nograde'));
+                $grademenu += make_grades_menu($this->get_instance()->grade);
+                /*
                 $grademenu = array(-1 => get_string("nograde")) + make_grades_menu($this->get_instance()->grade);
+                */
+                // Fi.
                 if (count($grademenu) > 1) {
                     $gradingelement = $mform->addElement('select', 'grade', get_string('gradenoun') . ':', $grademenu);
 
@@ -7912,6 +7999,17 @@ class assign {
 
         $mform->addElement('hidden', 'action', 'submitgrade');
         $mform->setType('action', PARAM_ALPHA);
+
+        // @PATCH IOC
+        if ($this->get_instance()->submissiondrafts) {
+            $submission = $this->get_user_submission($userid, false);
+            if ($submission and $submission->status == ASSIGN_SUBMISSION_STATUS_SUBMITTED) {
+                $mform->addElement('checkbox', 'reverttodraft', '',
+                                   get_string('reverttodraftshort', 'assign'));
+                $mform->closeHeaderBefore('reverttodraft');
+            }
+        }
+        // Fi.
 
         if (!$gradingpanel) {
 
@@ -8431,6 +8529,13 @@ class assign {
                 // Handle the case when grade is set to No Grade.
                 if (isset($formdata->grade)) {
                     $grade->grade = grade_floatval(unformat_float($formdata->grade));
+
+                    // @PATCH IOC
+                    if ($formdata->grade == -1) {
+                        $grade->grade = null;
+                    }
+                    // Fi.
+
                 }
             }
             if (isset($formdata->workflowstate) || isset($formdata->allocatedmarker)) {
@@ -8494,6 +8599,17 @@ class assign {
         if (!isset($formdata->sendstudentnotifications) || $formdata->sendstudentnotifications) {
             $this->notify_grade_modified($grade, true);
         }
+
+        // @PATCH IOC
+        if (!empty($formdata->reverttodraft)) {
+            $submission = $this->get_user_submission($userid, false);
+            if ($submission) {
+                $submission->status = ASSIGN_SUBMISSION_STATUS_DRAFT;
+                $this->update_submission($submission, false);
+            }
+        }
+        // Fi.
+
     }
 
 
