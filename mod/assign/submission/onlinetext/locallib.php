@@ -370,7 +370,12 @@ class assign_submission_onlinetext extends assign_submission_plugin {
 
         if ($onlinetextsubmission) {
             // This contains the shortened version of the text plus an optional 'Export to portfolio' button.
+            // @PATCH IOC
+            list($text, ) = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+            /*
             $text = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+            */
+            // Fi.
                                                              $onlinetextsubmission->submission,
                                                              $this->get_type(),
                                                              'onlinetext',
@@ -461,11 +466,21 @@ class assign_submission_onlinetext extends assign_submission_plugin {
         if ($onlinetextsubmission) {
 
             // Render for portfolio API.
+            // @PATCH IOC
+            list(, $result) = $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
+                                                                       $onlinetextsubmission->submission,
+                                                                       $this->get_type(),
+                                                                       'onlinetext',
+                                                                       'assignsubmission_onlinetext');
+            // Original.
+            /*
             $result .= $this->assignment->render_editor_content(ASSIGNSUBMISSION_ONLINETEXT_FILEAREA,
                                                                 $onlinetextsubmission->submission,
                                                                 $this->get_type(),
                                                                 'onlinetext',
                                                                 'assignsubmission_onlinetext');
+            */
+            // Fi.
 
             $plagiarismlinks = '';
 

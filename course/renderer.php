@@ -900,8 +900,16 @@ class core_course_renderer extends plugin_renderer_base {
         // This div is used to indent the content.
         $output .= html_writer::div('', $indentclasses);
 
+        // @PATCH IOC010: new styles
+        $customclass = !empty($mod->content) ? ' mod-restriction-col' : '';
+
+        // Start a wrapper for the actual content to keep the indentation consistent
+        $output .= html_writer::start_tag('div', array('class' => 'mod-restriction' . $customclass));
+        /*
         // Start a wrapper for the actual content to keep the indentation consistent
         $output .= html_writer::start_tag('div');
+        */
+        // Fi.
 
         // Display the link to the module (or do nothing if module has no url)
         $cmname = $this->course_section_cm_name($mod, $displayoptions);

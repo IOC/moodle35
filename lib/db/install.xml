@@ -920,8 +920,7 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="userid-courseid" UNIQUE="true" FIELDS="userid, courseid"/>
-        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
-        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+        <INDEX NAME="courseid-timeaccess" UNIQUE="false" FIELDS="courseid, timeaccess"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="user_password_history" COMMENT="A rotating log of hashes of previously used passwords for each user.">

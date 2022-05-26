@@ -198,6 +198,9 @@ class question_engine_data_mapper {
                 $value = (string) $value;
             }
 
+            // @PATCH IOC
+            $value = preg_replace('/’/', '\'', $value);
+            // Fi.
             $data = new stdClass();
             $data->attemptstepid = $stepid;
             $data->name = $name;

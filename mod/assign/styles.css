@@ -81,6 +81,15 @@
     background-color: #cfefcf;
 }
 
+/* @PATHC IOC */
+.path-mod-assign td.submissionstatussubmitteddeleted,
+.path-mod-assign div.submissionstatussubmitteddeleted,
+.path-mod-assign a:link.submissionstatussubmitteddeleted {
+    color: black;
+    background-color: #ffb500;
+}
+/* Fi. */
+
 .path-mod-assign td.submissionlocked,
 .path-mod-assign div.submissionlocked {
     color: black;
@@ -950,6 +959,9 @@
     left: 0;
     width: 100%;
     height: 60px;
+/* @PATCH IOC */
+    background-color: #fff;
+/* Fi. */
 }
 
 .path-mod-assign [data-region="grade-actions"] {

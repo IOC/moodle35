@@ -626,6 +626,12 @@ class assign_submission_file extends assign_submission_plugin {
         return (array) $configs;
     }
 
+    // @PATCH IOC
+    public function is_convertible() {
+        return true;
+    }
+    // Fi.
+
     /**
      * Get the type sets configured for this assignment.
      *

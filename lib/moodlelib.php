@@ -247,6 +247,14 @@ define('PARAM_URL',      'url');
  */
 define('PARAM_USERNAME',    'username');
 
+// @PATCH IOC
+/**
+ * PARAM_USERNAME_IOC - Clean username to only contains allowed characters. This is to be used ONLY when manually creating user
+ * accounts, do NOT use when syncing with external systems!!
+ */
+define('PARAM_USERNAME_IOC',    'usernameioc');
+// Fi.
+
 /**
  * PARAM_STRINGID - used to check if the given string is valid string identifier for get_string()
  */
@@ -1220,6 +1228,18 @@ function clean_param($param, $type) {
             }
             return $param;
 
+        // @PATCH IOC:
+        case PARAM_USERNAME_IOC:
+            $param = fix_utf8($param);
+            $param = trim($param);
+            if (empty($CFG->extendedusernamechars)) {
+                $param = str_replace(" " , "", $param);
+                // Regular expression, eliminate all chars EXCEPT:
+                // alphanum, dash (-), underscore (_), at sign (@) and period (.) characters.
+                $param = preg_replace('/[^-\.@_A-Za-z0-9]/', '', $param);
+            }
+            return $param;
+        // Fi.
         case PARAM_EMAIL:
             $param = fix_utf8($param);
             if (validate_email($param)) {
@@ -5115,6 +5135,18 @@ function remove_course_contents($courseid, $showfeedback = true, array $options 
     remove_course_grades($courseid, $showfeedback);
     remove_grade_letters($coursecontext, $showfeedback);
 
+    // @PATCH IOC . Remove grades history
+    $DB->execute('DELETE gg.* ' .
+                 'FROM {grade_grades_history} gg ' .
+                 'JOIN {grade_items_history} gi ON gi.oldid = gg.itemid ' .
+                 'WHERE gi.courseid = :courseid',
+                 array('courseid' => $courseid));
+    $DB->delete_records('grade_items_history', array('courseid' => $courseid));
+    $DB->delete_records('grade_categories_history', array('courseid' => $courseid));
+    $DB->delete_records('grade_outcomes_history', array('courseid' => $courseid));
+    $DB->delete_records('scale_history', array('courseid' => $courseid));
+    // Fi.
+
     // Delete course blocks in any all child contexts,
     // they may depend on modules so delete them first.
     $childcontexts = $coursecontext->get_child_contexts(); // Returns all subcontexts since 2.2.
@@ -5385,6 +5417,11 @@ function reset_course_userdata($data) {
     require_once($CFG->libdir.'/completionlib.php');
     require_once($CFG->dirroot.'/completion/criteria/completion_criteria_date.php');
     require_once($CFG->dirroot.'/group/lib.php');
+    // @PATCH IOC
+    set_time_limit(3600);
+    raise_memory_limit(MEMORY_EXTRA);
+    $DB->raise_timeout();
+    // Fi.
 
     $data->courseid = $data->id;
     $context = context_course::instance($data->courseid);
@@ -6144,10 +6181,20 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
             $messagehtml = trim(text_to_html($messagetext));
         }
         $context['body'] = $messagehtml;
+
+        // @PATCH IOC
+        $context['noreply'] = "<br /><br />" . str_repeat('-', 68) . "<br />" . get_string('noreply', 'message');
+        // Fi.
+
         $messagehtml = $renderer->render_from_template('core/email_html', $context);
     }
 
     $context['body'] = html_to_text(nl2br($messagetext));
+
+    // @PATCH IOC
+    $context['noreply'] = "\n\n" . str_repeat('-', 68) . "\n" . get_string('noreply', 'message');
+    // Fi.
+
     $mail->Subject = $renderer->render_from_template('core/email_subject', $context);
     $mail->FromName = $renderer->render_from_template('core/email_fromname', $context);
     $messagetext = $renderer->render_from_template('core/email_text', $context);
@@ -6217,7 +6264,14 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
     }
 
     // Check if the email should be sent in an other charset then the default UTF-8.
+    // @PATCH IOC
+    if ((!empty($CFG->sitemailcharset) || !empty($CFG->allowusermailcharset))
+        && empty($CFG->local_xtecmail_app)) {
+    // Original
+    /*
     if ((!empty($CFG->sitemailcharset) || !empty($CFG->allowusermailcharset))) {
+    */
+    // Fi.
 
         // Use the defined site mail charset or eventually the one preferred by the recipient.
         $charset = $CFG->sitemailcharset;
@@ -6265,6 +6319,38 @@ function email_to_user($user, $from, $subject, $messagetext, $messagehtml = '', 
             debugging("Email DKIM selector chosen due to {$mail->From} but no certificate found at $pempath", DEBUG_DEVELOPER);
         }
     }
+
+    // @PATCH IOC
+    if (!empty($CFG->local_xtecmail_app)) {
+        require_once("$CFG->dirroot/lib/soaplib.php");
+        require_once("$CFG->dirroot/lib/xtecmail/lib.php");
+        $xm = new xtecmail($CFG->local_xtecmail_app,
+                           $CFG->local_xtecmail_sender,
+                           $CFG->local_xtecmail_env);
+        $to = array();
+        foreach ($temprecipients as $recipient) {
+            $to[] = $recipient[0];
+        }
+        $replyto = $tempreplyto ? $tempreplyto[0][0] : $mail->From;
+        $attachments = array();
+        foreach ($mail->GetAttachments() as $attachment) {
+            $attachments[] = array('filename' => $attachment[2],
+                                   'content' => file_get_contents($attachment[0]),
+                                   'mimetype' => $attachment[4]);
+        }
+        try {
+            $xm->send($to, array(), array(), $replyto, $mail->Subject,
+                      $mail->Body, $mail->ContentType, $attachments);
+            set_send_count($user);
+            return true;
+        } catch (xtecmailerror $e) {
+            if (CLI_SCRIPT) {
+                mtrace('Error: xtecmail: '.$e->getMessage());
+            }
+            return false;
+        }
+    }
+    // Fi.
 
     if ($mail->send()) {
         set_send_count($user);
@@ -8254,6 +8340,12 @@ function moodle_setlocale($locale='') {
  * @return int The count of words in the specified string
  */
 function count_words($string) {
+    // @PATCH IOC
+    // Replace line breaks and end paragrahs by one space
+    static $toreplace = array('<br />', '</p>');
+    $string = str_replace($toreplace, ' ', $string);
+    // Fi.
+
     // Before stripping tags, add a space after the close tag of anything that is not obviously inline.
     // Also, br is a special case because it definitely delimits a word, but has no close tag.
     $string = preg_replace('~
@@ -9223,9 +9315,20 @@ function getremoteaddr($default='0.0.0.0') {
                 return !\core\ip_utils::is_ip_in_subnet_list($ip, $CFG->reverseproxyignore ?? '', ',');
             });
 
+            // @PATCH IOC
+            if (count($forwardedaddresses) > 1) {
+                $forwardedaddresses = array_filter($forwardedaddresses, create_function('$ip', 'return $ip != "127.0.0.1";'));
+                $address = count($forwardedaddresses) ? array_shift($forwardedaddresses) : $default;
+            } else {
+                $address = $forwardedaddresses[0];
+            }
+            // Original.
+            /*
             // Multiple proxies can append values to this header including an
             // untrusted original request header so we must only trust the last ip.
             $address = end($forwardedaddresses);
+            */
+            // Fi.
 
             if (substr_count($address, ":") > 1) {
                 // Remove port and brackets from IPv6.

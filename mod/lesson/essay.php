@@ -131,6 +131,12 @@ switch ($mode) {
                 $attempt->correct = 0;
             }
 
+            // @PATCH IOC
+            if (!isset($form->essaygrading)) {
+                $essayinfo = file_postupdate_standard_editor($essayinfo, 'response', array('noclean'=>true, 'maxfiles'=>EDITOR_UNLIMITED_FILES, 'maxbytes'=>$PAGE->course->maxbytes), context_module::instance($PAGE->cm->id), 'mod_lesson', 'attempt', $attempt->id);
+            }
+            // Fi.
+
             $attempt->useranswer = serialize($essayinfo);
 
             $DB->update_record('lesson_attempts', $attempt);
@@ -475,7 +481,17 @@ switch ($mode) {
         $data->attemptid = $attemptid;
         $data->score = $essayinfo->score;
         $data->question = format_text($currentpage->contents, $currentpage->contentsformat, $formattextdefoptions);
+
+        // @PATCH IOC
+        $essayinfo->answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $context->id, 'mod_lesson',
+                                                     'attempt', $attemptid);
+        $data->studentanswer = format_text($essayinfo->answer, $essayinfo->answerformat,
+        // Original.
+        /*
         $data->studentanswer = format_text($answer, $essayinfo->answerformat,
+        */
+        // Fi.
+
                 array('context' => $context, 'para' => true));
         $data->response = $essayinfo->response;
         $data->responseformat = $essayinfo->responseformat;

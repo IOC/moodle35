@@ -143,6 +143,9 @@ class progressive_parser {
      * Process the XML, delegating found chunks to the @progressive_parser_processor
      */
     public function process() {
+        //@PATCH IOC002: performance
+        @set_time_limit(1 * 60 * 60);
+        // fi
         if (empty($this->processor)) {
             throw new progressive_parser_exception('undefined_parser_processor');
         }

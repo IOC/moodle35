@@ -27,6 +27,10 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/question/type/ddimageortext/questiontypebase.php');
 
+// @PATCH IOC
+define('QTYPE_DDIMAGEORTEXT_BGIMAGE_MAXHEIGHT', 400);
+// Fi.
+
 /**
  * The drag-and-drop onto image question type class.
  *

@@ -545,6 +545,12 @@ $CFG->httpswwwroot = $CFG->wwwroot;
 
 require_once($CFG->libdir .'/setuplib.php');        // Functions that MUST be loaded first
 
+// @PATCH IOC siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
+// Admin site performance
+require_once($CFG->dirroot . '/admin/tool/siteperf/lib.php');
+tool_siteperf::init();
+// Fi
+
 if (NO_OUTPUT_BUFFERING) {
     // we have to call this always before starting session because it discards headers!
     disable_output_buffering();
@@ -1013,6 +1019,12 @@ if (PHPUNIT_TEST) {
         }
     }
 
+// @PATCH IOC002: optimitzacions de rendiment (possiblement innecessari)
+// Set PHP output compression
+if (!NO_OUTPUT_BUFFERING) {
+    @ini_set('zlib.output_compression', !empty($CFG->outputcompression) ? 'On' : 'Off');
+}
+// Fi.
 }
 
 // // try to detect IE6 and prevent gzip because it is extremely buggy browser
