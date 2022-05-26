@@ -388,9 +388,17 @@ class backup_controller extends base_controller {
      * @return void Throws and exception of completes
      */
     public function execute_plan() {
+        //@PATCH IOC002: performance
+        global $DB;
+        // fi
+
         // Basic/initial prevention against time/memory limits
         core_php_time_limit::raise(1 * 60 * 60); // 1 hour for 1 course initially granted
         raise_memory_limit(MEMORY_EXTRA);
+
+        //@PATCH IOC002: performance
+        $DB->raise_timeout();
+        // fi
 
         // Release the session so other tabs in the same session are not blocked.
         if ($this->get_releasesession() === backup::RELEASESESSION_YES) {

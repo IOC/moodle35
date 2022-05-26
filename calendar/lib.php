@@ -3340,6 +3340,11 @@ function core_calendar_user_preferences() {
  */
 function calendar_get_legacy_events($tstart, $tend, $users, $groups, $courses,
         $withduration = true, $ignorehidden = true, $categories = [], $limitnum = 0) {
+
+    // @PATCH IOC009: calendar improvement
+    global $CFG;
+    // fi
+
     // Normalise the users, groups and courses parameters so that they are compliant with \core_calendar\local\api::get_events().
     // Existing functions that were using the old calendar_get_events() were passing a mixture of array, int, boolean for these
     // parameters, but with the new API method, only null and arrays are accepted.
@@ -3376,7 +3381,13 @@ function calendar_get_legacy_events($tstart, $tend, $users, $groups, $courses,
         null,
         null,
         null,
+        // @PATCH IOC009: calendar improvement.
+        $CFG->calendar_maxevents_returned,
+        // Original.
+        /*
         $limitnum,
+        */
+        // Fi.
         null,
         $userparam,
         $groupparam,

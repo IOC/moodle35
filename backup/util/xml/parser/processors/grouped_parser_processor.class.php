@@ -191,6 +191,9 @@ abstract class grouped_parser_processor extends simplified_parser_processor {
     protected function grouped_parent_exists($path) {
         // Search the tree structure to find out if one of the paths
         // above the $path is a grouped path.
+        //@PATCH IOC002: performance
+        @set_time_limit(1 * 60 * 60);
+        // fi
         $patharray = explode('/', $this->get_parent_path($path));
         $groupedpath = '';
         $currentpos = &$this->groupedparentprefixtree;

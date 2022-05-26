@@ -198,7 +198,11 @@ class edit_category_form extends moodleform {
                          GRADE_DISPLAY_TYPE_PERCENTAGE_REAL    => get_string('percentagereal', 'grades')
                          );
 
+        // @PATCH IOC011: grade tree improvements. Remove sort.
+        /*
         asort($options);
+        */
+        // Fi
 
         foreach ($options as $key=>$option) {
             if ($key == $default_gradedisplaytype) {

@@ -842,6 +842,10 @@ function initialise_fullme() {
         // Used in load balancing scenarios.
         // Do not abuse this to try to solve lan/wan access problems!!!!!
 
+    // @PATCH IOC
+    } else if ($_SERVER['SCRIPT_FILENAME'] === $CFG->dirroot . '/ok.php') {
+        // Allow ok.php to be called from server
+    // Fi.
     } else {
         if (($rurl['host'] !== $wwwroot['host']) or
                 (!empty($wwwroot['port']) and $rurl['port'] != $wwwroot['port']) or
@@ -953,7 +957,20 @@ function setup_get_remote_url() {
     }
     $rurl['port'] = (int)$_SERVER['SERVER_PORT'];
     $rurl['path'] = $_SERVER['SCRIPT_NAME']; // Script path without slash arguments
+
+    // @PATCH IOC
+    if (isset($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        $rurl['scheme'] = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+    } else if (!empty($_SERVER['HTTPS'])) {
+        $rurl['scheme'] = strtolower($_SERVER['HTTPS']) == 'off' ? 'http' : 'https';
+    } else {
+        $rurl['scheme'] = 'http';
+    }
+    // Original.
+    /*
     $rurl['scheme'] = (empty($_SERVER['HTTPS']) or $_SERVER['HTTPS'] === 'off' or $_SERVER['HTTPS'] === 'Off' or $_SERVER['HTTPS'] === 'OFF') ? 'http' : 'https';
+    */
+    // Fi.
 
     if (stripos($_SERVER['SERVER_SOFTWARE'], 'apache') !== false) {
         //Apache server

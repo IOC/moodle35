@@ -54,6 +54,11 @@ class essay_grading_form extends moodleform {
         $mform->addElement('hidden', 'mode', 'update');
         $mform->setType('mode', PARAM_ALPHA);
 
+        // @PATCH IOC
+        $mform->addElement('hidden', 'essaygrading', '1');
+        $mform->setType('essaygrading', PARAM_INT);
+        // Fi.
+
         $mform->addElement('static', 'question', get_string('question', 'lesson'));
         $mform->addElement('static', 'studentanswer', get_string('studentresponse', 'lesson', fullname($this->_customdata['user'], true)));
 

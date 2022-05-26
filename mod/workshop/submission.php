@@ -195,7 +195,14 @@ if (trim($workshop->instructauthors)) {
         'mod_workshop', 'instructauthors', null, workshop::instruction_editors_options($PAGE->context));
     print_collapsible_region_start('', 'workshop-viewlet-instructauthors', get_string('instructauthors', 'workshop'),
             'workshop-viewlet-instructauthors-collapsed');
+
+    // @PATCH IOC
+    echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true, 'trusted' => true)), array('generalbox', 'instructions'));
+    // Original.
+    /*
     echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true)), array('generalbox', 'instructions'));
+    */
+    // Fi.
     print_collapsible_region_end();
 }
 

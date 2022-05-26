@@ -1292,7 +1292,14 @@ class global_navigation extends navigation_node {
             }
         } else {
             // The home element should be the site because the root node is my moodle
+
+            // @PATCH IOC
+            $this->rootnodes['home'] = $this->add(get_string('sitehome'), new moodle_url('/my/'),
+            // Original.
+            /*
             $this->rootnodes['home'] = $this->add(get_string('sitehome'), new moodle_url('/'),
+            */
+            // Fi.
                 self::TYPE_SETTING, null, 'home', new pix_icon('i/home', ''));
             $this->rootnodes['home']->showinflatnavigation = true;
             if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY)) {

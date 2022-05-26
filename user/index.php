@@ -272,6 +272,13 @@ if ($bulkoperations) {
         }
     }
 
+    // @PATCH IOC
+    if (has_capability('moodle/grade:manage', $context) and has_capability('moodle/user:viewhiddendetails', $context)) {
+        $displaylist['exportcsv.php'] = get_string('exportto', 'grades') . ' ' .
+            get_string('csv', 'grades');
+    }
+    // Fi.
+
     $selectactionparams = array(
         'id' => 'formactionid',
         'class' => 'ml-2',

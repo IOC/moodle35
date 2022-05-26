@@ -2934,6 +2934,11 @@ function redirect($url, $message='', $delay=null, $messagetype = \core\output\no
         }
     }
 
+    // @PATCH IOC siteperf: performance monitoring (https://github.com/IOC/moodle-admin_siteperf)
+    //Admin site performance
+    tool_siteperf::shutdown();
+    // Fi
+
     // Sanitise url - we can not rely on moodle_url or our URL cleaning
     // because they do not support all valid external URLs.
     $url = preg_replace('/[\x00-\x1F\x7F]/', '', $url);
