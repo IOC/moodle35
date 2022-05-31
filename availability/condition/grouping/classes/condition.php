@@ -308,9 +308,9 @@ class condition extends \core_availability\condition {
         return array($sql, array_merge($enrolparams, $aagparams, $matchparams));
     }
 
+    // @PATCH IOC004: Return inaccessible properties.
     /**
-     * Returns innaccessible properties.
-     * @PATCH IOC004
+     * Returns inaccessible properties.
      *
      * @param string $prop property to get.
      * @return mixed
@@ -321,4 +321,5 @@ class condition extends \core_availability\condition {
         }
         return null;
     }
+    // Fi.
 }

@@ -64,14 +64,6 @@ class calc_formula {
      */
     public function __construct($formula, $params=false) {
         // @PATCH IOC014: new formulari engine
-        /*
-        $this->_em = new EvalMath();
-        $this->_em->suppress_errors = true; // no PHP errors!
-        if (strpos($formula, '=') !== 0) {
-            $this->_error = "missing leading '='";
-            return;
-        }
-        */
         try {
             $this->_formula = new FormulaParser($formula);
         } catch (FormulaException $e) {
@@ -116,7 +108,13 @@ class calc_formula {
      * @param array $params associative array of parameters used in formula
      */
     function set_params($params) {
+        // @PATCH IOC014: new formulari engine
+        $this->_params = $params;
+        // Original.
+        /*
         $this->_em->v = $params;
+        */
+        // Fi.
     }
 
     /**

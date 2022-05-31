@@ -31,8 +31,9 @@ $id = required_param('id', PARAM_INT);
 $PAGE->set_url('/user/action_redir.php', array('formaction' => $formaction, 'id' => $id));
 list($formaction) = explode('?', $formaction, 2);
 
-// @PATCH IOC016: new action expert CSV
 // This page now only handles the bulk enrolment change actions, other actions are done with ajax.
+
+// @PATCH IOC016: new action expert CSV.
 $actions = array('bulkchange.php', 'exportcsv.php');
 // Original.
 /*
@@ -48,12 +49,12 @@ if (!confirm_sesskey()) {
     print_error('confirmsesskeybad');
 }
 
-// @PATCH IOC016: new action expert CSV
+// @PATCH IOC016: new action expert CSV.
 $url = new moodle_url(required_param('formaction', PARAM_URL));
 if ('csv' == $url->param('dataformat')) {
     $formaction = 'exportcsv.php';
 }
-// Fi
+// Fi.
 
 if ($formaction == 'bulkchange.php') {
     // Backwards compatibility for enrolment plugins bulk change functionality.
@@ -273,7 +274,3 @@ else {
 }
 */
 // Fi.
-
-} else {
-    throw new coding_exception('invalidaction');
-}

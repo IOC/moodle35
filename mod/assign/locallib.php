@@ -3705,8 +3705,8 @@ class assign {
                     $prefix = str_replace('_', ' ', $groupname . $fullname);
                     */
                     // Fi.
-                    $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
 
+                    $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 }
 
                 if ($submission) {

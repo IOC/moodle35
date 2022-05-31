@@ -197,10 +197,10 @@ if (trim($workshop->instructauthors)) {
             'workshop-viewlet-instructauthors-collapsed');
 
     // @PATCH IOC
-    echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true, 'trusted' => true)), array('generalbox', 'instructions'));
+    echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true)), array('generalbox', 'instructions'));
     // Original.
     /*
-    echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true)), array('generalbox', 'instructions'));
+    echo $output->box(format_text($instructions, $workshop->instructauthorsformat, array('overflowdiv'=>true, 'trusted' => true)), array('generalbox', 'instructions'));
     */
     // Fi.
     print_collapsible_region_end();

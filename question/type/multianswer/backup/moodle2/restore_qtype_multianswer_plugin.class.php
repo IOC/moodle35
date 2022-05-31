@@ -111,7 +111,7 @@ class restore_qtype_multianswer_plugin extends restore_qtype_plugin {
                 $sequencearr[$key] = $this->get_mappingid('question', $question);
             }
             $sequence = implode(',', array_filter($sequencearr));
-            $DB->set_field('question_multianswer', 'sequence', $sequence,
+            $DB->set_field('question_multianswer', 'sequence', $sequence, 
                     array('id' => $rec->id));
             if (!empty($sequence)) {
                 // Get relevant data indexed by positionkey from the multianswers table.

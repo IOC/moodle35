@@ -1096,8 +1096,9 @@ class grade_edit_tree_column_select extends grade_edit_tree_column {
     }
 }
 
+// @PATCH IOC011
 /**
- * Class grade_edit_tree_column_idnumber @PATCH IOC011
+ * Class grade_edit_tree_column_idnumber
  *
  * @package   core_grades
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -1133,3 +1134,4 @@ class grade_edit_tree_column_idnumber extends grade_edit_tree_column {
         return $itemcell;
     }
 }
+// Fi.

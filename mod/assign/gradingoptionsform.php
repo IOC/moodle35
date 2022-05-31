@@ -77,6 +77,8 @@ class mod_assign_grading_options_form extends moodleform {
         // Original.
         /*
                          ASSIGN_FILTER_GRANTED_EXTENSION => get_string('filtergrantedextension', 'assign'));
+        */
+        // Fi.
         if ($instance['submissionsenabled']) {
             $mform->addElement('select', 'filter', get_string('filter', 'assign'), $options, $dirtyclass);
         }

@@ -117,7 +117,7 @@ class api {
      * @param int|null $timesortfrom The start timesort value (inclusive)
      * @param int|null $timesortto The end timesort value (inclusive)
      * @param int|null $aftereventid Only return events after this one
-     * @param int $limitnum Limit results to this amount (between 1 and 480) //@PATCH IOC009
+     * @param int $limitnum Limit results to this amount (between 1 and 50)
      * @param bool $lmittononsuspendedevents Limit course events to courses the user is active in (not suspended).
      * @param \stdClass|null $user The user id or false for $USER
      * @return array A list of action_event_interface objects
@@ -140,7 +140,8 @@ class api {
         if (is_null($timesortfrom) && is_null($timesortto)) {
             throw new \moodle_exception("Must provide a timesort to and/or from value");
         }
-        //@PATCH IOC009: calendar improvement (old limit 50, new 480)
+
+        // @PATCH IOC009: calendar improvement (old limit 50, new 480).
         if ($limitnum < 1 || $limitnum > 480) {
             throw new \moodle_exception("Limit must be between 1 and 480 (inclusive)");
         }
@@ -172,7 +173,7 @@ class api {
      * @param int|null $timesortfrom The start timesort value (inclusive)
      * @param int|null $timesortto The end timesort value (inclusive)
      * @param int|null $aftereventid Only return events after this one
-     * @param int $limitnum Limit results to this amount (between 1 and 480) //@PATCH IOC009
+     * @param int $limitnum Limit results to this amount (between 1 and 50)
      * @return array A list of action_event_interface objects
      * @throws limit_invalid_parameter_exception
      */
@@ -185,7 +186,7 @@ class api {
     ) {
         global $USER;
 
-        //@PATCH IOC009: calendar improvement
+        // @PATCH IOC009: calendar improvement.
         if ($limitnum < 1 || $limitnum > 480) {
             throw new limit_invalid_parameter_exception(
                 "Limit must be between 1 and 480 (inclusive)");
@@ -221,7 +222,7 @@ class api {
      * @param array $courses The courses the events must belong to
      * @param int|null $timesortfrom The start timesort value (inclusive)
      * @param int|null $timesortto The end timesort value (inclusive)
-     * @param int $limitnum Limit results per course to this amount (between 1 and 480) //@PATCH IOC009
+     * @param int $limitnum Limit results per course to this amount (between 1 and 50)
      * @return array A list of action_event_interface objects indexed by course id
      */
     public static function get_action_events_by_courses(
