@@ -40,12 +40,20 @@ class forum_portfolio_caller extends portfolio_module_caller_base {
     protected $attachment;
 
     private $post;
-    // @PATCH IOC043: Export whole forum using portfolio Passem de Private a Protected
+
+    // @PATCH IOC043: Export whole forum using portfolio.
     protected $forum;
     protected $discussion;
     protected $posts;
-    protected $keyedfiles; // just using multifiles isn't enough if we're exporting a full thread
-    // Fi
+    protected $keyedfiles;
+    // Original
+    /*
+    private $forum;
+    private $discussion;
+    private $posts;
+    private $keyedfiles; // just using multifiles isn't enough if we're exporting a full thread
+    */
+    // Fi.
 
     /**
      * @return array
@@ -255,8 +263,13 @@ class forum_portfolio_caller extends portfolio_module_caller_base {
      *
      * @return int id of new entry
      */
-    // @PATCH IOC043: Export whole forum using portfolio Passem de Private a Protected
+    // @PATCH IOC043: Export whole forum using portfolio.
     protected function prepare_post_leap2a(portfolio_format_leap2a_writer $leapwriter, $post, $posthtml) {
+    // Original.
+    /*
+    private function prepare_post_leap2a(portfolio_format_leap2a_writer $leapwriter, $post, $posthtml) {
+    */
+    // Fi.
         $entry = new portfolio_format_leap2a_entry('forumpost' . $post->id,  $post->subject, 'resource', $posthtml);
         $entry->published = $post->created;
         $entry->updated = $post->modified;
@@ -274,8 +287,13 @@ class forum_portfolio_caller extends portfolio_module_caller_base {
      * @param mixed $justone false of id of single file to copy
      * @return bool|void
      */
-    // @PATCH IOC043: Export whole forum using portfolio Passem de Private a Protected
+    // @PATCH IOC043: Export whole forum using portfolio.
     protected function copy_files($files, $justone=false) {
+    // Original.
+    /*
+    private function copy_files($files, $justone=false) {
+    */
+    // Fi.
         if (empty($files)) {
             return;
         }
@@ -408,7 +426,7 @@ class forum_portfolio_caller extends portfolio_module_caller_base {
     }
 }
 
-// @PATCH IOC043: Export whole forum using portfolio Definim nova classe
+// @PATCH IOC043: Export whole forum using portfolio.
 class forum_full_portfolio_caller extends forum_portfolio_caller {
 
     private $index;
@@ -738,7 +756,7 @@ class forum_full_portfolio_caller extends forum_portfolio_caller {
         return $html;
     }
 }
-// Fi
+// Fi.
 
 /**
  * Class representing the virtual node with all itemids in the file browser

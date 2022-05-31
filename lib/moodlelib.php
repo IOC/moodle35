@@ -1221,7 +1221,8 @@ function clean_param($param, $type) {
                 $param = preg_replace('/[^-\.@_a-z0-9]/', '', $param);
             }
             return $param;
-        // @PATCH IOC020: Afegir tipus PARAM_USERNAME_IOC per WebService Secretaria
+
+        // @PATCH IOC020: Afegir tipus PARAM_USERNAME_IOC per WebService Secretaria.
         case PARAM_USERNAME_IOC:
             $param = fix_utf8($param);
             $param = trim($param);
@@ -1233,6 +1234,7 @@ function clean_param($param, $type) {
             }
             return $param;
         // Fi.
+
         case PARAM_EMAIL:
             $param = fix_utf8($param);
             if (validate_email($param)) {

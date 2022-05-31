@@ -2795,13 +2795,12 @@ function fulldelete($location) {
     return true;
 }
 
-// @PATCH IOC
+// @PATCH IOC005
 /**
  * Recursively delete the file or folder with path $location. A file
  * is deleted when it is older than date. If it is a folder, is deleted
  * when empty. If $location does not exist to start, that is not
  * considered an error.
- * @PATCH IOC005
  *
  * @param string $location the path to remove.
  * @param int $date to delete files.
