@@ -2054,8 +2054,13 @@ function forum_get_discussions_count($cm) {
             $timelimit .= ")";
         }
     }
-    //@PATCH IOC040: Optimització de diverses consultes
-    //Old Code:
+
+    // @PATCH IOC040: Optimització de diverses consultes.
+    $sql = "SELECT COUNT(d.id)
+              FROM {forum_discussions} d
+               WHERE d.forum = ?
+                   $groupselect $timelimit";
+    // Original.
     /*
     $sql = "SELECT COUNT(d.id)
               FROM {forum_discussions} d
@@ -2063,11 +2068,7 @@ function forum_get_discussions_count($cm) {
              WHERE d.forum = ? AND p.parent = 0
                    $groupselect $timelimit";
     */
-    $sql = "SELECT COUNT(d.id)
-              FROM {forum_discussions} d
-               WHERE d.forum = ?
-                   $groupselect $timelimit";
-    //Fi
+    // Fi.
 
     return $DB->get_field_sql($sql, $params);
 }
@@ -2459,13 +2460,19 @@ function forum_print_discussion_header(&$post, $forum, $group = -1, $datestring 
     }
 
     echo '<td class="lastpost">';
+
     // @PATCH IOC048: Parches Mod Forum
     if ($post->timestart and $post->replies === 0) {
         $usedate = $post->timestart;
     } else {
         $usedate = (empty($post->timemodified)) ? $post->modified : $post->timemodified;  // Just in case
     }
+    // Original.
+    /*
+    $usedate = (empty($post->timemodified)) ? $post->created : $post->timemodified;
+    */
     // Fi
+
     $parenturl = '';
     $usermodified = new stdClass();
     $usermodified->id = $post->usermodified;
@@ -3315,12 +3322,15 @@ function forum_delete_discussion($discussion, $fulldelete, $course, $cm, $forum)
             }
         }
     }
-    //@PATCH IOC039: Optimització de la neteja dels registres de missatges llegits
-    //Old Code:
-    //forum_tp_delete_read_records(-1, -1, $discussion->id);
+
+    // @PATCH IOC039: Optimització de la neteja dels registres de missatges llegits.
     if (!$fulldelete) {
         forum_tp_delete_read_records(-1, -1, $discussion->id);
     }
+    // Original.
+    /*
+    forum_tp_delete_read_records(-1, -1, $discussion->id);
+    */
     //Fi
 
     // Discussion subscriptions must be removed before discussions because of key constraints.
@@ -3409,13 +3419,17 @@ function forum_delete_post($post, $children, $course, $cm, $forum, $skipcompleti
     }
 
     if ($DB->delete_records("forum_posts", array("id" => $post->id))) {
-        //@PATCH IOC039: Optimització de la neteja dels registres de missatges llegits
-        //Old Code:
-        //forum_tp_delete_read_records(-1, $post->id);
+
+        // @PATCH IOC039: Optimització de la neteja dels registres de missatges llegits.
         if (!$skipcompletion) {
             forum_tp_delete_read_records(-1, $post->id);
         }
+        // Original.
+        /*
+        forum_tp_delete_read_records(-1, $post->id);
+        */
         //Fi
+
     // Just in case we are deleting the last post
         forum_discussion_update_last_post($post->discussion);
 
@@ -4453,11 +4467,13 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
         $groupsel = " AND (d.groupid = ? OR d.groupid = -1)";
         $params[] = $groupid;
     }
-    // @PATCH IOC048: Parches Mod Forum
+
+    // @PATCH IOC048: Parches Mod Forum.
     $now = time();
     $timedposts = ' AND (d.timestart < ? AND (d.timeend = 0 OR d.timeend > ?))';
     $params[] = $now;
     $params[] = $now;
+    // Fi.                  
 
     $sql = "SELECT p.id
               FROM {forum_posts} p
@@ -4465,8 +4481,14 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
                    LEFT JOIN {forum_read} r        ON (r.postid = p.id AND r.userid = ?)
              WHERE d.forum = ?
                    AND p.modified >= ? AND r.id is NULL
+                   // @PATCH IOC048: Parches Mod Forum.
                    $groupsel $timedposts";
-    // Fi                   
+                   // Original.
+                   /*
+                   $groupsel";
+                   */
+                   // Fi.
+
     if ($posts = $DB->get_records_sql($sql, $params)) {
         $postids = array_keys($posts);
         return forum_tp_mark_posts_read($user, $postids);
@@ -4971,8 +4993,12 @@ function forum_tp_clean_read_records() {
 // Look for records older than the cutoffdate that are still in the forum_read table.
     $cutoffdate = time() - ($CFG->forum_oldpostdays*24*60*60);
 
-    //@PATCH IOC040: Optimització de diverses consultes
-    //Old Code:
+    // @PATCH IOC040: Optimització de diverses consultes.
+    $sql = "DELETE r.* FROM {forum_read} r"
+        . " JOIN {forum_posts} p ON p.id = r.postid"
+        . " WHERE p.modified < ?";
+    $DB->execute($sql, array($cutoffdate));
+    // Original.
     /*
     //first get the oldest tracking present - we need tis to speedup the next delete query
     $sql = "SELECT MIN(fp.modified) AS first
@@ -4991,11 +5017,7 @@ function forum_tp_clean_read_records() {
                                WHERE fp.modified >= ? AND fp.modified < ?)";
     $DB->execute($sql, array($first, $cutoffdate));
     */
-    $sql = "DELETE r.* FROM {forum_read} r"
-        . " JOIN {forum_posts} p ON p.id = r.postid"
-        . " WHERE p.modified < ?";
-    $DB->execute($sql, array($cutoffdate));
-    //Fi
+    // Fi.
 }
 
 /**

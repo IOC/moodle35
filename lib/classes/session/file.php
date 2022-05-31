@@ -46,7 +46,6 @@ class file extends handler {
         if (!empty($CFG->session_file_save_path)) {
             $this->sessiondir = $CFG->session_file_save_path;
         } else {
-<<<<<<< HEAD
             // @PATCH IOC013: unnecessari sessiondir config (could be defined in config.php)
             $this->sessiondir = session_save_path();
             // Original.
@@ -54,9 +53,6 @@ class file extends handler {
             $this->sessiondir = "$CFG->dataroot/sessions";
             */
             // Fi.
-=======
-            $this->sessiondir = "$CFG->dataroot/sessions";
->>>>>>> 9284037c789... Nova versio 3.10.4 IOC_CAMPUS_V5.0.0
         }
     }
 
