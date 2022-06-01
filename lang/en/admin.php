@@ -317,9 +317,6 @@ $string['confignotifyloginfailures'] = 'Send login failure notification messages
 $string['confignotifyloginthreshold'] = 'If notifications about failed logins are active, how many failed login attempts by one user or one IP address is it worth notifying about?';
 $string['confignotloggedinroleid'] = 'Users who are not logged in to the site will be treated as if they have this role granted to them at the site context.  Guest is almost always what you want here, but you might want to create roles that are less or more restrictive.  Things like creating posts still require the user to log in properly.';
 $string['configopentowebcrawlers'] = 'If you enable this setting, then search engines will be allowed to enter your site as a guest.  In addition, people coming in to your site via a search engine will automatically be logged in as a guest.  Note that this only provides transparent access to courses that already allow guest access.';
-// @PATCH IOC012
-$string['configoutputcompression'] = 'Compress pages if the browser sends an "Accept-Encoding: gzip" or "deflate" header. "Content-Encoding: gzip" (respectively "deflate") and "Vary: Accept-Encoding" headers are added to the output.';
-// Fi.
 $string['configoverride'] = 'Defined in config.php';
 $string['configpasswordpolicy'] = 'If enabled, user passwords will be checked against the password policy as specified in the settings below. Enabling the password policy will not affect existing users until they decide to, or are required to, change their password, or the \'Check password on login\' setting is enabled.';
 $string['configpasswordpolicycheckonlogin'] = 'If enabled, user passwords will be checked against the password policy each time users log in. If the check fails, the user will be required to change their password before proceeding.
@@ -959,9 +956,6 @@ $string['passwordchangelogout'] = 'Log out after password change';
 $string['passwordchangelogout_desc'] = 'If enabled, when a password is changed, all browser sessions are terminated, apart from the one in which the new password is specified. (This setting does not affect password changes via bulk user upload.)';
 $string['passwordchangetokendeletion'] = 'Remove web service access tokens after password change';
 $string['passwordchangetokendeletion_desc'] = 'If enabled, when a password is changed, all the user web service access tokens are deleted.';
-// @PATCH IOC012
-$string['outputcompression'] = 'PHP output compression';
-// Fi.
 $string['passwordpolicy'] = 'Password policy';
 $string['passwordpolicycheckonlogin'] = 'Check password on login';
 $string['passwordresettime'] = 'Maximum time to validate password reset request';

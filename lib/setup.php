@@ -1019,12 +1019,6 @@ if (PHPUNIT_TEST) {
         }
     }
 
-// @PATCH IOC002: optimitzacions de rendiment (possiblement innecessari)
-// Set PHP output compression
-if (!NO_OUTPUT_BUFFERING) {
-    @ini_set('zlib.output_compression', !empty($CFG->outputcompression) ? 'On' : 'Off');
-}
-// Fi.
 }
 
 // // try to detect IE6 and prevent gzip because it is extremely buggy browser

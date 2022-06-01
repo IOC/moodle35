@@ -3382,13 +3382,7 @@ function calendar_get_legacy_events($tstart, $tend, $users, $groups, $courses,
         null,
         null,
         null,
-        // @PATCH IOC009: calendar improvement.
-        $CFG->calendar_maxevents_returned,
-        // Original.
-        /*
         $limitnum,
-        */
-        // Fi.
         null,
         $userparam,
         $groupparam,

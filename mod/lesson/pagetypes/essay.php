@@ -87,12 +87,6 @@ class lesson_page_type_essay extends lesson_page {
         $data->pageid = $this->properties->id;
         if (isset($USER->modattempts[$this->lesson->id])) {
             $essayinfo = self::extract_useranswer($attempt->useranswer);
-
-            // @PATCH IOC
-            $essayinfo->answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $PAGE->cm->context->id, 'mod_lesson',
-                                                     'attempt', $attempt->id);
-            // Fi.
-
             $data->answer = $essayinfo->answer;
         }
 
@@ -354,14 +348,6 @@ class lesson_page_type_essay extends lesson_page {
                 $avescore = $hasattempts ? get_string("essaynotgradedyet", "lesson") :
                         get_string("nooneansweredthisquestion", "lesson");
             }
-
-            // @PATCH IOC
-            if ($useranswer != null) {
-                $essayinfo->answer = file_rewrite_pluginfile_urls($essayinfo->answer, 'pluginfile.php', $answerpage->context->id, 'mod_lesson',
-                                                         'attempt', $useranswer->id);
-            }
-            // Fi.
-
             // This is the student's answer so it should be cleaned.
             $answerdata->answers[] = array(format_text($essayinfo->answer, $essayinfo->answerformat,
                     array('para' => true, 'context' => $answerpage->context)), $avescore);
@@ -383,36 +369,6 @@ class lesson_page_type_essay extends lesson_page {
         $essayinfo = self::extract_useranswer($attempt->useranswer);
         return $essayinfo->score;
     }
-
-    // @PATCH IOC
-    public function update_image_urls($attemptdata) {
-        global $CFG, $DB, $PAGE;
-
-        $mform = new lesson_display_answer_form_essay($CFG->wwwroot.'/mod/lesson/continue.php', array('contents' => $this->get_contents()));
-        $data = $mform->get_data();
-
-        if (!$data) {
-            return false;
-        }
-
-        if (is_array($data->answer)) {
-            $data->answer_editor = new ArrayObject($data->answer);
-            $options = array(
-                'noclean' => true,
-                'maxfiles' => EDITOR_UNLIMITED_FILES,
-                'maxbytes' => $PAGE->course->maxbytes,
-            );
-            $data = file_postupdate_standard_editor($data, 'answer', $options, context_module::instance($PAGE->cm->id), 'mod_lesson', 'attempt', $attemptdata->id);
-        }
-        $essayinfo = new stdClass;
-        $essayinfo = unserialize($attemptdata->useranswer);
-        $essayinfo->answer = $data->answer;
-        $attemptdata->useranswer = serialize($essayinfo);
-
-        $DB->update_record('lesson_attempts',  $attemptdata);
-    }
-    // Fi.
-
 }
 
 class lesson_add_page_form_essay extends lesson_add_page_form_base {
@@ -431,14 +387,7 @@ class lesson_add_page_form_essay extends lesson_add_page_form_base {
 class lesson_display_answer_form_essay extends moodleform {
 
     public function definition() {
-        // @PATCH IOC
-        global $USER, $OUTPUT, $PAGE;
-        // Original.
-        /*
         global $USER, $OUTPUT;
-        */
-        // Fi.
-
         $mform = $this->_form;
         $contents = $this->_customdata['contents'];
         $editoroptions = $this->_customdata['editoroptions'];
@@ -453,12 +402,6 @@ class lesson_display_answer_form_essay extends moodleform {
                 $attrs = array('disabled' => 'disabled');
                 $hasattempt = true;
                 $useranswertemp = lesson_page_type_essay::extract_useranswer($USER->modattempts[$lessonid]->useranswer);
-
-                // @PATCH IOC
-                $useranswertemp->answer = file_rewrite_pluginfile_urls($useranswertemp->answer, 'pluginfile.php', $PAGE->cm->context->id, 'mod_lesson',
-                                                     'attempt', $USER->modattempts[$lessonid]->id);
-                // Fi.
-
                 $useranswer = htmlspecialchars_decode($useranswertemp->answer, ENT_QUOTES);
                 $useranswerraw = $useranswertemp->answer;
             }
@@ -490,13 +433,7 @@ class lesson_display_answer_form_essay extends moodleform {
             $mform->addElement('html', $OUTPUT->container($useranswer, 'reviewessay'));
             $this->add_action_buttons(null, get_string("nextpage", "lesson"));
         } else {
-            // @PATCH IOC
-            $mform->addElement('editor', 'answer_editor', get_string('youranswer', 'lesson'), null, array('maxfiles' => EDITOR_UNLIMITED_FILES));
-            // Original.
-            /*
             $mform->addElement('editor', 'answer_editor', get_string('youranswer', 'lesson'), null, $editoroptions);
-            */
-            // Fi.
             $mform->setType('answer_editor', PARAM_RAW);
             $this->add_action_buttons(null, get_string("submit", "lesson"));
         }

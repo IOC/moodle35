@@ -2870,9 +2870,4 @@ abstract class moodle_database {
         // No support unless specified.
         return false;
     }
-
-    // @PATCH IOC
-    public function raise_timeout() {
-    }
-    // Fi.
 }
