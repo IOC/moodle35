@@ -3696,12 +3696,12 @@ class assign {
                     $prefix = str_replace('_', ' ', $groupname . get_string('participant', 'assign'));
                     $prefix = clean_filename($prefix . '_' . $this->get_uniqueid_for_user($userid));
                 } else {
-                    $fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
 
                     // @PATCH IOC028: Changed lastname firstname order on downloaded filename
                     $prefix = str_replace('_', ' ', $groupname . $student->lastname .' '. $student->firstname);
                     // Original.
                     /*
+                    $fullname = fullname($student, has_capability('moodle/site:viewfullnames', $this->get_context()));
                     $prefix = str_replace('_', ' ', $groupname . $fullname);
                     */
                     // Fi.

@@ -4229,11 +4229,6 @@ abstract class lesson_page extends lesson_base {
                         $event->add_record_snapshot('lesson_attempts', $attempt);
                         $event->trigger();
 
-                        // @PATCH IOC
-                        if (method_exists($this, 'update_image_urls')) {
-                            $this->update_image_urls($attempt, $context);
-                        }
-                        // Fi.
                         // Increase the number of attempts made.
                         $nattempts++;
                     }

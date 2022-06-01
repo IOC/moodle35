@@ -321,11 +321,6 @@ if ($hassiteconfig) {
     $temp->add(new admin_setting_configtext('curltimeoutkbitrate', new lang_string('curltimeoutkbitrate', 'admin'),
         new lang_string('curltimeoutkbitrate_help', 'admin'), 56, PARAM_INT));
 
-    // @PATCH IOC001: new admin settings
-    $temp->add(new admin_setting_configcheckbox('outputcompression', new lang_string('outputcompression', 'admin'),
-                                            new lang_string('configoutputcompression', 'admin'), 0));
-    // Fi
-
     $ADMIN->add('server', $temp);
 
     // Tasks.

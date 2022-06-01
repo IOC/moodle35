@@ -220,13 +220,6 @@ function scorm_get_forceattempt_array() {
  */
 function scorm_parse($scorm, $full) {
     global $CFG, $DB;
-
-    // @PATCH IOC
-    set_time_limit(3600);
-    raise_memory_limit(MEMORY_EXTRA);
-    $DB->raise_timeout();
-    // Fi.
-
     $cfgscorm = get_config('scorm');
 
     if (!isset($scorm->cmid)) {
