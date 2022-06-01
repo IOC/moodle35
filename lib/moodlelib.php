@@ -5418,11 +5418,6 @@ function reset_course_userdata($data) {
     require_once($CFG->libdir.'/completionlib.php');
     require_once($CFG->dirroot.'/completion/criteria/completion_criteria_date.php');
     require_once($CFG->dirroot.'/group/lib.php');
-    // @PATCH IOC
-    set_time_limit(3600);
-    raise_memory_limit(MEMORY_EXTRA);
-    $DB->raise_timeout();
-    // Fi.
 
     $data->courseid = $data->id;
     $context = context_course::instance($data->courseid);
@@ -8341,12 +8336,6 @@ function moodle_setlocale($locale='') {
  * @return int The count of words in the specified string
  */
 function count_words($string) {
-    // @PATCH IOC
-    // Replace line breaks and end paragrahs by one space
-    static $toreplace = array('<br />', '</p>');
-    $string = str_replace($toreplace, ' ', $string);
-    // Fi.
-
     // Before stripping tags, add a space after the close tag of anything that is not obviously inline.
     // Also, br is a special case because it definitely delimits a word, but has no close tag.
     $string = preg_replace('~
@@ -9316,20 +9305,9 @@ function getremoteaddr($default='0.0.0.0') {
                 return !\core\ip_utils::is_ip_in_subnet_list($ip, $CFG->reverseproxyignore ?? '', ',');
             });
 
-            // @PATCH IOC
-            if (count($forwardedaddresses) > 1) {
-                $forwardedaddresses = array_filter($forwardedaddresses, create_function('$ip', 'return $ip != "127.0.0.1";'));
-                $address = count($forwardedaddresses) ? array_shift($forwardedaddresses) : $default;
-            } else {
-                $address = $forwardedaddresses[0];
-            }
-            // Original.
-            /*
             // Multiple proxies can append values to this header including an
             // untrusted original request header so we must only trust the last ip.
             $address = end($forwardedaddresses);
-            */
-            // Fi.
 
             if (substr_count($address, ":") > 1) {
                 // Remove port and brackets from IPv6.
