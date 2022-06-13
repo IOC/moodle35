@@ -22,10 +22,10 @@ export const initialize = () => {
     document.querySelectorAll('.instance-container, div.videotime-tab-instance').forEach((container) => {
         observer.observe(container);
     });
-    resize();
     document.querySelectorAll('.videotime-tab-instance').forEach((instance) => {
         instance.style.position = 'absolute';
     });
+    resize();
 
     window.removeEventListener('mousemove', mousemoveHandler);
     window.addEventListener('mousemove', mousemoveHandler);
@@ -50,19 +50,20 @@ const resize = () => {
             return;
         }
         container.closest('.videotimetabs').querySelectorAll('.videotime-tab-instance .vimeo-embed iframe').forEach((iframe) => {
-            let instance = iframe.closest('.videotime-tab-instance');
+            let instance = iframe.closest('.videotime-tab-instance'),
+                content = iframe.closest('.tab-content');
             Object.assign(instance.style, {
                 top: container.offsetTop + 'px',
                 left: container.offsetLeft + 'px',
                 width: container.offsetWidth + 'px'
             });
             container.style.minHeight = iframe.closest('.videotime-tab-instance').offsetHeight + 'px';
-            document.querySelectorAll('.videotime-tab-instance-cover').forEach((cover) => {
+            content.querySelectorAll('.videotime-tab-instance-cover').forEach((cover) => {
                 Object.assign(cover.style, {
-                    top: instance.style.top,
-                    left: instance.style.left,
-                    width: instance.style.width,
-                    height: instance.offsetHeight + 'px'
+                    height: content.offsetHeight + 'px',
+                    left: content.offsetLeft + 'px',
+                    top: content.offsetTop + 'px',
+                    width: content.offsetWidth + 'px'
                 });
             });
         });
@@ -113,18 +114,18 @@ const mousemoveHandler = (e) => {
  * @param {event} e mouse event
  */
 const cueVideo = (e) => {
-    if (e.target.matches('[data-action="cue"]')) {
+    if (e.target.closest('[data-action="cue"]')) {
         let starttime = e.target.closest('a').getAttribute('data-start'),
-            time = starttime.match(/((([0-9]+):)?(([0-9]+):))?([0-9]+(\.[0-9]+))/),
+            time = starttime.match(/((([0-9]+):)?(([0-9]+):))?([0-9]+(\.[0-9]+)?)/),
             iframe = e.target.closest('.videotimetabs').querySelector('.vimeo-embed iframe'),
             player = new Player(iframe);
         e.preventDefault();
         e.stopPropagation();
         if (time) {
-            player.setCurrentTime(
-                3600 * Number(time[3] || 0) + 60 * Number(time[5] || 0) + Number(time[6])
-            ).then(player.play.bind(player)
-            ).catch(Notification.exception);
+            player
+                .setCurrentTime(3600 * Number(time[3] || 0) + 60 * Number(time[5] || 0) + Number(time[6]))
+                .then(player.play.bind(player))
+                .catch(Notification.exception);
         }
     }
 };
