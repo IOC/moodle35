@@ -67,10 +67,6 @@ div.videotimetab-resize {
     display: block !important; /* stylelint-disable-line declaration-no-important */
 }
 
-.path-course-view .modtype_videotime.label_mode > div {
-    padding: 0 25px 0 0;
-}
-
 /** Compatible with non-Bootstrap 4 themes **/
 .path-mod-videotime .btn-dark {
     color: white !important; /* stylelint-disable-line declaration-no-important */
@@ -147,6 +143,11 @@ body.editing .activity.videotime.preview_mode .actions {
 .path-course-view li.activity.videotime.preview_mode {
     clear: none;
     float: left;
+}
+
+
+.path-course-view li.activity.videotime.preview_mode.previewfull {
+    float: none;
 }
 
 body.editing.path-course-view li.activity.videotime.preview_mode {

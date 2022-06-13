@@ -508,7 +508,7 @@ function videotime_extend_settings_navigation($settings, $videtimenode) {
         $beforekey = $keys[$i + 1];
     }
 
-    if (videotime_has_pro() && has_capability('mod/videotime:view_report', $PAGE->cm->context)) {
+    if (videotime_has_pro() && $PAGE->cm && has_capability('mod/videotime:view_report', $PAGE->cm->context)) {
         $node = navigation_node::create(get_string('report'),
             new moodle_url('/mod/videotime/report.php', array('id' => $PAGE->cm->id)),
             navigation_node::TYPE_SETTING, null, 'mod_videotime_report',
@@ -599,7 +599,7 @@ function videotime_cm_info_view(cm_info $cm) {
             $preview = new \videotimeplugin_repository\output\video_preview($instance, $USER->id);
             $content = $renderer->render($preview);
 
-            $columnclass = 'col-sm-12';
+            $columnclass = 'previewfull';
             if ($instance->columns == 2) {
                 $columnclass = 'col-sm-6';
             } else if ($instance->columns == 3) {

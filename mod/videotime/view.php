@@ -48,19 +48,31 @@ if ($id) {
     throw new moodle_exception('invalidcoursemodule', 'mod_videotime');
 }
 
-$moduleinstance = videotime_instance::instance_by_id($moduleinstance->id);
-
-$PAGE->set_context($moduleinstance->get_context());
+$context = context_module::instance($cm->id);
+$PAGE->set_context($context);
 
 require_login($course, true, $cm);
 
-require_capability('mod/videotime:view', $moduleinstance->get_context());
-
-videotime_view($moduleinstance, $course, $cm, $moduleinstance->get_context());
+require_capability('mod/videotime:view', $context);
 
 $PAGE->set_url('/mod/videotime/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($moduleinstance->name));
+if (class_exists('core\\output\\activity_header') && !$moduleinstance->show_description_in_player) {
+    $PAGE->activityheader->set_description('');
+}
 $PAGE->set_heading(format_string($course->fullname));
+$PAGE->add_body_class('limitedwidth');
+
+$edit = optional_param('edit', null, PARAM_BOOL);
+if ($edit !== null and confirm_sesskey() and $PAGE->user_allowed_editing()) {
+    $USER->editing = $edit;
+    redirect($PAGE->url);
+}
+
+$moduleinstance = videotime_instance::instance_by_id($moduleinstance->id);
+$moduleinstance->setup_page();
+
+videotime_view($moduleinstance, $course, $cm, $moduleinstance->get_context());
 
 $renderer = $PAGE->get_renderer('mod_videotime');
 
@@ -77,12 +89,14 @@ foreach (\core_component::get_component_classes_in_namespace(null, 'videotime\\i
 }
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(format_string($moduleinstance->name), 2);
+if (!class_exists('core\\output\\activity_header')) {
+    echo $OUTPUT->heading(format_string($moduleinstance->name), 2);
+}
 if (!$moduleinstance->vimeo_url) {
     \core\notification::error(get_string('vimeo_url_missing', 'videotime'));
 } else {
     // Render the activity information.
-    if (class_exists('\\core_completion\\activity_custom_completion')) {
+    if (class_exists('\\core_completion\\activity_custom_completion') && !class_exists('core\\output\\activity_header')) {
         $cminfo = cm_info::create($cm);
         $completiondetails = \core_completion\cm_completion_details::get_instance($cminfo, $USER->id);
         $activitydates = \core\activity_dates::get_dates_for_module($cminfo, $USER->id);
