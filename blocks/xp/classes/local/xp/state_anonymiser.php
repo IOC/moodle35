@@ -15,45 +15,32 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Block XP helper.
+ * State anonymiser.
  *
  * @package    block_xp
- * @copyright  2014 Frédéric Massart
+ * @copyright  2021 Frédéric Massart
+ * @author     Frédéric Massart <fred@branchup.tech>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace block_xp\local\xp;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Block XP helper class.
- *
- * This class does not do anything any more, but during upgrade Moodle may
- * try to include the file which leads to very ugly errors if we it does not
- * exist any more. So we keep the file, but it does not do anything.
+ * State anonymiser.
  *
  * @package    block_xp
- * @copyright  2014 Frédéric Massart
+ * @copyright  2021 Frédéric Massart
+ * @author     Frédéric Massart <fred@branchup.tech>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @deprecated Since v3.0.0
  */
-class block_xp_helper {
+interface state_anonymiser {
 
     /**
-     * Act when a course is deleted.
+     * Return an anonymised state.
      *
-     * @param  \core\event\course_deleted $event The event.
-     * @return void
+     * @return state
      */
-    public static function course_deleted(\core\event\course_deleted $event) {
-    }
-
-    /**
-     * Observe the events, and dispatch them if necessary.
-     *
-     * @param \core\event\base $event The event.
-     * @return void
-     */
-    public static function observer(\core\event\base $event) {
-    }
+    public function anonymise_state(state $state);
 
 }
