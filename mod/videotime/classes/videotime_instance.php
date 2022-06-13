@@ -80,6 +80,11 @@ class videotime_instance implements \renderable, \templatable {
     private $embed = false;
 
     /**
+     * @var tabs
+     */
+    private $tabs = null;
+
+    /**
      * @var string Random, unique element ID.
      */
     private $uniqueid;
@@ -120,7 +125,11 @@ class videotime_instance implements \renderable, \templatable {
     public static function instance_by_id($id) : videotime_instance {
         global $DB;
 
-        return new videotime_instance($DB->get_record('videotime', ['id' => $id], '*', MUST_EXIST));
+        $instance = new videotime_instance($DB->get_record('videotime', ['id' => $id], '*', MUST_EXIST));
+        if ($instance->enabletabs) {
+            $instance->tabs = new tabs($instance);
+        }
+        return $instance;
     }
 
     /**
@@ -278,13 +287,24 @@ class videotime_instance implements \renderable, \templatable {
 
         $record->name = format_string($record->name, FORMAT_HTML);
 
-        $record->intro  = file_rewrite_pluginfile_urls($record->intro, 'pluginfile.php', $this->get_context()->id,
-            'mod_videotime', 'intro', null);
-        $record->intro = format_text($record->intro, $record->introformat);
+        if (
+            !empty($record->show_description_in_player)
+            && !class_exists('core\\output\\activity_header')
+        ) {
+            $record->intro  = file_rewrite_pluginfile_urls($record->intro, 'pluginfile.php', $this->get_context()->id,
+                'mod_videotime', 'intro', null);
+            $record->intro = format_text($record->intro, $record->introformat, [
+                'noclean' => true,
+            ]);
+        } else {
+            $record->intro = '';
+        }
 
         $record->video_description = file_rewrite_pluginfile_urls($record->video_description, 'pluginfile.php',
             $this->get_context()->id, 'mod_videotime', 'video_description', 0);
-        $record->video_description = format_text($record->video_description, $record->video_description_format);
+        $record->video_description = format_text($record->video_description, $record->video_description_format, [
+            'noclean' => true,
+        ]);
 
         $record->intro_excerpt = videotime_get_excerpt($record->intro);
         $record->show_more_link = strlen(strip_tags($record->intro_excerpt)) < strlen(strip_tags($record->intro));
@@ -428,8 +448,7 @@ class videotime_instance implements \renderable, \templatable {
         }
 
         if ($this->enabletabs) {
-            $tabs = new tabs($this);
-            $context['tabshtml'] = $output->render($tabs);
+            $context['tabshtml'] = $output->render($this->tabs);
         }
 
         return $context;
@@ -491,4 +510,14 @@ class videotime_instance implements \renderable, \templatable {
             'preventfastforwarding' => new \external_value(PARAM_BOOL),
         ]);
     }
+
+    /**
+     * Call plugins hook to setup page
+     */
+    public function setup_page() {
+        if ($this->enabletabs) {
+            $this->tabs->setup_page();
+        }
+    }
+
 }

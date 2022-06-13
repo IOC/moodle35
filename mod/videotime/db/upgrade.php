@@ -566,5 +566,42 @@ function xmldb_videotime_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022022802, 'videotime');
     }
 
+    if ($oldversion < 2022030104) {
+        // Assign view_report to editing teacher if assigned to non editing teacher.
+        $context = context_system::instance();
+        $roles = $DB->get_records_menu('role', array(), '', 'shortname, id');
+        $capabilities = $DB->get_records_menu('role_capabilities', array(
+            'contextid' => $context->id,
+            'capability' => 'mod/videotime:view_report'
+        ), '', 'roleid, permission');
+        if (
+            key_exists('editingteacher', $roles)
+            && !key_exists($roles['editingteacher'], $capabilities)
+            && key_exists('teacher', $roles)
+            && $capabilities[$roles['teacher']] === (string)CAP_ALLOW
+        ) {
+            assign_capability('mod/videotime:view_report', CAP_ALLOW,
+                    $roles['editingteacher'], $context->id, true);
+        }
+
+        // Videotime savepoint reached.
+        upgrade_mod_savepoint(true, 2022030104, 'videotime');
+    }
+
+    if ($oldversion < 2022040801) {
+
+        // Define field show_description_in_player to be added to videotime.
+        $table = new xmldb_table('videotime');
+        $field = new xmldb_field('show_description_in_player', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'show_description');
+
+        // Conditionally launch add field show_description_in_player.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Videotime savepoint reached.
+        upgrade_mod_savepoint(true, 2022040801, 'videotime');
+    }
+
     return true;
 }
