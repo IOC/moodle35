@@ -25,10 +25,11 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'qbehaviour_regexpadaptivewithhelpnopenalty';
-$plugin->version  = 2021052300;
+
+$plugin->version  = 2022041800;
 $plugin->requires = 2016052300; // Moodle version.
 $plugin->dependencies = array(
-    'qbehaviour_regexpadaptivewithhelp' => 2021052300
+    'qbehaviour_regexpadaptivewithhelp' => 2022041800
 );
-$plugin->release = '3.11.0 for Moodle 3.11';
+$plugin->release = '4.0 for Moodle 4.0';
 $plugin->maturity  = MATURITY_STABLE;
