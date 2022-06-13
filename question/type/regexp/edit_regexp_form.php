@@ -21,7 +21,6 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
 
  */
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Editing form for the regexp question type
@@ -95,7 +94,6 @@ class qtype_regexp_edit_form extends question_edit_form {
 
             // Add current question category to $data for validation!
             // Modified for moodle 3.6 compatibility.
-            $data['category'] = $this->category->id.','.$this->category->contextid;
 
             foreach ($this->currentanswers as $key => $answer) {
                 $qu->answers[$i] = new stdClass();
@@ -192,7 +190,12 @@ class qtype_regexp_edit_form extends question_edit_form {
         global $CFG;
 
         require_once($CFG->dirroot.'/question/type/regexp/locallib.php');
-        $errors = parent::validation($data, $files);
+        // Starting with Moodle 4 if we are calculating alternate answers we cannot use parent:validation.
+        if ($this->showalternate) {
+            $errors = array();
+        } else {
+            $errors = parent::validation($data, $files);
+        }
         $answers = $data['answer'];
         $data['fraction'][0] = 1;
         $grades = $data['fraction'];
