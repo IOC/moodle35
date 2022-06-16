@@ -253,21 +253,28 @@ if ($view == 'job_queue') {
             $categorydest  = (int) $data['categorydest'];
             $coursedisplay = !empty($data['coursedisplay']);
             $context = context_user::instance($USER->id);
+
             if (!empty($data['choose-backup'])) {
                 $params = array(
                     'startday'      => $startday,
                     'startmonth'    => $startmonth,
                     'startyear'     => $startyear,
                     'category'      => $categorydest,
-                    'coursedisplay' => $coursedisplay
+                    'coursedisplay' => $coursedisplay,
+                    'fullname'      => '',
+                    'shortname'     => '',
+                    'type'          => 'import_course',
                 );
+                
+                $context = context_coursecat::instance($categorydest);        
+                $draftareaid = file_get_submitted_draft_itemid('choose-backup');
+        
+                $job = batch_queue::add_job($USER->id, $categorydest, 'import_course', (object) $params, true);
                 $context = context_coursecat::instance($categorydest);
-                $files = optional_param_array('choose-backup', '', PARAM_PATH);
-                foreach ($files as $file) {
-                    $params['file'] = $file;
-                    $job = batch_queue::add_job($USER->id, $categorydest, 'import_course', (object) $params);
-                }
-                redirect(new moodle_url('/local/batch/index.php', array('category' => $category)));
+                file_prepare_draft_area($draftareaid, $context->id, 'local_batch', 'job', $job->id);
+                file_save_draft_area_files($draftareaid, $context->id, 'local_batch', 'job', $job->id);
+                            
+                redirect(new moodle_url('/local/batch/index.php', array('category' => $categorydest)));
             }
         }
     }

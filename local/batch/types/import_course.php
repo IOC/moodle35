@@ -30,46 +30,51 @@ class batch_type_import_course extends batch_type_base {
         global $DB, $CFG;
 
         $context = context_coursecat::instance($categoryid);
-        $slash = '/';
-        if (preg_match('/\/$/', $CFG->local_batch_path_backups)) {
-            $slash = '';
+
+        $fs = get_file_storage();
+        $af = $fs->get_area_files($context->id, 'local_batch', 'job', $jobid, 'filename', false);
+        if ($af) {
+            $file = array_shift($af);
+            $params->courseid = batch_course::restore_backup($file, $context, $params);
+            $params->shortname = $DB->get_field('course', 'shortname' , array('id' => $params->courseid));
+            $params->fullname = $DB->get_field('course', 'fullname' , array('id' => $params->courseid));
         }
-        $filepath = $CFG->dataroot . '/' . $CFG->local_batch_path_backups . $slash . $params->file;
-        $options = array('import' => true);
-        $params->courseid = batch_course::restore_backup($filepath, $context, $params, $options);
-        batch_course::assignmentupgrade($params->courseid);
-        $enrol = new enrol_manual_plugin();
-        $enrol->add_instance((object) array('id' => $params->courseid));
-        if ($params->coursedisplay) {
-            $conditions = array(
-                'courseid' => $params->courseid,
-                'name'     => 'coursedisplay',
-            );
-            $DB->set_field('course_format_options', 'value', 1, $conditions);
-        }
+
     }
 
     public function params_info($params, $jobid) {
         global $DB, $PAGE;
-
         $context = context_coursecat::instance($params->category);
+        $fs = get_file_storage();
+        $af = $fs->get_area_files($context->id, 'local_batch', 'job', $jobid, 'filename', false);
+        $attach = $filename = $fileurl = '';
+        if ($af) {
+            $attach = array_shift($af);
+            $filename = $attach->get_filename();
+            $path = '/'.$attach->get_contextid().'/local_batch/job/'.$attach->get_itemid().$attach->get_filepath().$filename;
+            $fileurl = moodle_url::make_file_url('/pluginfile.php', $path, true);
+        }
+
         $categoryname = $DB->get_field('course_categories', 'name' , array('id' => $params->category));
         $user = batch_get_user($params->user);
         $url = new moodle_url('/course/index.php', array('categoryid' => $params->category));
         $batchoutput = $PAGE->get_renderer('local_batch');
 
+        
         return $batchoutput->print_info_import_courses(
             array(
+                'attach'       => $attach,
+                'categoryname' => $categoryname,
                 'courseid'      => (isset($params->courseid) ? $params->courseid : ''),
-                'categoryname'  => $categoryname,
-                'coursedisplay' => $params->coursedisplay,
-                'filename'      => basename($params->file),
+                'fileurl'      => $fileurl,
+                'filename'      => $filename,
                 'fullname'      => (isset($params->fullname) ? $params->fullname : ''),
                 'startday'      => $params->startday,
                 'startmonth'    => $params->startmonth,
                 'startyear'     => $params->startyear,
                 'url'           => $url,
-                'user'          => $user
+                'user'          => $user,
+                'shortname'    => $params->shortname,
             )
         );
     }

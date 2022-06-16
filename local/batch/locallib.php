@@ -605,6 +605,13 @@ class batch_course {
         if (isset($files) and !$fileisunzip and !$import and !$file->is_external_file()) {
             fulldelete($pathname);
         }
+        
+        if (!empty($params->coursedisplay) && $params->type == 'import_course') {   
+            
+            $data_course = ['courseid' => intval($courseid), 'name' => addslashes('coursedisplay')];
+            $DB->execute("UPDATE {course_format_options} SET `value` = 1 WHERE courseid= ? AND `name`= ?", $data_course);
+
+        } 
 
         return $courseid;
     }

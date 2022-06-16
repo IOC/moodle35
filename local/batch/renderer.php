@@ -555,11 +555,26 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::empty_tag('input', $params);
         $content .= $this->output->container_start('section');
         $content .= $this->output->heading(get_string('backup'), 3);
+         
         $params = array(
             'type' => 'hidden',
             'name' => 'course',
             'value' => $SITE->id
         );
+
+        $content .= html_writer::empty_tag('input', $params);
+        $options = array(
+            'accepted_types' => '.mbz',
+            'maxfiles' => 1
+        );
+
+        $df = new MoodleQuickForm_filemanager('choose-backup', '', array('id' => 'choose-backup'), $options);
+        if (isset($info['draftareaid'])) {
+            $df->setValue($info['draftareaid']);
+        }
+
+        $content .= $df->toHtml();
+
         $content .= html_writer::empty_tag('input', $params);
         if (!empty($CFG->local_batch_path_backups)) {
             $files = get_directory_list($CFG->dataroot . '/' . $CFG->local_batch_path_backups);
@@ -583,6 +598,7 @@ class local_batch_renderer extends plugin_renderer_base {
                 $content .= html_writer::label(basename($file), 'choose-backup[' . $key . ']');
                 $content .= html_writer::end_tag('li');
             }
+            
             $content .= html_writer::end_tag('ul');
         } else {
             $content .= html_writer::tag('div', get_string('nobackupfolder', 'local_batch'));
@@ -636,11 +652,26 @@ class local_batch_renderer extends plugin_renderer_base {
 
     public function print_info_import_courses($params) {
         $info = '';
-        $info .= html_writer::start_tag('div')
+        if (!is_null($params['attach'])) {
+            $iconimage = $this->output->pix_icon(file_file_icon($params['attach']), get_mimetype_description($params['attach']),
+                                        'moodle', array('class' => 'icon'));
+            $info .= html_writer::start_tag('div')
             . html_writer::tag('span', get_string('backup'), array('class' => 'batch_param'))
-            . html_writer::tag('span', $params['filename'], array('class' => 'batch_value'))
+            . html_writer::start_tag('span', array('class' => 'batch_value'))
+            . html_writer::link($params['fileurl'], $iconimage) . html_writer::link($params['fileurl'], $params['filename'])
+            . html_writer::end_tag('span')
             . html_writer::end_tag('div');
+        } else {
+            $info .= html_writer::start_tag('div')
+                . html_writer::tag('span', get_string('backup'), array('class' => 'batch_param'))
+                . html_writer::tag('span', $params['filename'], array('class' => 'batch_value'))
+                . html_writer::end_tag('div');
+        }
         if (is_int($params['courseid'])) {
+            $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string('shortname'), array('class' => 'batch_param'))
+            . html_writer::link(new moodle_url('/course/view.php', array('id' => $params['courseid'])), $params['shortname'], array('class' => 'batch_value'))
+            . html_writer::end_tag('div');
             $info .= html_writer::start_tag('div')
             . html_writer::tag('span', get_string('fullname'), array('class' => 'batch_param'))
             . html_writer::link(new moodle_url('/course/view.php', array('id' => $params['courseid'])), $params['fullname'], array('class' => 'batch_value'))
@@ -655,7 +686,7 @@ class local_batch_renderer extends plugin_renderer_base {
             . html_writer::tag('span', get_string('start_date', 'local_batch'), array('class' => 'batch_param'))
             . html_writer::tag('span', $value, array('class' => 'batch_value'))
             . html_writer::end_tag('div');
-        $value = ($params['coursedisplay'] ? get_string('yes') : get_string('no'));
+        // $value = ($params['coursedisplay'] ? get_string('yes') : get_string('no'));
         $info .= html_writer::start_tag('div')
             . html_writer::tag('span', get_string('course_display', 'local_batch'), array('class' => 'batch_param'))
             . html_writer::tag('span', $value, array('class' => 'batch_value'))
