@@ -259,7 +259,8 @@ if ($view == 'job_queue') {
                     'startmonth'    => $startmonth,
                     'startyear'     => $startyear,
                     'category'      => $categorydest,
-                    'coursedisplay' => $coursedisplay
+                    'coursedisplay' => $coursedisplay,
+                    'type'          => 'import_course',
                 );
                 $context = context_coursecat::instance($categorydest);
                 $files = optional_param_array('choose-backup', '', PARAM_PATH);
