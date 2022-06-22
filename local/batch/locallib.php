@@ -606,6 +606,11 @@ class batch_course {
             fulldelete($pathname);
         }
 
+        if (!empty($params->coursedisplay) && $params->type === 'import_course') {
+            $data_course = ['courseid' => $courseid, 'name' => addslashes('coursedisplay')];
+            $DB->execute("UPDATE {course_format_options} SET `value` = 1 WHERE courseid = ? AND `name`= ?", $data_course);
+        }
+
         return $courseid;
     }
 

@@ -565,7 +565,7 @@ class local_batch_renderer extends plugin_renderer_base {
             $files = get_directory_list($CFG->dataroot . '/' . $CFG->local_batch_path_backups);
 
             $filter = function($value) {
-                return preg_match('/\.zip$/', $value);
+                return preg_match('/\.mbz$/', $value);
             };
 
             $files = array_filter($files, $filter);
