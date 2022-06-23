@@ -658,41 +658,6 @@ class batch_course {
          ));
     }
 
-    public static function assignmentupgrade($courseid) {
-        global $DB, $CFG;
-        require_once($CFG->dirroot . '/mod/assign/locallib.php');
-        require_once($CFG->dirroot . '/admin/tool/assignmentupgrade/locallib.php');
-        // first find all the unique assignment types
-        $sql = 'SELECT plugin AS assignmenttype, value AS version'
-            . ' FROM {config_plugins}'
-            . ' WHERE name = :version'
-            . ' AND plugin LIKE :assignment';
-        $types = $DB->get_records_sql($sql, array(
-            'version' => 'version',
-            'assignment' => 'assignment_%'
-        ));
-
-        $upgradabletypes = array();
-
-        foreach ($types as $assignment) {
-            $shorttype = substr($assignment->assignmenttype, strlen('assignment_'));
-            if (assign::can_upgrade_assignment($shorttype, $assignment->version)) {
-                $upgradabletypes[] = $shorttype;
-            }
-        }
-
-        list($sql, $params) = $DB->get_in_or_equal($upgradabletypes, SQL_PARAMS_NAMED);
-        $sql .= ' AND course = :courseid';
-        $params['courseid'] = $courseid;
-        $records = $DB->get_records_sql(
-                  'SELECT id '
-                . ' FROM {assignment}'
-                . ' WHERE assignmenttype ' . $sql, $params);
-        foreach ($records as $record) {
-            tool_assignmentupgrade_upgrade_assignment($record->id);
-        }
-    }
-
     public static function change_prefix($courseid, $prefix) {
         global $DB;
         $course = $DB->get_record('course', array('id' => $courseid));
