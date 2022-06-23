@@ -37,7 +37,6 @@ class batch_type_import_course extends batch_type_base {
         $filepath = $CFG->dataroot . '/' . $CFG->local_batch_path_backups . $slash . $params->file;
         $options = array('import' => true);
         $params->courseid = batch_course::restore_backup($filepath, $context, $params, $options);
-        batch_course::assignmentupgrade($params->courseid);
         $enrol = new enrol_manual_plugin();
         $enrol->add_instance((object) array('id' => $params->courseid));
         if ($params->coursedisplay) {
