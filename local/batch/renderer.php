@@ -159,6 +159,7 @@ class local_batch_renderer extends plugin_renderer_base {
     }
 
     public function print_job_queue($jobs, $count, $page, $filter, $category, $totalpending, $mypending) {
+        global $CFG;
         $url = $this->url('job_queue')->out();
         $content = html_writer::start_tag('form', array('id' => 'queue-filter', 'action' => $url));
         $content .= $this->print_filter_select($filter);
