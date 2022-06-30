@@ -190,12 +190,12 @@ class local_batch_renderer extends plugin_renderer_base {
         return $content;
     }
 
-    public function same_config_courses($info, $type_job) {
+    public function config_courses($info, $type_job) {
     
-        GLOBAL $SITE;
+        global $SITE;
 
         $content = $this->output->container_start($type_job);
-
+        
         $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
         $params = array(
             'id' => 'sesskey',
@@ -205,6 +205,7 @@ class local_batch_renderer extends plugin_renderer_base {
         );
         $content .= html_writer::empty_tag('input', $params);
         
+        
         if ($type_job != 'batch_config_courses'){
             $params = array(
                 'id' => 'category',
@@ -213,10 +214,9 @@ class local_batch_renderer extends plugin_renderer_base {
                 'value' => $info['category']
             );
             $content .= html_writer::empty_tag('input', $params);
-        }
-  
+        }        
 
-        if($type_job == 'batch_create_courses'){
+        if($type_job == 'batch_create_courses'){        
             $content .= $this->output->container_start('section');
             $content .= $this->output->heading(get_string('backup'), 3);
             $params = array(
@@ -226,13 +226,13 @@ class local_batch_renderer extends plugin_renderer_base {
             );
             $content .= html_writer::empty_tag('input', $params);
         }
-        
+                
         return $content;
     }
 
     public function print_create_courses($info) {
     
-        $content = $this->same_config_courses($info, 'batch_create_courses');
+        $content = $this->config_courses($info, 'batch_create_courses');
 
         $options = array(
             'accepted_types' => '.mbz',
@@ -320,6 +320,20 @@ class local_batch_renderer extends plugin_renderer_base {
         return $content;
     }
 
+    public function data_info_courses($info, $value, $params, $data_course) {        
+        
+        $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string($data_course, 'local_batch'), array('class' => 'batch_param'))
+            . html_writer::tag('span', $value, array('class' => 'batch_value'))
+            . html_writer::end_tag('div');
+        $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string('creator', 'local_batch'), array('class' => 'batch_param'))
+            . html_writer::tag('span', fullname($params['user']), array('class' => 'batch_value'))
+            . html_writer::end_tag('div');
+            
+        return $info;
+    }
+
     public function print_info_create_courses($params) {
         $info = '';
         if (!is_null($params['attach'])) {
@@ -351,20 +365,14 @@ class local_batch_renderer extends plugin_renderer_base {
             . html_writer::tag('span', $params['fullname'], array('class' => 'batch_value'))
             . html_writer::end_tag('div');
         }
+        
         $info .= html_writer::start_tag('div')
             . html_writer::tag('span', get_string('category'), array('class' => 'batch_param'))
             . html_writer::link($params['url'], $params['categoryname'])
             . html_writer::end_tag('div');
         $value = $params['startday'] . '/'. $params['startmonth'] . '/' . $params['startyear'];
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('start_date', 'local_batch'), array('class' => 'batch_param'))
-            . html_writer::tag('span', $value, array('class' => 'batch_value'))
-            . html_writer::end_tag('div');
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('creator', 'local_batch'), array('class' => 'batch_param'))
-            . html_writer::tag('span', fullname($params['user']), array('class' => 'batch_value'))
-            . html_writer::end_tag('div');
-        return $info;
+
+        return $this->data_info_courses($info, $value, $params, 'start_date');
     }
 
     public function print_delete_courses($courses, $category) {
@@ -416,16 +424,9 @@ class local_batch_renderer extends plugin_renderer_base {
         return $info;
     }
 
-    public function print_restart_courses($courses, $info) {
-        
-        $content = $this->same_config_courses($info, 'batch_restart_courses');
 
-        $content .= $this->output->container_start('section');
-        $content .= $this->output->heading(get_string('courses'), 3);
-        $content .= $this->output->container_start('', 'course-tree');
-        $content .= $this->print_course_menu($courses);
-        $content .= $this->output->container_end();// close course-tree
-        $content .= $this->output->container_end();// close section
+    public function config_context_courses($content, $info){
+
         $content .= $this->output->container_start('section');
         $content .= $this->output->heading(get_string('parameters', 'local_batch'), 3);
         $content .= $this->output->container_start('', 'calendar-panel');
@@ -446,6 +447,23 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::label(get_string('backup_category', 'local_batch'), 'category');
         $content .= $this->print_category_menu('categorydest', $info['category']);
         $content .= $this->output->container_end();// close category
+
+        return $content;
+    }
+
+    public function print_restart_courses($courses, $info) {
+
+        $content = $this->config_courses($info, 'batch_restart_courses');
+
+        $content .= $this->output->container_start('section');
+        $content .= $this->output->heading(get_string('courses'), 3);
+        $content .= $this->output->container_start('', 'course-tree');
+        $content .= $this->print_course_menu($courses);
+        $content .= $this->output->container_end();// close course-tree
+        $content .= $this->output->container_end();// close section
+
+        $content = $this->config_context_courses($content, $info);
+
         $content .= $this->output->container_start('roles');
         $content .= html_writer::label(get_string('roleassignments', 'role'), 'roleassignments');
         $context = context_system::instance();
@@ -542,14 +560,13 @@ class local_batch_renderer extends plugin_renderer_base {
     public function print_import_courses($info) {
         global $CFG;
 
-        $content = $this->same_config_courses($info, 'batch_create_courses');
-
-
+        $content = $this->config_courses($info, 'batch_create_courses');
+    
         if (!empty($CFG->local_batch_path_backups)) {
             $files = get_directory_list($CFG->dataroot . '/' . $CFG->local_batch_path_backups);
 
             $filter = function($value) {
-                return preg_match('/\.zip$/', $value);
+                return preg_match('/\.mbz$/', $value);
             };
 
             $files = array_filter($files, $filter);
@@ -573,26 +590,9 @@ class local_batch_renderer extends plugin_renderer_base {
         }
 
         $content .= $this->output->container_end('section');// close backup files section
-        $content .= $this->output->container_start('section');
-        $content .= $this->output->heading(get_string('parameters', 'local_batch'), 3);
-        $content .= $this->output->container_start('', 'calendar-panel');
-        $content .= html_writer::label(get_string('start_date', 'local_batch'), 'startdate');
-        $params = array(
-            'id' => 'startdate',
-            'type' => 'text',
-            'name' => 'startdate',
-            'size' => '10',
-            'value' => $info['startday'] . '/' . $info['startmonth'] . '/' . $info['startyear']
-        );
-        $content .= html_writer::empty_tag('input', $params);
-        $url = $this->output->image_url('i/calendar', 'core');
-        $datepicker = html_writer::empty_tag('img', array('id' => 'batch_toggle_datepicker', 'class' => 'batch_toggle_datepicker', 'src' => $url, 'alt' => 'calendar'));
-        $content .= html_writer::link('#', $datepicker);
-        $content .= $this->output->container_end();// close startdate
-        $content .= $this->output->container_start('batch_category', 'category');
-        $content .= html_writer::label(get_string('backup_category', 'local_batch'), 'category');
-        $content .= $this->print_category_menu('categorydest', $info['category']);
-        $content .= $this->output->container_end();// close category
+        
+        $content =  $this->config_context_courses($content, $info);
+        
         $content .= $this->output->container_start();
         $content .= html_writer::label(get_string('course_display', 'local_batch'), 'coursedisplay');
         $params = array(
@@ -640,21 +640,15 @@ class local_batch_renderer extends plugin_renderer_base {
             . html_writer::tag('span', $value, array('class' => 'batch_value'))
             . html_writer::end_tag('div');
         $value = ($params['coursedisplay'] ? get_string('yes') : get_string('no'));
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('course_display', 'local_batch'), array('class' => 'batch_param'))
-            . html_writer::tag('span', $value, array('class' => 'batch_value'))
-            . html_writer::end_tag('div');
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('creator', 'local_batch'), array('class' => 'batch_param'))
-            . html_writer::tag('span', fullname($params['user']), array('class' => 'batch_value'))
-            . html_writer::end_tag('div');
-        return $info;
+
+        return $this->data_info_courses($info, $value, $params, 'course_display');
+        
     }
 
     public function print_config_courses($courses, $themes) {
         global $CFG;
        
-        $content = $this->same_config_courses(false, 'batch_config_courses');
+        $content = $this->config_courses(false, 'batch_config_courses');
 
         $content .= $this->output->container_start('section');
         $content .= $this->output->heading(get_string('courses'), 3);
@@ -805,6 +799,12 @@ class local_batch_renderer extends plugin_renderer_base {
                 $content .= html_writer::label($course->fullname, 'course-' . $course->id);
                 $content .= html_writer::end_tag('li');
             }
+            $content .= html_writer::end_tag('ul');
+        }
+        $content .= html_writer::end_tag('li');
+        return $content;
+    }
+}
             $content .= html_writer::end_tag('ul');
         }
         $content .= html_writer::end_tag('li');
