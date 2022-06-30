@@ -190,10 +190,12 @@ class local_batch_renderer extends plugin_renderer_base {
         return $content;
     }
 
-    public function print_create_courses($info) {
-        global $SITE;
+    public function same_config_courses($info, $type_job) {
+    
+        GLOBAL $SITE;
 
-        $content = $this->output->container_start('batch_create_courses');
+        $content = $this->output->container_start($type_job);
+
         $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
         $params = array(
             'id' => 'sesskey',
@@ -202,21 +204,36 @@ class local_batch_renderer extends plugin_renderer_base {
             'value' => sesskey()
         );
         $content .= html_writer::empty_tag('input', $params);
-        $params = array(
-            'id' => 'category',
-            'type' => 'hidden',
-            'name' => 'category',
-            'value' => $info['category']
-        );
-        $content .= html_writer::empty_tag('input', $params);
-        $content .= $this->output->container_start('section');
-        $content .= $this->output->heading(get_string('backup'), 3);
-        $params = array(
-            'type' => 'hidden',
-            'name' => 'course',
-            'value' => $SITE->id
-        );
-        $content .= html_writer::empty_tag('input', $params);
+        
+        if ($type_job != 'batch_config_courses'){
+            $params = array(
+                'id' => 'category',
+                'type' => 'hidden',
+                'name' => 'category',
+                'value' => $info['category']
+            );
+            $content .= html_writer::empty_tag('input', $params);
+        }
+  
+
+        if($type_job == 'batch_create_courses'){
+            $content .= $this->output->container_start('section');
+            $content .= $this->output->heading(get_string('backup'), 3);
+            $params = array(
+                'type' => 'hidden',
+                'name' => 'course',
+                'value' => $SITE->id
+            );
+            $content .= html_writer::empty_tag('input', $params);
+        }
+        
+        return $content;
+    }
+
+    public function print_create_courses($info) {
+    
+        $content = $this->same_config_courses($info, 'batch_create_courses');
+
         $options = array(
             'accepted_types' => '.mbz',
             'maxfiles' => 1
@@ -400,22 +417,9 @@ class local_batch_renderer extends plugin_renderer_base {
     }
 
     public function print_restart_courses($courses, $info) {
-        $content = $this->output->container_start('batch_restart_courses');
-        $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
-        $params = array(
-            'id' => 'sesskey',
-            'type' => 'hidden',
-            'name' => 'sesskey',
-            'value' => sesskey()
-        );
-        $content .= html_writer::empty_tag('input', $params);
-        $params = array(
-            'id' => 'category',
-            'type' => 'hidden',
-            'name' => 'category',
-            'value' => $info['category']
-        );
-        $content .= html_writer::empty_tag('input', $params);
+        
+        $content = $this->same_config_courses($info, 'batch_restart_courses');
+
         $content .= $this->output->container_start('section');
         $content .= $this->output->heading(get_string('courses'), 3);
         $content .= $this->output->container_start('', 'course-tree');
@@ -536,32 +540,11 @@ class local_batch_renderer extends plugin_renderer_base {
     }
 
     public function print_import_courses($info) {
-        global $CFG, $SITE;
+        global $CFG;
 
-        $content = $this->output->container_start('batch_create_courses');
-        $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
-        $params = array(
-            'id' => 'sesskey',
-            'type' => 'hidden',
-            'name' => 'sesskey',
-            'value' => sesskey()
-        );
-        $content .= html_writer::empty_tag('input', $params);
-        $params = array(
-            'id' => 'category',
-            'type' => 'hidden',
-            'name' => 'category',
-            'value' => $info['category']
-        );
-        $content .= html_writer::empty_tag('input', $params);
-        $content .= $this->output->container_start('section');
-        $content .= $this->output->heading(get_string('backup'), 3);
-        $params = array(
-            'type' => 'hidden',
-            'name' => 'course',
-            'value' => $SITE->id
-        );
-        $content .= html_writer::empty_tag('input', $params);
+        $content = $this->same_config_courses($info, 'batch_create_courses');
+
+
         if (!empty($CFG->local_batch_path_backups)) {
             $files = get_directory_list($CFG->dataroot . '/' . $CFG->local_batch_path_backups);
 
@@ -670,15 +653,9 @@ class local_batch_renderer extends plugin_renderer_base {
 
     public function print_config_courses($courses, $themes) {
         global $CFG;
-        $content = $this->output->container_start('batch_config_courses');
-        $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
-        $params = array(
-            'id' => 'sesskey',
-            'type' => 'hidden',
-            'name' => 'sesskey',
-            'value' => sesskey()
-        );
-        $content .= html_writer::empty_tag('input', $params);
+       
+        $content = $this->same_config_courses(false, 'batch_config_courses');
+
         $content .= $this->output->container_start('section');
         $content .= $this->output->heading(get_string('courses'), 3);
         $content .= $this->output->container_start('', 'course-tree');
