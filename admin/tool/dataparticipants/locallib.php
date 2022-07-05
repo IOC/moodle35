@@ -63,12 +63,9 @@ class tool_dataparticipants_utils {
 
         list($sqlid, $params) = $DB->get_in_or_equal(explode(',', $task->courses));
         $courses = $DB->get_records_select('course', "id {$sqlid}", $params, '', 'id, shortname, fullname');
-        if (count($courses) < 1) {
-            return false;
-        }
-
         $roles = explode(',', $task->roles);
-        if (count($roles) < 1) {
+        
+        if (count($courses) < 1 || count($roles) < 1) {
             return false;
         }
 

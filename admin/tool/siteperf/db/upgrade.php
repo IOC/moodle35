@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-function xmldb_tool_siteperf_upgrade($oldversion) {
+function xmldb_tool_siteperf_upgrade() {
     global $CFG, $DB, $OUTPUT;
 
     $dbman = $DB->get_manager();

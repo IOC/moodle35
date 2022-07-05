@@ -197,17 +197,22 @@ $(document).ready(function($) {
     }
 
     $('#stats-chart').bind('jqplotDataClick', function(ev, seriesIndex, pointIndex, data) {
+
+        var type_context = '';
+        var value = $('#stats-'+type_context+' > option').eq(pointIndex+1).val();
+        var final_val = $('#stats-'+type_context).val(value);
+
         if (M_jqplot_context === 'year'){
-            var value = $('#stats-week > option').eq(pointIndex+1).val();
-            $('#stats-week').val(value);
+            type_context = 'week';
+            final_val;
         }else{
             if (M_jqplot_context === 'week'){
-                var value = $('#stats-day > option').eq(pointIndex+1).val();
-                $('#stats-day').val(value);
+                type_context = 'day';
+                final_val;
             }else{
                 if (M_jqplot_context === 'day'){
-                    var value = $('#stats-hour > option').eq(pointIndex+1).val();
-                    $('#stats-hour').val(value);
+                    type_context = 'hour';
+                    final_val;
                 }
             }
         }

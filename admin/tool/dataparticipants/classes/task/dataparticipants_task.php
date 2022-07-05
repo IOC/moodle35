@@ -67,10 +67,8 @@ class dataparticipants_task extends \core\task\scheduled_task {
                 $send = ($task->scheduled == WEEKLY) && ($task->timesend + AWEEK <= $now);
                 $send = $send || (($task->scheduled == QUARTERLY) && ($task->timesend + THREEMONTHS <= $now));
             }
-            if ($send) {
-                if ($zipfile = $utils->generate_zip($task)) {
-                    $utils->send_email($task, $zipfile);
-                }
+            if ($send && $zipfile = $utils->generate_zip($task)) {
+                $utils->send_email($task, $zipfile);
             }
         }
     }
