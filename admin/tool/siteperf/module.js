@@ -31,6 +31,8 @@ $(document).ready(function($) {
         update(params);
     }
 
+    function alert(){}
+    
     var update = function(params) {
         $('#stats').addClass('updating');
         $.ajax({
@@ -199,23 +201,22 @@ $(document).ready(function($) {
     $('#stats-chart').bind('jqplotDataClick', function(ev, seriesIndex, pointIndex, data) {
 
         var type_context = '';
-        var value = $('#stats-'+type_context+' > option').eq(pointIndex+1).val();
-        var final_val = $('#stats-'+type_context).val(value);
+        var value = $('#stats-'+type_context+' > option').eq(pointIndex+1).val();      
 
         if (M_jqplot_context === 'year'){
             type_context = 'week';
-            final_val;
         }else{
             if (M_jqplot_context === 'week'){
                 type_context = 'day';
-                final_val;
             }else{
                 if (M_jqplot_context === 'day'){
                     type_context = 'hour';
-                    final_val;
                 }
             }
         }
+
+        $('#stats-'+type_context).val(value);
+
         change();
     });
 
