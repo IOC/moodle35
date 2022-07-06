@@ -49,7 +49,7 @@ YUI(M.yui.loader).use('node', 'anim', function(Y) {
         course_row.one('input[name="fullname-'+lastindex+'"]').set('name', 'fullname-'+(lastindex+1)).set('value', '');
         course_row.one('#category-'+lastindex).set('id', 'category-'+(lastindex+1)).set('name', 'category-'+(lastindex+1));
         node_lastindex.setAttribute('value', (lastindex+1));
-        var node = Y.one('#course-list tbody').append(course_row);
+        Y.one('#course-list tbody').append(course_row);
         Y.one("#course-list tbody tr:last-child a.delete-course").setStyle('visibility', 'visible');
         Y.one('#course-list tbody tr:last-child input[name^="shortname"]').focus();
         var count = Y.all('#course-list tbody tr').size();
@@ -61,7 +61,7 @@ YUI(M.yui.loader).use('node', 'anim', function(Y) {
 
     var batch_toggle_datepicker = function() {
         batch_position_datepicker();
-        var node = Y.one('#dateselector-calendar-panel');
+        Y.one('#dateselector-calendar-panel');
         if (M.form.dateselector.showing) {
             M.form.dateselector.panel.hide();
             M.form.dateselector.showing = false;
