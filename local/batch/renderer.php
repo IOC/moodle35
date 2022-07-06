@@ -805,9 +805,3 @@ class local_batch_renderer extends plugin_renderer_base {
         return $content;
     }
 }
-            $content .= html_writer::end_tag('ul');
-        }
-        $content .= html_writer::end_tag('li');
-        return $content;
-    }
-}
