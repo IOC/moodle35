@@ -59,19 +59,19 @@ class batch_job {
     }
 
     public function can_start() {
-        $types = batch_type($this->type);
-        return $types->can_start($this->params);
+        $type = batch_type($this->type);
+        return $type->can_start($this->params);
     }
 
     public function execute() {
         global $DB;
 
-        $types = batch_type($this->type);
+        $type = batch_type($this->type);
         $this->timestarted = time();
         $this->save();
         $transaction = $DB->start_delegated_transaction();
         try {
-            $types->execute($this->id, $this->category, $this->params);
+            $type->execute($this->id, $this->category, $this->params);
         } catch (moodle_exception $e) {
             $this->error = $e->getMessage() . ' in file: ' .
                            $e->getFile() . ' line: ' . $e->getLine() . ' ' . $e->getTraceAsString();
@@ -242,10 +242,12 @@ class batch_queue {
 
     public static function prioritize_job($id, $value) {
         global $DB;
-        if (has_capability('moodle/site:config', context_system::instance()) && $job = self::get_job($id)) {
-            $context = context_coursecat::instance($job->category);
-            if (has_capability('moodle/category:manage', $context) and $job->timestarted == 0) {
-                $DB->set_field('local_batch_jobs', 'priority', $value, array('id' => $job->id));
+        if (has_capability('moodle/site:config', context_system::instance())) {
+            if ($job = self::get_job($id)) {
+                $context = context_coursecat::instance($job->category);
+                if (has_capability('moodle/category:manage', $context) and $job->timestarted == 0) {
+                    $DB->set_field('local_batch_jobs', 'priority', $value, array('id' => $job->id));
+                }
             }
         }
     }
@@ -444,11 +446,13 @@ class batch_course {
         $bc->get_plan()->get_setting('userscompletion')->set_value(false);
         $bc->get_plan()->get_setting('logs')->set_value(false);
 
-        if ($allmods = $DB->get_records_menu('modules', null, '', 'id, name') && $modules = $DB->get_records('course_modules', array('course' => $courseid), '', 'id, module')) {
-            foreach ($modules as $mod) {
-                $name = $allmods[$mod->module] . '_' . $mod->id . '_userinfo';
-                if ($bc->get_plan()->setting_exists($name)) {
-                    $bc->get_plan()->get_setting($name)->set_value(false);
+        if ($allmods = $DB->get_records_menu('modules', null, '', 'id, name')) {
+            if ($modules = $DB->get_records('course_modules', array('course' => $courseid), '', 'id, module')) {
+                foreach ($modules as $mod) {
+                    $name = $allmods[$mod->module] . '_' . $mod->id . '_userinfo';
+                    if ($bc->get_plan()->setting_exists($name)) {
+                        $bc->get_plan()->get_setting($name)->set_value(false);
+                    }
                 }
             }
         }
@@ -473,11 +477,11 @@ class batch_course {
         global $CFG, $DB;
 
         if (!$DB->record_exists('course', array('id' => $courseid))) {
-            throw new InvalidArgumentException('delete_course: nonexistent_course ' . $courseid);
+            throw new Exception('delete_course: nonexistent_course ' . $courseid);
         }
 
         if (!delete_course($courseid, false)) {
-            throw new InvalidArgumentException('delete_course ' . $courseid);
+            throw new Exception('delete_course ' . $courseid);
         }
     }
 
@@ -485,7 +489,7 @@ class batch_course {
         global $DB;
 
         if (!$DB->set_field('course', 'visible', 0, array('id' => $courseid))) {
-            throw new InvalidArgumentException('hide_course');
+            throw new Exception('hide_course');
         }
     }
 
@@ -493,7 +497,7 @@ class batch_course {
         global $DB;
 
         if (!$DB->set_field('course', 'visible', 1, array('id' => $courseid))) {
-            throw new InvalidArgumentException('show course');
+            throw new Exception('show course');
         }
     }
 
@@ -502,7 +506,7 @@ class batch_course {
         $themes = array_keys(core_component::get_plugin_list('theme'));
         if (empty($theme) || in_array($theme, $themes)) {
             if (!$DB->set_field('course', 'theme', $theme, array('id' => $courseid))) {
-                throw new InvalidArgumentException('set theme');
+                throw new Exception('set theme');
             }
         }
     }
@@ -511,11 +515,11 @@ class batch_course {
         global $DB;
 
         if (!$DB->set_field('course', 'shortname', $shortname, array('id' => $courseid))) {
-            throw new InvalidArgumentException('rename_course: shortname');
+            throw new Exception('rename_course: shortname');
         }
 
         if (!$DB->set_field('course', 'fullname', $fullname, array('id' => $courseid))) {
-            throw new InvalidArgumentException('rename_course: fullname');
+            throw new Exception('rename_course: fullname');
         }
     }
 
@@ -706,8 +710,10 @@ class batch_course {
 
         if (preg_match('/^(.*)([~\*])$/', $course->shortname, $match)) {
             $course->shortname = $match[1];
-            if ($match[2] == '~' && preg_match('/(.*) ~ .*?$/', $course->fullname, $match)) {
-                $course->fullname = $match[1];
+            if ($match[2] == '~') {
+                if (preg_match('/(.*) ~ .*?$/', $course->fullname, $match)) {
+                    $course->fullname = $match[1];
+                }
             }
         }
 

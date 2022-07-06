@@ -238,35 +238,37 @@ if ($view == 'job_queue') {
     $data['category']   = $category;
     echo $batchoutput->print_restart_courses($courses, $data);
 } else if ($view == 'import_courses') {
-    if ($data = batch_data_submitted() && !empty($data['categorydest'])) {
-        if (preg_match("/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})/", $data['startdate'], $match)) {
-            $startday   = (int) $match[1];
-            $startmonth = (int) $match[2];
-            $startyear  = (int) $match[3];
-        } else {
-            $date       = getdate();
-            $startday   = $date['mday'];
-            $startyear  = $date['year'];
-            $startmonth = $date['mon'];
-        }
-        $categorydest  = (int) $data['categorydest'];
-        $coursedisplay = !empty($data['coursedisplay']);
-        $context = context_user::instance($USER->id);
-        if (!empty($data['choose-backup'])) {
-            $params = array(
-                'startday'      => $startday,
-                'startmonth'    => $startmonth,
-                'startyear'     => $startyear,
-                'category'      => $categorydest,
-                'coursedisplay' => $coursedisplay
-            );
-            $context = context_coursecat::instance($categorydest);
-            $files = optional_param_array('choose-backup', '', PARAM_PATH);
-            foreach ($files as $file) {
-                $params['file'] = $file;
-                $job = batch_queue::add_job($USER->id, $categorydest, 'import_course', (object) $params);
+    if ($data = batch_data_submitted()) {
+        if (!empty($data['categorydest'])) {
+            if (preg_match("/([0-9]{1,2})\/([0-9]{1,2})\/([0-9]{4})/", $data['startdate'], $match)) {
+                $startday   = (int) $match[1];
+                $startmonth = (int) $match[2];
+                $startyear  = (int) $match[3];
+            } else {
+                $date       = getdate();
+                $startday   = $date['mday'];
+                $startyear  = $date['year'];
+                $startmonth = $date['mon'];
             }
-            redirect(new moodle_url('/local/batch/index.php', array('category' => $category)));
+            $categorydest  = (int) $data['categorydest'];
+            $coursedisplay = !empty($data['coursedisplay']);
+            $context = context_user::instance($USER->id);
+            if (!empty($data['choose-backup'])) {
+                $params = array(
+                    'startday'      => $startday,
+                    'startmonth'    => $startmonth,
+                    'startyear'     => $startyear,
+                    'category'      => $categorydest,
+                    'coursedisplay' => $coursedisplay
+                );
+                $context = context_coursecat::instance($categorydest);
+                $files = optional_param_array('choose-backup', '', PARAM_PATH);
+                foreach ($files as $file) {
+                    $params['file'] = $file;
+                    $job = batch_queue::add_job($USER->id, $categorydest, 'import_course', (object) $params);
+                }
+                redirect(new moodle_url('/local/batch/index.php', array('category' => $category)));
+            }
         }
     }
     echo $OUTPUT->header();
@@ -291,8 +293,10 @@ if ($view == 'job_queue') {
                 } else if (trim($data['prefix'])) {
                     batch_course::change_prefix($courseid, $data['prefix']);
                 }
-                if ($data['suffix'] && !batch_course::change_suffix($courseid, $data['suffix'])) {
-                    $errors[] = $courseid;
+                if ($data['suffix']) {
+                    if (!batch_course::change_suffix($courseid, $data['suffix'])) {
+                        $errors[] = $courseid;
+                    }
                 }
                 if ($data['visible'] == 'yes') {
                     batch_course::show_course($courseid);

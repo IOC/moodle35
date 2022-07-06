@@ -51,7 +51,8 @@ function local_batch_extend_settings_navigation($nav, $context) {
     }
 }
 
-function local_batch_pluginfile($context, $filearea, $args, array $options=array()) {
+function local_batch_pluginfile($course, $cm, $context, $filearea, $args,
+                               $forcedownload, array $options=array()) {
     // Check context
 
     if (!has_capability('moodle/category:manage', $context)) {

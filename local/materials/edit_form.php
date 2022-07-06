@@ -67,8 +67,10 @@ class material_edit_form extends moodleform {
 
         $errors = array();
 
-        if (!$data['id'] && $DB->get_records('local_materials', array('courseid' => $data['courseid']))) {
-            $errors['attachment_filemanager'] = get_string('duplicatedcourse', 'local_materials');
+        if (!$data['id']) {
+            if ($DB->get_records('local_materials', array('courseid' => $data['courseid']))) {
+                $errors['attachment_filemanager'] = get_string('duplicatedcourse', 'local_materials');
+            }
         }
 
         return $errors;

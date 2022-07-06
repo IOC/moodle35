@@ -387,16 +387,27 @@ function format_unreadforums(array $unreadforums): string {
 function is_quiz_available(stdClass $quiz, int $userid): bool {
 
     $cm = get_coursemodule_from_id(MODULE_QUIZ_NAME, $quiz->coursemodule);
-    $now = time();
 
-    if (!$quiz->visible || !(($quiz->timeclose >= $now && $quiz->timeopen < $now) ||
-    ((int)$quiz->timeclose === 0 && $quiz->timeopen < $now) ||
-    ((int)$quiz->timeclose === 0 && (int)$quiz->timeopen === 0)) || 
-    !\core_availability\info_module::is_user_visible($cm, $userid)) {
+    // Check visibility.
+    if (!$quiz->visible) {
+        return false;
+    }
+
+    // Check if quiz is open.
+    $now = time();
+    if (!(($quiz->timeclose >= $now && $quiz->timeopen < $now) ||
+        ((int)$quiz->timeclose === 0 && $quiz->timeopen < $now) ||
+        ((int)$quiz->timeclose === 0 && (int)$quiz->timeopen === 0))) {
+        return false;
+    }
+
+    // Check availability.
+    if (!\core_availability\info_module::is_user_visible($cm, $userid)) {
         return false;
     }
 
     return true;
+
 }
 
 /**
