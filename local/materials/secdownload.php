@@ -37,12 +37,10 @@ foreach ($materials as $material) {
     $context = context_course::instance($material->courseid);
     while (count($parts) > 0) {
         foreach ($sources as $source) {
-            if (implode('/', $parts) === trim($source, '/')) {
-                if (has_capability('moodle/course:viewparticipants', $context)) {
-                    $url = make_secret_url($originalpath);
-                    redirect($url);
-                    exit;
-                }
+            if (implode('/', $parts) === trim($source, '/') && has_capability('moodle/course:viewparticipants', $context)) {
+                $url = make_secret_url($originalpath);
+                redirect($url);
+                exit;
             }
         }
         array_pop($parts);

@@ -25,6 +25,8 @@ div.dashboard-card div.course-info-container {
 /* Styles for the box of icons (courseoverview.mustache) */
 .local-course-overview-item {
     padding-right: 0.6rem;
+    cursor: pointer;
+
 }
 
 .local-course-overview-item img {
@@ -34,8 +36,4 @@ div.dashboard-card div.course-info-container {
 .local-course-overview-item-forum {
     font-weight: bold;
     color: #2A84F9;
-}
-
-.local-course-overview-item {
-    cursor: pointer;
 }

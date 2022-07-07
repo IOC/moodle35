@@ -395,9 +395,10 @@ function is_quiz_available(stdClass $quiz, int $userid): bool {
 
     // Check if quiz is open.
     $now = time();
-    if (!(($quiz->timeclose >= $now && $quiz->timeopen < $now) ||
-        ((int)$quiz->timeclose === 0 && $quiz->timeopen < $now) ||
-        ((int)$quiz->timeclose === 0 && (int)$quiz->timeopen === 0))) {
+    if (!$quiz->visible || !(($quiz->timeclose >= $now && $quiz->timeopen < $now) ||
+    ((int)$quiz->timeclose === 0 && $quiz->timeopen < $now) ||
+    ((int)$quiz->timeclose === 0 && (int)$quiz->timeopen === 0)) || 
+    !\core_availability\info_module::is_user_visible($cm, $userid)) {
         return false;
     }
 

@@ -34,7 +34,7 @@ YUI(M.yui.loader).use('node', 'anim', function(Y) {
             var obj = Y.one('#course-list tbody tr:last-child input[name^="shortname-"]');
             var lastindex = obj.getAttribute('name').match(/\d+/);
             Y.one('input[name="lastindex"]').setAttribute('value', lastindex[0]);
-            var obj = Y.one('#course-list tbody tr:last-child');
+            obj = Y.one('#course-list tbody tr:last-child');
             if (obj) {
                 obj.addClass('lastrow');
             }
