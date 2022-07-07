@@ -31,10 +31,10 @@ admin_externalpage_setup('tooldataparticipants');
 
 require_capability('tool/dataparticipants:manage', context_system::instance());
 
-$output = $PAGE->get_renderer('tool_dataparticipants');
+$output = $PAGE->get_renderer(PARAM_TOOL_DATAPARTICIPANTS);
 
-$tasks = $DB->get_records('tool_dataparticipants', null, '', '*', $page * PAGENUM, PAGENUM);
-$total = $DB->count_records('tool_dataparticipants');
+$tasks = $DB->get_records(PARAM_TOOL_DATAPARTICIPANTS, null, '', '*', $page * PAGENUM, PAGENUM);
+$total = $DB->count_records(PARAM_TOOL_DATAPARTICIPANTS);
 
 $params = array();
 if ($page) {
@@ -44,7 +44,7 @@ $baseurl = new moodle_url('/admin/tool/dataparticipants/index.php', $params);
 
 // output starts here
 echo $output->header();
-echo $output->heading(get_string('pluginname', 'tool_dataparticipants'));
+echo $output->heading(get_string('pluginname', PARAM_TOOL_DATAPARTICIPANTS));
 echo $output->single_button(new moodle_url('dataparticipants_task.php'), get_string('add'));
 echo $output->paging_bar($total, $page, PAGENUM, $baseurl);
 echo $output->tasks_table($tasks, $page);

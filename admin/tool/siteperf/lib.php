@@ -37,7 +37,7 @@ class tool_siteperf {
     public function log() {
         global $COURSE, $DB;
 
-        if (!$DB->get_manager()->table_exists('tool_siteperf_log')) {
+        if (!$DB->get_manager()->table_exists(PARAM_TOOL_SITEPERF_LOG)) {
             return false;
         }
         $time = microtime(true) - $this->timestamp;
@@ -50,7 +50,7 @@ class tool_siteperf {
         $record->script = $this->script();
         $record->time = $time;
         if (!empty($COURSE)) {
-            $DB->insert_record('tool_siteperf_log', $record);
+            $DB->insert_record(PARAM_TOOL_SITEPERF_LOG, $record);
         };
     }
 
@@ -101,7 +101,7 @@ class tool_siteperf_log {
 
     public function move_to_stats() {
         global $DB;
-        $maxid = $DB->get_field('tool_siteperf_log', 'MAX(id)', array());
+        $maxid = $DB->get_field(PARAM_TOOL_SITEPERF_LOG, 'MAX(id)', array());
 
         $groups = array('year, week, day, hour, course',
                 'year, week, day, hour, script',
@@ -122,7 +122,7 @@ class tool_siteperf_log {
                 $records = $this->fetch_aggregate($maxid, $fields);
                 $stats->add_records($records);
             }
-            $DB->delete_records_select('tool_siteperf_log',
+            $DB->delete_records_select(PARAM_TOOL_SITEPERF_LOG,
                     'id <= ?', array($maxid));
         }
     }
@@ -146,16 +146,16 @@ class tool_siteperf_stats {
         $where->script = $script;
 
         list($select, $params) = tool_siteperf_array_to_select($where);
-        $record = $DB->get_record_select('tool_siteperf_stats', $select, $params);
+        $record = $DB->get_record_select(PARAM_TOOL_SITEPERF_STATS, $select, $params);
         if ($record) {
             $record->hits += $hits;
             $record->time += $time;
-            $DB->update_record('tool_siteperf_stats', $record);
+            $DB->update_record(PARAM_TOOL_SITEPERF_STATS, $record);
         } else {
             $record = $where;
             $record->hits = $hits;
             $record->time = $time;
-            $DB->insert_record('tool_siteperf_stats', $record);
+            $DB->insert_record(PARAM_TOOL_SITEPERF_STATS, $record);
         }
     }
 
@@ -177,7 +177,7 @@ class tool_siteperf_stats {
         $object = new stdClass();
 
         list($select, $params) = $this->where($year, $week, $day, $hour);
-        if ($record = $DB->get_record_select('tool_siteperf_stats', $select, $params)) {
+        if ($record = $DB->get_record_select(PARAM_TOOL_SITEPERF_STATS, $select, $params)) {
             $object->hits = (int) $record->hits;
             $object->time = (float) $record->time / $record->hits;
         }
@@ -231,16 +231,17 @@ class tool_siteperf_stats {
                 $exportdata = array();
                 $date = new DateTime();
                 $date->setISODate($row->year, $row->week, !is_null($row->day) ? $row->day : 1);
+                $format_data='Y/m/d';
                 if ($week === false) {
-                    $exportdata[] = $date->format('Y/m/d');
+                    $exportdata[] = $date->format($format_data);
                 } else if ($day === false) {
                     $exportdata[] = date_format_string($date->getTimestamp(), '%Y/%m/%d');
                     $exportdata[] = $row->course;
                 } else if ($hour === false) {
-                    $exportdata[] = $date->format('Y/m/d');
+                    $exportdata[] = $date->format($format_data);
                     $exportdata[] = $row->course;
                 } else {
-                    $exportdata[] = $date->format('Y/m/d') . ' ' . $row->hour . ':00';
+                    $exportdata[] = $date->format($format_data) . ' ' . $row->hour . ':00';
                     $exportdata[] = $row->course;
                 }
                 $exportdata[] = $row->hits;
@@ -290,7 +291,7 @@ class tool_siteperf_stats {
         $params = array();
 
         list($select, $params) = $this->where($year, $week, $day, $hour, true, false);
-        $records = $DB->get_records_select('tool_siteperf_stats', $select,
+        $records = $DB->get_records_select(PARAM_TOOL_SITEPERF_STATS, $select,
                 $params, 'hits DESC', '*', 0, 20);
         foreach ($records as $record) {
             $object = new stdClass();
@@ -308,7 +309,7 @@ class tool_siteperf_stats {
         $scripts = array();
         $params = array();
         list($select, $params) = $this->where($year, $week, $day, $hour, false, true);
-        $records = $DB->get_records_select('tool_siteperf_stats', $select,
+        $records = $DB->get_records_select(PARAM_TOOL_SITEPERF_STATS, $select,
                 $params, 'hits DESC', '*', 0, 20);
         foreach ($records as $record) {
             $object = new stdClass();
@@ -326,7 +327,7 @@ class tool_siteperf_stats {
         $years = array();
 
         $sql = 'SELECT DISTINCT year'.
-                ' FROM {tool_siteperf_stats}'.
+                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year IS NOT NULL'.
                 ' GROUP BY year'.
                 ' ORDER BY year ASC';
@@ -346,7 +347,7 @@ class tool_siteperf_stats {
         $weeks = array();
 
         $sql = 'SELECT DISTINCT week'.
-                ' FROM {tool_siteperf_stats}'.
+                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week IS NOT NULL'.
                 ' GROUP BY year, week'.
                 ' ORDER BY week ASC';
@@ -367,7 +368,7 @@ class tool_siteperf_stats {
         $days = array();
 
         $sql = 'SELECT DISTINCT day'.
-                ' FROM {tool_siteperf_stats}'.
+                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week=? AND day IS NOT NULL'.
                 ' GROUP BY year, week, day'.
                 ' ORDER BY day ASC';
@@ -391,7 +392,7 @@ class tool_siteperf_stats {
         $hours = array();
 
         $sql = 'SELECT DISTINCT hour'.
-                ' FROM {tool_siteperf_stats}'.
+                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week=? AND day=?'.
                 ' AND hour IS NOT NULL'.
                 ' GROUP BY year, week, day, hour'.

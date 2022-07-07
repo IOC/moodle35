@@ -27,24 +27,24 @@ class tool_dataparticipants_renderer extends plugin_renderer_base {
         $data = array();
 
         if (empty($tasks)) {
-            return get_string('notasks', 'tool_dataparticipants');
+            return get_string('notasks', PARAM_TOOL_DATAPARTICIPANTS);
         }
 
         $table = new html_table();
         $table->head = array(
-                            get_string('courses', 'moodle'),
-                            get_string('roles', 'moodle'),
-                            get_string('email', 'moodle'),
-                            get_string('interval', 'tool_dataparticipants'),
-                            get_string('timesend', 'tool_dataparticipants'),
-                            get_string('actions', 'moodle')
+                            get_string('courses', PARAM_MOODLE),
+                            get_string('roles', PARAM_MOODLE),
+                            get_string('email', PARAM_MOODLE),
+                            get_string('interval', PARAM_TOOL_DATAPARTICIPANTS),
+                            get_string('timesend', PARAM_TOOL_DATAPARTICIPANTS),
+                            get_string('actions', PARAM_MOODLE)
         );
         foreach ($tasks as $task) {
             $data[] = $this->task_row($task, $page);
         }
         $table->data = $data;
         $table->id = 'dataparticipants_task';
-        $table->attributes['class'] = 'flexible admintable generaltable';
+        $table->attributes[PARAM_CLASS] = 'flexible admintable generaltable';
 
         $output = html_writer::table($table);
         return $output;
@@ -73,10 +73,10 @@ class tool_dataparticipants_renderer extends plugin_renderer_base {
 
         $cells[] = $task->email;
 
-        $langstring = get_string('weekly', 'tool_dataparticipants');
+        $langstring = get_string('weekly', PARAM_TOOL_DATAPARTICIPANTS);
 
         if ($task->scheduled == QUARTERLY) {
-            $langstring = get_string('quarterly', 'tool_dataparticipants');
+            $langstring = get_string('quarterly', PARAM_TOOL_DATAPARTICIPANTS);
         }
 
         $cells[] = $langstring;
@@ -84,16 +84,16 @@ class tool_dataparticipants_renderer extends plugin_renderer_base {
         if ($task->timesend) {
             $cells[] = userdate($task->timesend, get_string('strftimedatetime'));
         } else {
-            $cells[] = get_string('notsendyet', 'tool_dataparticipants');
+            $cells[] = get_string('notsendyet', PARAM_TOOL_DATAPARTICIPANTS);
         }
 
         $buttons = array();
         $editlink = new moodle_url('dataparticipants_task.php', array('id' => $task->id, 'page' => $page));
         $buttons[] = $this->output->action_icon($editlink, new pix_icon('t/edit', get_string('edit')),
-                null, array('class' => 'action-icon'));
+                null, array(PARAM_CLASS => 'action-icon'));
         $deletelink = new moodle_url('dataparticipants_task.php', array('id' => $task->id, 'delete' => 1));
         $buttons[] = $this->output->action_icon($deletelink, new pix_icon('t/delete', get_string('delete')),
-                null, array('class' => 'action-icon'));
+                null, array(PARAM_CLASS => 'action-icon'));
         $cells[] = implode(' ', $buttons);
 
         return $cells;

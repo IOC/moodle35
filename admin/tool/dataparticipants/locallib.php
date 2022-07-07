@@ -102,8 +102,8 @@ class tool_dataparticipants_utils {
         $mail = array(
             'to' => array($task->email),
             'from' => $CFG->noreplyaddress,
-            'subject' => get_string('emailsubject', 'tool_dataparticipants'),
-            'body' => get_string('emailcontent', 'tool_dataparticipants', $stringcourses),
+            'subject' => get_string('emailsubject', PARAM_TOOL_DATAPARTICIPANTS),
+            'body' => get_string('emailcontent', PARAM_TOOL_DATAPARTICIPANTS, $stringcourses),
             'contenttype' => 'text/plain',
         );
         $filename = 'tool_dataparticipants_' . str_replace(',', '_', $task->courses);
@@ -135,7 +135,7 @@ class tool_dataparticipants_utils {
     public function update_timesend($task, $now) {
         global $DB;
 
-        $DB->set_field('tool_dataparticipants', 'timesend', $now, array('id' => $task->id));
+        $DB->set_field(PARAM_TOOL_DATAPARTICIPANTS, 'timesend', $now, array('id' => $task->id));
     }
 
     /**

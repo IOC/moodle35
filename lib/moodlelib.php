@@ -128,6 +128,68 @@ define('PARAM_CLEANHTML', 'cleanhtml');
 define('PARAM_EMAIL',   'email');
 
 /**
+ * PARAM_DELETE - constant to put delete in the suggested field
+ */
+
+define('PARAM_DELETE',   'delete');
+
+/**
+ * PARAM_TOOL_DATAPARTICIPANTS - constant to put tool_dataparticipants in the suggested field
+ */
+
+define('PARAM_TOOL_DATAPARTICIPANTS',   'tool_dataparticipants');
+
+/**
+ * PARAM_MOODLE - constant to put tool_dataparticipants in the suggested field
+ */
+
+define('PARAM_MOODLE',   'moodle');
+
+/**
+ * PARAM_COURSES - constant to put courses in the suggested field
+ */
+
+define('PARAM_COURSES',   'courses');
+
+/**
+ * PARAM_REQUIRED - constant to put required in the suggested field
+ */
+
+define('PARAM_REQUIRED',   'required');
+
+/**
+ * PARAM_CLIENT - constant to put client in the suggested field
+ */
+
+define('PARAM_CLIENT',   'client');
+
+/**
+ * PARAM_ROLES - constant to put roles in the suggested field
+ */
+
+define('PARAM_ROLES',   'roles');
+
+/**
+ * PARAM_CLASS - constant to put class in the suggested field
+ */
+
+define('PARAM_CLASS',   'class');
+
+/**
+ * PARAM_TOOL_SITEPERF_LOG - constant to put tool_siteperf_log in the suggested field
+ */
+
+define('PARAM_TOOL_SITEPERF_LOG',   'tool_siteperf_log');
+
+/**
+ * PARAM_TOOL_SITEPERF_STATS - constant to put tool_siteperf_stats in the suggested field
+ */
+
+define('PARAM_TOOL_SITEPERF_STATS',   'tool_siteperf_stats');
+
+
+
+/**
  * PARAM_FILE - safe file name, all dangerous chars are stripped, protects against XSS, SQL injections and directory traversals
  */
 define('PARAM_FILE',   'file');

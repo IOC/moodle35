@@ -34,7 +34,7 @@ require_capability('tool/dataparticipants:manage', $context);
 
 
 $id      = optional_param('id', 0, PARAM_INT);
-$delete  = optional_param('delete', 0, PARAM_BOOL);
+$delete  = optional_param(PARAM_DELETE, 0, PARAM_BOOL);
 $confirm = optional_param('confirm', 0, PARAM_BOOL);
 $page    = optional_param('page', 0, PARAM_INT);
 
@@ -49,7 +49,7 @@ $returnurl = new moodle_url('/admin/tool/dataparticipants/index.php', array('pag
 $PAGE->set_context($context);
 $params = array(
     'id' => $id,
-    'delete' => $delete,
+    PARAM_DELETE => $delete,
     'confirm' => $confirm,
     'page' => $page
 );
@@ -68,7 +68,7 @@ if ($delete and isset($task->id)) {
     echo $OUTPUT->heading($strheading);
     $params = array(
         'id' => $task->id,
-        'delete' => 1,
+        PARAM_DELETE => 1,
         'confirm' => 1,
         'sesskey' => sesskey(),
         'page' => $page
