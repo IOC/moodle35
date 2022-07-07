@@ -85,7 +85,7 @@ class local_batch_renderer extends plugin_renderer_base {
             $job->params->user = $job->user;
             $strparams = $type->params_info($job->params, $job->id);
 
-            $timestarted = $this->strtime($job->timestarted);
+            $timestarted = $job->timestarted ? strftime("%e %B, %R", $job->timestarted) : '';                    
 
             if (!$job->timestarted) {
                 $state = get_string('state_waiting', 'local_batch');
@@ -718,10 +718,6 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::end_tag('form');
         $content .= $this->output->container_end();// close section
         return $content;
-    }
-
-    public function strtime($time) {
-        return $time ? strftime("%e %B, %R", $time) : '';
     }
 
     public function print_category_menu($name="categorydest", $category=0, $selected=0) {
