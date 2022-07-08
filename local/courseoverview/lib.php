@@ -70,7 +70,7 @@ function local_courseoverview_before_footer() {
 
             $unreadforums = get_pending_forums($USER->id, $course);
 
-            if ($unreadforums['totalunread'] > 0) {
+            if ($unreadforums[PARAM_TOTALUNREAD] > 0) {
                 $forumsdetails = format_unreadforums($unreadforums);
             }
 
@@ -101,8 +101,8 @@ function local_courseoverview_before_footer() {
                 'course_id' => $course->id,
                 'is_student' => $isstudent,
                 'is_teacher' => $isteacher,
-                'unread_forums' => $unreadforums['totalunread'],
-                'is_unread_forums' => (bool)$unreadforums['totalunread'],
+                'unread_forums' => $unreadforums[PARAM_TOTALUNREAD],
+                'is_unread_forums' => (bool)$unreadforums[PARAM_TOTALUNREAD],
                 'forums_details' => $forumsdetails ?? '',
                 'student_pending_assign' => $studentpendingassign ?? 0,
                 'is_student_pending_assign' => (bool)($studentpendingassign ?? 0),
@@ -174,12 +174,12 @@ function get_pending_forums(int $userid, stdClass $course, bool $resetreadcache 
             $unreadforums[$forum->id] = [
                 'id' => $forum->coursemodule,
                 'name' => $forum->name,
-                'count' => $forumunread,
+                PARAM_COUNT => $forumunread,
             ];
         }
     }
 
-    return $unreadforums + ['totalunread' => $totalunread];
+    return $unreadforums + [PARAM_TOTALUNREAD => $totalunread];
 
 }
 
@@ -360,10 +360,10 @@ function format_unreadforums(array $unreadforums): string {
 
     foreach ($unreadforums as $key => $value) {
         if (is_numeric($key)) {
-            $unreadtext = ($value['count'] === 1) ? get_string('onepostunread', 'local_courseoverview')
+            $unreadtext = ($value[PARAM_COUNT] === 1) ? get_string('onepostunread', 'local_courseoverview')
                 : get_string('manypostsunread', 'local_courseoverview');
 
-            $content .= '<li><strong>' . $value['count'] . '</strong>'
+            $content .= '<li><strong>' . $value[PARAM_COUNT] . '</strong>'
                 . ' ' . $unreadtext . ' '
                 . '<a href="' . $CFG->wwwroot . '/mod/forum/view.php?id=' . $value['id'] . '" target="_blank">'
                 . addslashes($value['name'])

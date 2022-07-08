@@ -41,9 +41,9 @@ function get_materials($searchquery, $page) {
     $params = array();
 
     if (empty($searchquery)) {
-        $materials = $DB->get_records('local_materials', array(), '', '*', $page * PAGENUM, PAGENUM);
-        $total = $DB->count_records('local_materials');
-        return array('records' => $materials, 'total' => $total);
+        $materials = $DB->get_records(LOCAL_MATERIALS, array(), '', '*', $page * PAGENUM, PAGENUM);
+        $total = $DB->count_records(LOCAL_MATERIALS);
+        return array(PARAM_RECORDS => $materials, PARAM_TOTAL => $total);
     }
 
     if ($courses = search_courses($searchquery)) {
@@ -54,7 +54,7 @@ function get_materials($searchquery, $page) {
         $in = rtrim($in, ',').')';
         $wherecondition = "courseid IN $in";
     } else {
-        return array('records' => array(), 'total' => 0);
+        return array(PARAM_RECORDS => array(), PARAM_TOTAL => 0);
     }
 
     $countfields = "SELECT COUNT(1)";
@@ -68,7 +68,7 @@ function get_materials($searchquery, $page) {
     $materials = $DB->get_records_sql($fields . $sql, $params, $page * PAGENUM, PAGENUM);
     $total = $DB->count_records_sql($countfields . $sql, $params);
 
-    return array('records' => $materials, 'total' => $total);
+    return array(PARAM_RECORDS => $materials, PARAM_TOTAL => $total);
 }
 
 function create_category_list($categoryid) {
@@ -83,14 +83,14 @@ function save_serialized_sources($context, $material) {
     global $DB;
 
     $fs = get_file_storage();
-    $files = $fs->get_area_files($context->id, 'local_materials', 'attachment', $material->id, "timemodified", false);
+    $files = $fs->get_area_files($context->id, LOCAL_MATERIALS, 'attachment', $material->id, "timemodified", false);
     $sources = array();
     foreach ($files as $file) {
         $sources[] = $file->get_source();
     }
     $material->sources = serialize($sources);
 
-    $DB->update_record('local_materials', $material);
+    $DB->update_record(LOCAL_MATERIALS, $material);
 }
 
 function make_secret_url($path) {

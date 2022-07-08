@@ -35,11 +35,11 @@ class material_edit_form extends moodleform {
 
         $mform = $this->_form;
         $material = $this->_customdata['data'];
-        $categoryid = $this->_customdata['categoryid'];
+        $categoryid = $this->_customdata[PARAM_CATEGORYID];
         $courses = $this->_customdata['courses'];
         $attachmentoptions = $this->_customdata['attachmentoptions'];
 
-        $select = $mform->addElement('select', 'courseid', get_string('courses'), $courses);
+        $select = $mform->addElement('select', PARAM_COURSEID, get_string('courses'), $courses);
 
         if (isset($material->courseid)) {
             $select->setselected($material->courseid);
@@ -47,14 +47,14 @@ class material_edit_form extends moodleform {
 
         $mform->addElement('filemanager', 'attachment_filemanager', get_string('attachment', 'glossary'), null, $attachmentoptions);
 
-        $mform->addRule('courseid', get_string('required'), 'required', null, 'client');
+        $mform->addRule(PARAM_COURSEID, get_string('required'), 'required', null, 'client');
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('hidden', 'categoryid');
-        $mform->setType('categoryid', PARAM_INT);
-        $mform->setDefault('categoryid', $categoryid);
+        $mform->addElement('hidden', PARAM_CATEGORYID);
+        $mform->setType(PARAM_CATEGORYID, PARAM_INT);
+        $mform->setDefault(PARAM_CATEGORYID, $categoryid);
 
         $this->add_action_buttons();
 
@@ -67,7 +67,7 @@ class material_edit_form extends moodleform {
 
         $errors = array();
 
-        if (!$data['id'] && $DB->get_records('local_materials', array('courseid' => $data['courseid']))) {
+        if (!$data['id'] && $DB->get_records('local_materials', array(PARAM_COURSEID => $data[PARAM_COURSEID]))) {
             $errors['attachment_filemanager'] = get_string('duplicatedcourse', 'local_materials');
         }
 

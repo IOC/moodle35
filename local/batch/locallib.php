@@ -32,6 +32,9 @@ require_once($CFG->dirroot . '/group/lib.php');
 define('BATCH_CRON_TIME', 600);
 define('BATCH_TODELETE_AGE', 365 * 86400);
 
+define('PARAM_CATEGORY_MOODLE', 'moodle/category:manage');
+
+
 class batch_job {
     public $id;
     public $user;
@@ -89,23 +92,23 @@ class batch_job {
                               'type' => $this->type,
                               'params' => json_encode($this->params),
                               'timecreated' => $this->timecreated,
-                              'timestarted' => $this->timestarted,
-                              'timeended' => $this->timeended,
-                              'error' => $this->error);
+                              PARAM_TIMESTARTED => $this->timestarted,
+                              PARAM_TIMEENDED => $this->timeended,
+                              PARAM_ERROR => $this->error);
     }
 
     public function save() {
         global $DB;
-        $DB->update_record('local_batch_jobs', $this->record());
+        $DB->update_record(PARAM_LOCAL_BATCH_JOBS, $this->record());
     }
 
     public function delete() {
         global $DB;
-        $DB->delete_records('local_batch_jobs', array('id' => $this->id));
+        $DB->delete_records(PARAM_LOCAL_BATCH_JOBS, array('id' => $this->id));
         if ($DB->record_exists('course_categories', array('id' => $this->category))) {
             $fs = get_file_storage();
             $context = context_coursecat::instance($this->category);
-            $fs->delete_area_files($context->id, 'local_batch', 'job', $this->id);
+            $fs->delete_area_files($context->id, PARAM_LOCAL_BATCH, 'job', $this->id);
         }
     }
 
@@ -128,11 +131,11 @@ class batch_queue {
                                  'type' => $type,
                                  'params' => json_encode($params),
                                  'timecreated' => time(),
-                                 'timestarted' => 0,
-                                 'timeended' => 0,
-                                 'priority' => $priority,
-                                 'error' => '');
-        $record->id = $DB->insert_record('local_batch_jobs', $record);
+                                 PARAM_TIMESTARTED => 0,
+                                 PARAM_TIMEENDED => 0,
+                                 PARAM_PRIORITY => $priority,
+                                 PARAM_ERROR => '');
+        $record->id = $DB->insert_record(PARAM_LOCAL_BATCH_JOBS, $record);
         return new batch_job($record);
     }
 
@@ -140,10 +143,10 @@ class batch_queue {
         global $DB;
         if ($job = self::get_job($id)) {
             $context = context_coursecat::instance($job->category);
-            if (has_capability('moodle/category:manage', $context) and $job->timestarted == 0) {
-                $DB->delete_records('local_batch_jobs', array('id' => $job->id));
+            if (has_capability(PARAM_CATEGORY_MOODLE, $context) and $job->timestarted == 0) {
+                $DB->delete_records(PARAM_LOCAL_BATCH_JOBS, array('id' => $job->id));
                 $fs = get_file_storage();
-                $fs->delete_area_files($context->id, 'local_batch', 'job', $job->id);
+                $fs->delete_area_files($context->id, PARAM_LOCAL_BATCH, 'job', $job->id);
             }
         }
     }
@@ -151,7 +154,7 @@ class batch_queue {
     public static function count_jobs($filter, $category = 0, $owner = false) {
         global $DB;
         list($select, $params) = self::filter_select($filter, $category, $owner);
-        return $DB->count_records_select('local_batch_jobs', $select, $params);
+        return $DB->count_records_select(PARAM_LOCAL_BATCH_JOBS, $select, $params);
     }
 
     public static function filter_select($filter, $category, $owner = false) {
@@ -161,30 +164,30 @@ class batch_queue {
         $params['timetodelete'] = $timetodelete;
         if ($filter == self::FILTER_PENDING) {
             $select .= " AND timeended = :timeended";
-            $params['timeended'] = 0;
+            $params[PARAM_TIMEENDED] = 0;
         } else if ($filter == self::FILTER_FINISHED) {
             $select .= " AND timeended > :timeended AND error = :error";
-            $params['timeended'] = 0;
-            $params['error'] = '';
+            $params[PARAM_TIMEENDED] = 0;
+            $params[PARAM_ERROR] = '';
         } else if ($filter == self::FILTER_ERRORS) {
             $select .= " AND timeended > :timeended AND error != :error";
-            $params['timeended'] = 0;
-            $params['error'] = '';
+            $params[PARAM_TIMEENDED] = 0;
+            $params[PARAM_ERROR] = '';
         } else if ($filter == self::FILTER_ABORTED) {
             $select .= " AND timestarted > :timestarted AND timeended = :timeended";
-            $params['timestarted'] = 0;
-            $params['timeended'] = 0;
+            $params[PARAM_TIMESTARTED] = 0;
+            $params[PARAM_TIMEENDED] = 0;
         } else if ($filter == self::FILTER_TODELETE) {
             $select = "timecreated <= :timetodelete";
             $params['timetodelete'] = $timetodelete;
         } else if ($filter == self::FILTER_PRIORITIZED) {
             $select .= " AND priority = :priority AND timeended = :timeended";
-            $params['priority'] = true;
-            $params['timeended'] = 0;
+            $params[PARAM_PRIORITY] = true;
+            $params[PARAM_TIMEENDED] = 0;
         }
         if ($category) {
             $cat = batch_get_category($category);
-            $categories = core_course_category::make_categories_list('moodle/category:manage', $cat);
+            $categories = core_course_category::make_categories_list(PARAM_CATEGORY_MOODLE, $cat);
             $cats = array_keys($categories);
             $select .= ' AND category IN(' . implode(',', $cats) . ')';
         }
@@ -198,7 +201,7 @@ class batch_queue {
     public static function get_job($id) {
         global $DB;
 
-        $record = $DB->get_record('local_batch_jobs', array('id' => $id));
+        $record = $DB->get_record(PARAM_LOCAL_BATCH_JOBS, array('id' => $id));
         return new batch_job($record);
     }
 
@@ -208,7 +211,7 @@ class batch_queue {
 
         $sort = ($filter == self::FILTER_PENDING || $filter == self::FILTER_PRIORITIZED) ? 'priority DESC, timecreated, id ASC' : 'timecreated DESC, id DESC';
         list($select, $params) = self::filter_select($filter, $category);
-        $records = $DB->get_records_select('local_batch_jobs', $select, $params,
+        $records = $DB->get_records_select(PARAM_LOCAL_BATCH_JOBS, $select, $params,
                                       $sort, '*', $start, $count);
         if ($records) {
             foreach ($records as $record) {
@@ -222,13 +225,13 @@ class batch_queue {
     public static function retry_job($id) {
         if ($job = self::get_job($id)) {
             $context = context_coursecat::instance($job->category);
-            if (has_capability('moodle/category:manage', $context) and $job->error) {
+            if (has_capability(PARAM_CATEGORY_MOODLE, $context) and $job->error) {
                 $newjob = self::add_job($job->user, $job->category, $job->type, $job->params);
                 $fs = get_file_storage();
-                $af = $fs->get_area_files($context->id, 'local_batch', 'job', $job->id, 'filename', false);
+                $af = $fs->get_area_files($context->id, PARAM_LOCAL_BATCH, 'job', $job->id, 'filename', false);
                 if ($af) {
                     $newfile = array(
-                        'component' => 'local_batch',
+                        'component' => PARAM_LOCAL_BATCH,
                         'filearea'  => 'job',
                         'contextid' => $context->id,
                         'itemid'    => $newjob->id
@@ -244,8 +247,8 @@ class batch_queue {
         global $DB;
         if (has_capability('moodle/site:config', context_system::instance()) && $job = self::get_job($id)) {
             $context = context_coursecat::instance($job->category);
-            if (has_capability('moodle/category:manage', $context) and $job->timestarted == 0) {
-                $DB->set_field('local_batch_jobs', 'priority', $value, array('id' => $job->id));
+            if (has_capability(PARAM_CATEGORY_MOODLE, $context) and $job->timestarted == 0) {
+                $DB->set_field(PARAM_LOCAL_BATCH_JOBS, PARAM_PRIORITY, $value, array('id' => $job->id));
             }
         }
     }
@@ -274,20 +277,20 @@ function batch_create_courses_get_data() {
         return array(false, false);
     }
 
-    $info = array();
+    $info = array();    
 
-    $info['lastindex'] = (int) $data['lastindex'];
+    $info[PARAM_LASTINDEX] = (int) $data[PARAM_LASTINDEX];
 
-    $info['courses'] = array();
-    for ($i = 0; $i <= $info['lastindex']; $i++) {
+    $info[PARAM_COURSES] = array();
+    for ($i = 0; $i <= $info[PARAM_LASTINDEX]; $i++) {
         if (isset($data["shortname-$i"])) {
             $shortname = stripslashes($data["shortname-$i"]);
             $fullname = stripslashes($data["fullname-$i"]);
             $category = (int) $data["category-$i"];
             if ($shortname and $fullname and $category) {
-                $info['courses'][$i] = (object)  array(
-                    'shortname' => $shortname,
-                    'fullname' => $fullname,
+                $info[PARAM_COURSES][$i] = (object)  array(
+                    PARAM_SHORTNAME => $shortname,
+                    PARAM_FULLNAME => $fullname,
                     'category' => $category,
                 );
             }
@@ -301,10 +304,10 @@ function batch_create_courses_get_data() {
             foreach (explode("\n", $content) as $line) {
                 $fields = explode(",", $line);
                 if (count($fields) == 3) {
-                    $info['lastindex']++;
-                    $info['courses'][$info['lastindex']] = (object)  array(
-                        'shortname' => trim($fields[0]),
-                        'fullname' => trim($fields[1]),
+                    $info[PARAM_LASTINDEX]++;
+                    $info[PARAM_COURSES][$info[PARAM_LASTINDEX]] = (object)  array(
+                        PARAM_SHORTNAME => trim($fields[0]),
+                        PARAM_FULLNAME => trim($fields[1]),
                         'category' => trim($fields[2]),
                     );
                 }
@@ -317,7 +320,7 @@ function batch_create_courses_get_data() {
         $info['startday'] = (int) $match[1];
         $info['startmonth'] = (int) $match[2];
         $info['startyear'] = (int) $match[3];
-        $info['data'] = ($data['choose-backup'] and $info['courses']);
+        $info['data'] = ($data['choose-backup'] and $info[PARAM_COURSES]);
     } else {
         $info['data'] = false;
     }
@@ -332,7 +335,7 @@ function batch_get_category($category) {
 
 function batch_get_course_category($course) {
     global $DB;
-    return $DB->get_field('course', 'category', array('id' => $course));
+    return $DB->get_field(PARAM_COURSE, 'category', array('id' => $course));
 }
 
 function batch_get_course_category_tree($tree, $category, &$result) {
@@ -444,7 +447,7 @@ class batch_course {
         $bc->get_plan()->get_setting('userscompletion')->set_value(false);
         $bc->get_plan()->get_setting('logs')->set_value(false);
 
-        if ($allmods = $DB->get_records_menu('modules', null, '', 'id, name') && $modules = $DB->get_records('course_modules', array('course' => $courseid), '', 'id, module')) {
+        if ($allmods = $DB->get_records_menu('modules', null, '', 'id, name') && $modules = $DB->get_records('course_modules', array(PARAM_COURSE => $courseid), '', 'id, module')) {
             foreach ($modules as $mod) {
                 $name = $allmods[$mod->module] . '_' . $mod->id . '_userinfo';
                 if ($bc->get_plan()->setting_exists($name)) {
@@ -472,7 +475,7 @@ class batch_course {
     public static function delete_course($courseid) {
         global $CFG, $DB;
 
-        if (!$DB->record_exists('course', array('id' => $courseid))) {
+        if (!$DB->record_exists(PARAM_COURSE, array('id' => $courseid))) {
             throw new InvalidArgumentException('delete_course: nonexistent_course ' . $courseid);
         }
 
@@ -484,7 +487,7 @@ class batch_course {
     public static function hide_course($courseid) {
         global $DB;
 
-        if (!$DB->set_field('course', 'visible', 0, array('id' => $courseid))) {
+        if (!$DB->set_field(PARAM_COURSE, 'visible', 0, array('id' => $courseid))) {
             throw new InvalidArgumentException('hide_course');
         }
     }
@@ -492,7 +495,7 @@ class batch_course {
     public static function show_course($courseid) {
         global $DB;
 
-        if (!$DB->set_field('course', 'visible', 1, array('id' => $courseid))) {
+        if (!$DB->set_field(PARAM_COURSE, 'visible', 1, array('id' => $courseid))) {
             throw new InvalidArgumentException('show course');
         }
     }
@@ -501,7 +504,7 @@ class batch_course {
         global $DB;
         $themes = array_keys(core_component::get_plugin_list('theme'));
         if (empty($theme) || in_array($theme, $themes)) {
-            if (!$DB->set_field('course', 'theme', $theme, array('id' => $courseid))) {
+            if (!$DB->set_field(PARAM_COURSE, 'theme', $theme, array('id' => $courseid))) {
                 throw new InvalidArgumentException('set theme');
             }
         }
@@ -510,11 +513,11 @@ class batch_course {
     public static function rename_course($courseid, $shortname, $fullname) {
         global $DB;
 
-        if (!$DB->set_field('course', 'shortname', $shortname, array('id' => $courseid))) {
+        if (!$DB->set_field(PARAM_COURSE, PARAM_SHORTNAME, $shortname, array('id' => $courseid))) {
             throw new InvalidArgumentException('rename_course: shortname');
         }
 
-        if (!$DB->set_field('course', 'fullname', $fullname, array('id' => $courseid))) {
+        if (!$DB->set_field(PARAM_COURSE, PARAM_FULLNAME, $fullname, array('id' => $courseid))) {
             throw new InvalidArgumentException('rename_course: fullname');
         }
     }
@@ -612,11 +615,11 @@ class batch_course {
                      'FROM {grade_grades_history} gg ' .
                      'JOIN {grade_items_history} gi ON gi.oldid = gg.itemid ' .
                      'WHERE gi.courseid = :courseid',
-                     array('courseid' => $courseid));
-        $DB->delete_records('grade_items_history', array('courseid' => $courseid));
-        $DB->delete_records('grade_categories_history', array('courseid' => $courseid));
-        $DB->delete_records('grade_outcomes_history', array('courseid' => $courseid));
-        $DB->delete_records('scale_history', array('courseid' => $courseid));
+                     array(PARAM_COURSEID => $courseid));
+        $DB->delete_records('grade_items_history', array(PARAM_COURSEID => $courseid));
+        $DB->delete_records('grade_categories_history', array(PARAM_COURSEID => $courseid));
+        $DB->delete_records('grade_outcomes_history', array(PARAM_COURSEID => $courseid));
+        $DB->delete_records('scale_history', array(PARAM_COURSEID => $courseid));
     }
 
     public static function get_user_assignments_by_course($courseid) {
@@ -642,7 +645,7 @@ class batch_course {
          return $DB->get_records_sql($sql, array(
              'component' => '',
              'contextlevel' => CONTEXT_COURSE,
-             'courseid' => $courseid,
+             PARAM_COURSEID => $courseid,
              'enrol' => 'manual',
              'itemid' => 0,
              'mnethostid' => $CFG->mnet_localhost_id,
@@ -674,7 +677,7 @@ class batch_course {
 
         list($sql, $params) = $DB->get_in_or_equal($upgradabletypes, SQL_PARAMS_NAMED);
         $sql .= ' AND course = :courseid';
-        $params['courseid'] = $courseid;
+        $params[PARAM_COURSEID] = $courseid;
         $records = $DB->get_records_sql(
                   'SELECT id '
                 . ' FROM {assignment}'
@@ -686,7 +689,7 @@ class batch_course {
 
     public static function change_prefix($courseid, $prefix) {
         global $DB;
-        $course = $DB->get_record('course', array('id' => $courseid));
+        $course = $DB->get_record(PARAM_COURSE, array('id' => $courseid));
 
         if (preg_match('/^\[.*?\](.*)$/', $course->fullname, $match)) {
             $course->fullname = trim($match[1]);
@@ -696,13 +699,13 @@ class batch_course {
             $course->fullname = "[$prefix] {$course->fullname}";
         }
 
-        return $DB->update_record('course', $course);
+        return $DB->update_record(PARAM_COURSE, $course);
     }
 
 
     public static function change_suffix($courseid, $suffix) {
         global $DB;
-        $course = $DB->get_record('course', array('id' => $courseid));
+        $course = $DB->get_record(PARAM_COURSE, array('id' => $courseid));
 
         if (preg_match('/^(.*)([~\*])$/', $course->shortname, $match)) {
             $course->shortname = $match[1];
@@ -718,23 +721,24 @@ class batch_course {
             $course->shortname .= '*';
         }
 
-        $id = $DB->get_field('course', 'id', array('shortname' => $course->shortname));
+        $id = $DB->get_field(PARAM_COURSE, 'id', array(PARAM_SHORTNAME => $course->shortname));
         if (!$id or $id == $courseid) {
-            return $DB->update_record('course', $course);
+            return $DB->update_record(PARAM_COURSE, $course);
         }
     }
 
     public static function copy_config_materials($oldcourseid, $newcourseid) {
         global $DB;
+        $name_table='local_materials';
 
-        if ($record = $DB->get_record('local_materials', array('courseid' => $oldcourseid))) {
+        if ($record = $DB->get_record($name_table, array(PARAM_COURSEID => $oldcourseid))) {
             $materialid = $record->id;
             unset($record->id);
             $record->courseid = $newcourseid;
-            $newid = $DB->insert_record('local_materials', $record);
+            $newid = $DB->insert_record($name_table, $record);
             $context = context_system::instance();
             $fs = get_file_storage();
-            $oldfiles = $fs->get_area_files($context->id, 'local_materials', 'attachment', $materialid, 'id', false);
+            $oldfiles = $fs->get_area_files($context->id, $name_table, 'attachment', $materialid, 'id', false);
             foreach ($oldfiles as $oldfile) {
                 $filerecord = new stdClass();
                 $filerecord->contextid = $context->id;

@@ -1,3 +1,4 @@
+local/materials/edit.php
 <?php
 // This file is part of Moodle - http://moodle.org/
 //
@@ -27,15 +28,17 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require($CFG->dirroot.'/local/materials/edit_form.php');
 require_once('lib.php');
 
+CONST LOCAL_MATERIALS = 'local_materials';
+
 require_login();
 
 $id        = optional_param('id', 0, PARAM_INT);
 $categoryid = optional_param('categoryid', 1, PARAM_INT);
-$delete    = optional_param('delete', 0, PARAM_BOOL);
-$confirm   = optional_param('confirm', 0, PARAM_BOOL);
+$delete    = optional_param(PARAM_DELETE, 0, PARAM_BOOL);
+$confirm   = optional_param(PARAM_CONFIRM, 0, PARAM_BOOL);
 
 if ($id) {
-    $material = $DB->get_record('local_materials', array('id' => $id));
+    $material = $DB->get_record(LOCAL_MATERIALS, array('id' => $id));
 } else {
     $material = new stdClass();
     $material->id = null;
@@ -47,29 +50,29 @@ $context = context_system::instance();
 require_capability('local/materials:manage', $context);
 
 $PAGE->set_context($context);
-$PAGE->set_url('/local/materials/edit.php', array('id' => $id, 'delete' => $delete, 'confirm' => $confirm));
+$PAGE->set_url('/local/materials/edit.php', array('id' => $id, PARAM_DELETE => $delete, PARAM_CONFIRM => $confirm));
 $PAGE->set_context($context);
 
 if ($delete and $material->id) {
-    $PAGE->url->param('delete', 1);
+    $PAGE->url->param(PARAM_DELETE, 1);
     if ($confirm and confirm_sesskey()) {
-        $DB->delete_records('local_materials', array('id' => $material->id));
+        $DB->delete_records(LOCAL_MATERIALS, array('id' => $material->id));
         redirect($returnurl);
     }
-    $strheading = get_string('delmaterial', 'local_materials');
+    $strheading = get_string('delmaterial', LOCAL_MATERIALS);
     $PAGE->navbar->add($strheading);
     $PAGE->set_title($strheading);
     $PAGE->set_heading($COURSE->fullname);
     echo $OUTPUT->header();
     echo $OUTPUT->heading($strheading);
-    $yesurl = new moodle_url('./edit.php', array('id' => $material->id, 'delete' => 1, 'confirm' => 1, 'sesskey' => sesskey()));
+    $yesurl = new moodle_url('./edit.php', array('id' => $material->id, PARAM_DELETE => 1, PARAM_CONFIRM => 1, 'sesskey' => sesskey()));
     if ($course = $DB->get_record('course', array('id' => $material->courseid))) {
         $messageparams = new stdClass;
         $messageparams->sources = implode(',', unserialize($material->sources));
         $messageparams->sources = str_replace('/', '', $messageparams->sources);
         $messageparams->course = $course->fullname;
     }
-    $message = get_string('delconfirm', 'local_materials', $messageparams);
+    $message = get_string('delconfirm', LOCAL_MATERIALS, $messageparams);
     echo $OUTPUT->confirm($message, $yesurl, $returnurl);
     echo $OUTPUT->footer();
     die;
@@ -78,7 +81,7 @@ if ($delete and $material->id) {
 $maxfiles = 50;
 $maxbytes = 0;
 $attachmentoptions = array('subdirs' => false, 'maxfiles' => $maxfiles, 'maxbytes' => $maxbytes);
-$material = file_prepare_standard_filemanager($material, 'attachment', $attachmentoptions, $context, 'local_materials', 'attachment', $material->id);
+$material = file_prepare_standard_filemanager($material, PARAM_ATTACHMENT, $attachmentoptions, $context, LOCAL_MATERIALS, PARAM_ATTACHMENT, $material->id);
 
 if (isset($material->id)) {
     $strheading = get_string('edit');
@@ -88,9 +91,9 @@ if (isset($material->id)) {
 
 $PAGE->set_title($strheading);
 $PAGE->set_heading($COURSE->fullname);
-$PAGE->navbar->add(get_string('plugin_pluginname', 'local_materials'));
+$PAGE->navbar->add(get_string('plugin_pluginname', LOCAL_MATERIALS));
 $PAGE->navbar->add($strheading, new moodle_url('/local/materials/edit.php',
-    array('id' => $id, 'delete' => $delete, 'confirm' => $confirm)));
+    array('id' => $id, PARAM_DELETE => $delete, PARAM_CONFIRM => $confirm)));
 
 if ($categoryid) {
     require_once($CFG->dirroot . '/course/classes/category.php');
@@ -118,13 +121,13 @@ if ($editform->is_cancelled()) {
 
     if ($data->id) {
         $material->courseid = $data->courseid;
-        $DB->update_record('local_materials', $material);
+        $DB->update_record(LOCAL_MATERIALS, $material);
     } else {
         $material->courseid = $data->courseid;
-        $material->id = $DB->insert_record('local_materials', $material);
+        $material->id = $DB->insert_record(LOCAL_MATERIALS, $material);
     }
 
-    file_postupdate_standard_filemanager($material, 'attachment', $attachmentoptions, $context, 'local_materials', 'attachment', $material->id);
+    file_postupdate_standard_filemanager($material, PARAM_ATTACHMENT, $attachmentoptions, $context, LOCAL_MATERIALS, PARAM_ATTACHMENT, $material->id);
     save_serialized_sources($context, $material);
 
     redirect(new moodle_url('/local/materials/index.php', array()));

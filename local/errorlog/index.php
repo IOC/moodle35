@@ -18,8 +18,9 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 
+CONST LOCAL_ERRORLOG = 'local_errorlog';
 
-admin_externalpage_setup('local_errorlog');
+admin_externalpage_setup(LOCAL_ERRORLOG);
 
 require_capability('moodle/site:config', context_system::instance());
 
@@ -27,7 +28,7 @@ $PAGE->requires->js('/local/errorlog/index.js');
 $PAGE->requires->css('/local/errorlog/index.css');
 
 echo $OUTPUT->header();
-echo $OUTPUT->heading(get_string('errorlog', 'local_errorlog'));
+echo $OUTPUT->heading(get_string('errorlog', LOCAL_ERRORLOG));
 
 $filter = optional_param('filter', '', PARAM_TEXT);
 
@@ -54,7 +55,7 @@ if ($file) {
         $lines = preg_grep("/$patt/", $lines);
     }
 } else {
-    $error = get_string('errorlog_notfound', 'local_errorlog');
+    $error = get_string('errorlog_notfound', LOCAL_ERRORLOG);
 }
 
 $content = s(implode('', $lines));

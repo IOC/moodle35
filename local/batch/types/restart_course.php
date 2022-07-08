@@ -29,19 +29,19 @@ class batch_type_restart_course extends batch_type_base {
         global $DB;
 
         @set_time_limit(0);
-        if (!$course = $DB->get_record('course', array('shortname' => $params->shortname))) {
-            throw new moodle_exception('error:coursenotexist', 'local_batch', '', $params->shortname);
+        if (!$course = $DB->get_record('course', array(PARAM_SHORTNAME => $params->shortname))) {
+            throw new moodle_exception('error:coursenotexist', PARAM_LOCAL_BATCH, '', $params->shortname);
         }
 
         if (time() - $course->startdate < 30 * 86400) {
-            throw new moodle_exception('error:courserestartedrecently', 'local_batch');
+            throw new moodle_exception('error:courserestartedrecently', PARAM_LOCAL_BATCH);
         }
 
         $oldshortname = $course->shortname . '~';
         $oldfullname = $course->fullname . strftime(' ~ %B %G');
 
-        if ($oldcourse = $DB->get_record('course', array('shortname' => $oldshortname))) {
-            throw new moodle_exception('error:oldcourseexists', 'local_batch');
+        if ($oldcourse = $DB->get_record('course', array(PARAM_SHORTNAME => $oldshortname))) {
+            throw new moodle_exception('error:oldcourseexists', PARAM_LOCAL_BATCH);
         }
 
         list($file, $backupid) = batch_course::backup_course($course->id);
@@ -58,6 +58,8 @@ class batch_type_restart_course extends batch_type_base {
         );
         $params->courseid = batch_course::restore_backup($file, $context, $params, $options);
         $context = context_course::instance($params->courseid);// new course
+        $manual_plugin='manual';
+        $enrol_plugin='enrol';
 
         if (!empty($params->roleassignments)) {
             $participants = batch_course::get_user_assignments_by_course($params->courseid);
@@ -69,17 +71,17 @@ class batch_type_restart_course extends batch_type_base {
                     $listusers[$user->id] = true;
                 }
             }
-            $plugin = enrol_get_plugin('manual');
-            $conditions = array('enrol' => 'manual', 'courseid' => $params->courseid);
-            $enrol = $DB->get_record('enrol', $conditions, '*', MUST_EXIST);
+            $plugin = enrol_get_plugin($manual_plugin);
+            $conditions = array($enrol_plugin => $manual_plugin, PARAM_COURSEID => $params->courseid);
+            $enrol = $DB->get_record($enrol_plugin, $conditions, '*', MUST_EXIST);
             $userstodelete = array_diff_key($participants, $listusers);
             foreach ($userstodelete as $user) {
                 $plugin->unenrol_user($enrol, $user->id);
             }
         } else {
-            $plugin = enrol_get_plugin('manual');
-            $conditions = array('enrol' => 'manual', 'courseid' => $params->courseid);
-            $enrol = $DB->get_record('enrol', $conditions, '*', MUST_EXIST);
+            $plugin = enrol_get_plugin($manual_plugin);
+            $conditions = array($enrol_plugin => $manual_plugin, PARAM_COURSEID => $params->courseid);
+            $enrol = $DB->get_record($enrol_plugin, $conditions, '*', MUST_EXIST);
             $participants = batch_course::get_user_assignments_by_course($params->courseid);
             foreach ($participants as $user) {
                 $plugin->unenrol_user($enrol, $user->id);
@@ -92,7 +94,7 @@ class batch_type_restart_course extends batch_type_base {
             if (!isset($participants) or empty($participants)) {
                 $participants = batch_course::get_user_assignments_by_course($params->courseid);
             }
-            $destinationgroups = $DB->get_records_menu('groups', array('courseid' => $params->courseid), '', 'id, name');
+            $destinationgroups = $DB->get_records_menu('groups', array(PARAM_COURSEID => $params->courseid), '', 'id, name');
             foreach ($groups as $group) {
                 if ($groupid = array_search($group->name, $destinationgroups)) {
                     // Members group from source
@@ -127,13 +129,13 @@ class batch_type_restart_course extends batch_type_base {
     public function params_info($params, $jobid) {
         global $PAGE;
         $user = batch_get_user($params->user);
-        $batchoutput = $PAGE->get_renderer('local_batch');
+        $batchoutput = $PAGE->get_renderer(PARAM_LOCAL_BATCH);
 
         return $batchoutput->print_info_restart_courses(
             array(
-                'courseid'   => (isset($params->courseid) ? $params->courseid : ''),
+                PARAM_COURSEID   => (isset($params->courseid) ? $params->courseid : ''),
                 'fullname'   => (isset($params->fullname) ? $params->fullname : ''),
-                'shortname'  => $params->shortname,
+                PARAM_SHORTNAME  => $params->shortname,
                 'startday'   => $params->startday,
                 'startmonth' => $params->startmonth,
                 'startyear'  => $params->startyear,

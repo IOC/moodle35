@@ -51,7 +51,7 @@ class tool_siteperf {
         $record->time = $time;
         if (!empty($COURSE)) {
             $DB->insert_record(PARAM_TOOL_SITEPERF_LOG, $record);
-        };
+        }
     }
 
     private function script() {
@@ -217,7 +217,7 @@ class tool_siteperf_stats {
             $downloadfilename = clean_filename($filename);
             list($where, $params) = $this->where($year, $week, $day, $hour, true);
             $sql .= " WHERE " . $where . " ORDER BY hits DESC";
-            if ($hour === false and $day === false) {
+            if ($hour === false && $day === false) {
                 $exportdata[0] = get_string('week');
             }
             array_splice($exportdata, 1, 0, get_string('course'));
@@ -327,7 +327,7 @@ class tool_siteperf_stats {
         $years = array();
 
         $sql = 'SELECT DISTINCT year'.
-                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
+                ' FROM '.'{'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year IS NOT NULL'.
                 ' GROUP BY year'.
                 ' ORDER BY year ASC';
@@ -347,7 +347,7 @@ class tool_siteperf_stats {
         $weeks = array();
 
         $sql = 'SELECT DISTINCT week'.
-                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
+                ' FROM '.'{'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week IS NOT NULL'.
                 ' GROUP BY year, week'.
                 ' ORDER BY week ASC';
@@ -368,7 +368,7 @@ class tool_siteperf_stats {
         $days = array();
 
         $sql = 'SELECT DISTINCT day'.
-                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
+                ' FROM '.'{'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week=? AND day IS NOT NULL'.
                 ' GROUP BY year, week, day'.
                 ' ORDER BY day ASC';
@@ -392,7 +392,7 @@ class tool_siteperf_stats {
         $hours = array();
 
         $sql = 'SELECT DISTINCT hour'.
-                ' FROM {'.PARAM_TOOL_SITEPERF_STATS.'}'.
+                ' FROM '.'{'.PARAM_TOOL_SITEPERF_STATS.'}'.
                 ' WHERE year=? AND week=? AND day=?'.
                 ' AND hour IS NOT NULL'.
                 ' GROUP BY year, week, day, hour'.

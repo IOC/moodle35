@@ -416,6 +416,108 @@ define('PARAM_VALUE',   'value');
 define('PARAM_SUBMIT',   'submit');
 
 /**
+ * PARAM_CONFIRM - constant to put confirm in the suggested field
+ */
+
+define('PARAM_CONFIRM',   'confirm');
+
+/**
+ * PARAM_PLUGINNAME - constant to put pluginname in the suggested field
+ */
+
+define('PARAM_PLUGINNAME',   'pluginname');
+
+/**
+ * PARAM_CHOOSE_BACKUP - constant to put choose-backup in the suggested field
+ */
+
+define('PARAM_CHOOSE_BACKUP',   'choose-backup');
+
+/**
+ * PARAM_CATEGORYDEST - constant to put categorydest in the suggested field
+ */
+
+define('PARAM_CATEGORYDEST',   'categorydest');
+
+/**
+ * PARAM_TIMESTARTED - constant to put timestarted in the suggested field
+ */
+
+define('PARAM_TIMESTARTED',   'timestarted');
+
+/**
+ * PARAM_TIMEENDED - constant to put timeended in the suggested field
+ */
+
+define('PARAM_TIMEENDED',   'timeended');
+
+/**
+ * PARAM_ERROR - constant to put error in the suggested field
+ */
+
+define('PARAM_ERROR',   'error');
+
+/**
+ * PARAM_LOCAL_BATCH_JOBS - constant to put local_batch_jobs in the suggested field
+ */
+
+define('PARAM_LOCAL_BATCH_JOBS',   'local_batch_jobs');
+
+/**
+ * PARAM_PRIORITY - constant to put priority in the suggested field
+ */
+
+define('PARAM_PRIORITY',   'priority');
+
+/**
+ * PARAM_LASTINDEX - constant to put lastindex in the suggested field
+ */
+
+define('PARAM_LASTINDEX',   'lastindex');
+
+/**
+ * PARAM_FILENAME - constant to put filename in the suggested field
+ */
+
+define('PARAM_FILENAME',   'filename');
+
+/**
+ * PARAM_TOTALUNREAD - constant to put totalunread in the suggested field
+ */
+
+define('PARAM_TOTALUNREAD',   'totalunread');
+
+/**
+ * PARAM_COUNT - constant to put count in the suggested field
+ */
+
+define('PARAM_COUNT',   'count');
+
+/**
+ * PARAM_ATTACHMENT - constant to put attachment in the suggested field
+ */
+
+define('PARAM_ATTACHMENT',   'attachment');
+
+/**
+ * PARAM_CATEGORYID - constant to put categoryid in the suggested field
+ */
+
+define('PARAM_CATEGORYID',   'categoryid');
+
+/**
+ * PARAM_RECORDS - constant to put records in the suggested field
+ */
+
+define('PARAM_RECORDS',   'records');
+
+/**
+ * PARAM_RECORDS - constant to put total in the suggested field
+ */
+
+define('PARAM_TOTAL',   'total');
+
+/**
  * PARAM_FILE - safe file name, all dangerous chars are stripped, protects against XSS, SQL injections and directory traversals
  */
 define('PARAM_FILE',   'file');

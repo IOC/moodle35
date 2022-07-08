@@ -29,7 +29,7 @@ class batch_type_create_course extends batch_type_base {
         global $CFG, $USER, $DB;
         $context = context_coursecat::instance($categoryid);
         $fs = get_file_storage();
-        $af = $fs->get_area_files($context->id, 'local_batch', 'job', $jobid, 'filename', false);
+        $af = $fs->get_area_files($context->id, PARAM_LOCAL_BATCH, 'job', $jobid, PARAM_FILENAME, false);
         if ($af) {
             $file = array_shift($af);
             $params->courseid = batch_course::restore_backup($file, $context, $params);
@@ -41,7 +41,7 @@ class batch_type_create_course extends batch_type_base {
 
         $context = context_coursecat::instance($params->category);
         $fs = get_file_storage();
-        $af = $fs->get_area_files($context->id, 'local_batch', 'job', $jobid, 'filename', false);
+        $af = $fs->get_area_files($context->id, PARAM_LOCAL_BATCH, 'job', $jobid, PARAM_FILENAME, false);
         $attach = $filename = $fileurl = '';
         if ($af) {
             $attach = array_shift($af);
@@ -53,7 +53,7 @@ class batch_type_create_course extends batch_type_base {
         $user = batch_get_user($params->user);
         $url = new moodle_url('/course/index.php', array('categoryid' => $params->category));
 
-        $batchoutput = $PAGE->get_renderer('local_batch');
+        $batchoutput = $PAGE->get_renderer(PARAM_LOCAL_BATCH);
 
         return $batchoutput->print_info_create_courses(
             array(
@@ -61,7 +61,7 @@ class batch_type_create_course extends batch_type_base {
                 'categoryname' => $categoryname,
                 'courseid'     => (isset($params->courseid)?$params->courseid:''),
                 'fileurl'      => $fileurl,
-                'filename'     => $filename,
+                PARAM_FILENAME     => $filename,
                 'fullname'     => (isset($params->fullname)?$params->fullname:''),
                 'shortname'    => $params->shortname,
                 'startday'     => $params->startday,

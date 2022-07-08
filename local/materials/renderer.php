@@ -28,15 +28,15 @@ class local_materials_renderer extends plugin_renderer_base {
     public function search_form($searchquery) {
 
         $search  = html_writer::start_tag('form', array('id' => 'searchmaterialquery', 'method' => 'get'));
-        $search .= html_writer::start_tag('div', array('class' => 'materials_search'));
-        $search .= html_writer::label(get_string('searchmaterial', 'local_materials'), 'material_search_q'); // No : in form labels!
+        $search .= html_writer::start_tag('div', array(PARAM_CLASS => 'materials_search'));
+        $search .= html_writer::label(get_string('searchmaterial', LOCAL_MATERIALS), 'material_search_q'); // No : in form labels!
         $params = array(
                         'id' => 'material_search_q',
                         'type' => 'text',
                         'name' => 'search',
                         'value' => $searchquery,
                         'maxlength' => '50',
-                        'class' => 'materials_text_search',
+                        PARAM_CLASS => 'materials_text_search',
         );
         $search .= html_writer::empty_tag('input', $params);
         $search .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('search')));
@@ -58,10 +58,10 @@ class local_materials_renderer extends plugin_renderer_base {
         $buttons = array();
         $editlink = new moodle_url('./edit.php', array('id' => $material->id, 'categoryid' => $course->category));
         $editicon = html_writer::empty_tag('img',
-            array('src' => $OUTPUT->image_url('t/edit'), 'alt' => get_string('edit'), 'class' => 'iconsmall'));
+            array('src' => $OUTPUT->image_url('t/edit'), 'alt' => get_string('edit'), PARAM_CLASS => 'iconsmall'));
         $deletelink = new moodle_url('./edit.php', array('id' => $material->id, 'categoryid' => $course->category, 'delete' => 1));
         $deleteicon = html_writer::empty_tag('img',
-            array('src' => $OUTPUT->image_url('t/delete'), 'alt' => get_string('delete'), 'class' => 'iconsmall'));
+            array('src' => $OUTPUT->image_url('t/delete'), 'alt' => get_string('delete'), PARAM_CLASS => 'iconsmall'));
         $buttons[] = html_writer::link($editlink, $editicon);
         $buttons[] = html_writer::link($deletelink, $deleteicon);
         $line[] = implode(' ', $buttons);
@@ -80,11 +80,11 @@ class local_materials_renderer extends plugin_renderer_base {
             if (!preg_match('/^.+?\.\w+$/', end($filename))) {
                 $stringsourcesfolders[] = html_writer::empty_tag('img', array('src' => $OUTPUT->image_url('i/files'),
                                                                'alt' => get_string('edit'),
-                                                               'class' => 'iconsmall')).end($filename)."\n";
+                                                               PARAM_CLASS => 'iconsmall')).end($filename)."\n";
             } else {
                 $stringsourcesfiles[] = html_writer::empty_tag('img', array('src' => $OUTPUT->image_url('i/report'),
                                                                'alt' => get_string('edit'),
-                                                               'class' => 'iconsmall')).end($filename)."\n";
+                                                               PARAM_CLASS => 'iconsmall')).end($filename)."\n";
             }
         }
         if (isset($stringsourcesfolders)) {
@@ -109,15 +109,15 @@ class local_materials_renderer extends plugin_renderer_base {
                     $data[] = $this->make_table_line($material);
                 }
             } else {
-                return get_string('nomaterials', 'local_materials');
+                return get_string('nomaterials', LOCAL_MATERIALS);
             }
         }
 
         $table = new html_table();
-        $table->head = array(get_string('shortname'), get_string('course'), get_string('sources', 'local_materials'), get_string('edit'));
+        $table->head = array(get_string('shortname'), get_string('course'), get_string('sources', LOCAL_MATERIALS), get_string('edit'));
         $table->data = $data;
         $table->id = 'materials';
-        $table->attributes['class'] = 'admintable generaltable';
+        $table->attributes[PARAM_CLASS] = 'admintable generaltable';
 
         $output = html_writer::table($table);
         return $output;

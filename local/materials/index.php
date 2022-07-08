@@ -24,6 +24,9 @@
 
 define("PAGENUM", "20");
 
+define("URL_MATERIALS", '/local/materials/index.php');
+
+
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once('lib.php');
 
@@ -36,39 +39,39 @@ $search = optional_param('search', '', PARAM_RAW);
 $context = context_system::instance();
 require_capability('local/materials:manage', $context);
 
-$strheading = get_string('plugin_pluginname', 'local_materials');
+$strheading = get_string('plugin_pluginname', LOCAL_MATERIALS);
 
 $params = array('page' => $page);
 if (!empty($search)) {
     $params['search'] = $search;
 }
-$baseurl = new moodle_url('/local/materials/index.php', $params);
+$baseurl = new moodle_url(URL_MATERIALS, $params);
 
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('admin');
-$PAGE->set_url(new moodle_url('/local/materials/index.php'));
+$PAGE->set_url(new moodle_url(URL_MATERIALS));
 $PAGE->set_title($strheading);
 $PAGE->add_body_class('path-admin');
 $PAGE->set_heading($COURSE->fullname);
 $PAGE->requires->css('/local/materials/styles.css');
-$PAGE->navbar->add(get_string('plugin_pluginname', 'local_materials'));
-$PAGE->navbar->add($strheading, new moodle_url('/local/materials/index.php'));
+$PAGE->navbar->add(get_string('plugin_pluginname', LOCAL_MATERIALS));
+$PAGE->navbar->add($strheading, new moodle_url(URL_MATERIALS));
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading($strheading);
 
 $materials = get_materials($search, $page);
 
-$ouput = $PAGE->get_renderer('local_materials');
+$ouput = $PAGE->get_renderer(LOCAL_MATERIALS);
 echo $ouput->search_form($search);
 
-echo html_writer::start_div('local_materials');
+echo html_writer::start_div(LOCAL_MATERIALS);
 echo $OUTPUT->paging_bar($materials['total'], $page, PAGENUM, $baseurl);
 echo html_writer::end_div();
 
 echo $ouput->materials_table($materials);
 
-echo html_writer::start_div('local_materials');
+echo html_writer::start_div(LOCAL_MATERIALS);
 echo $OUTPUT->paging_bar($materials['total'], $page, PAGENUM, $baseurl);
 echo html_writer::end_div();
 

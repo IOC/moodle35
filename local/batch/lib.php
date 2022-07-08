@@ -27,25 +27,25 @@ const LOCAL_BATCH_PERPAGE = 20;
 
 function local_batch_extend_settings_navigation($nav, $context) {
     if (has_capability('moodle/site:config', context_system::instance())) {
-        $node = navigation_node::create(get_string('pluginname', 'local_batch'),
+        $node = navigation_node::create(get_string('pluginname', PARAM_LOCAL_BATCH),
                         new moodle_url('/local/batch/index.php',
-                        array('category' => 0)),
+                        array(PARAM_CATEGORY => 0)),
                         navigation_node::TYPE_ROOTNODE,
-                        'local_batch',
-                        'local_batch',
-                        new pix_icon('icon', '', 'local_batch'));
+                        PARAM_LOCAL_BATCH,
+                        PARAM_LOCAL_BATCH,
+                        new pix_icon('icon', '', PARAM_LOCAL_BATCH));
         if ($settings = $nav->get('root')) {
             $settings->children->add($node);
         }
     }
     if ($context and has_capability('moodle/category:manage', $context) and $context->contextlevel == CONTEXT_COURSECAT) {
-        $node = navigation_node::create(get_string('pluginname', 'local_batch'),
+        $node = navigation_node::create(get_string('pluginname', PARAM_LOCAL_BATCH),
                         new moodle_url('/local/batch/index.php',
-                        array('category' => $context->instanceid)),
+                        array(PARAM_CATEGORY => $context->instanceid)),
                         navigation_node::TYPE_SETTING,
                         null,
                         null,
-                        new pix_icon('icon', '', 'local_batch'));
+                        new pix_icon('icon', '', PARAM_LOCAL_BATCH));
         $settings = $nav->get('categorysettings');
         $settings->children->add($node);
     }

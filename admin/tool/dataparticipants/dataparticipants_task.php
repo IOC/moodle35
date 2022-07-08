@@ -35,11 +35,11 @@ require_capability('tool/dataparticipants:manage', $context);
 
 $id      = optional_param('id', 0, PARAM_INT);
 $delete  = optional_param(PARAM_DELETE, 0, PARAM_BOOL);
-$confirm = optional_param('confirm', 0, PARAM_BOOL);
+$confirm = optional_param(PARAM_CONFIRM, 0, PARAM_BOOL);
 $page    = optional_param('page', 0, PARAM_INT);
 
 if ($id) {
-    $task = $DB->get_record('tool_dataparticipants', array('id' => $id));
+    $task = $DB->get_record(PARAM_TOOL_DATAPARTICIPANTS, array('id' => $id));
 } else {
     $task = new StdClass;
 }
@@ -50,17 +50,17 @@ $PAGE->set_context($context);
 $params = array(
     'id' => $id,
     PARAM_DELETE => $delete,
-    'confirm' => $confirm,
+    PARAM_CONFIRM => $confirm,
     'page' => $page
 );
 $PAGE->set_url('/admin/tool/dataparticipants/dataparticipants_task.php', $params);
 
 if ($delete and isset($task->id)) {
     if ($confirm and confirm_sesskey()) {
-        $DB->delete_records('tool_dataparticipants', array('id' => $task->id));
+        $DB->delete_records(PARAM_TOOL_DATAPARTICIPANTS, array('id' => $task->id));
         redirect($returnurl);
     }
-    $strheading = get_string('removetask', 'tool_dataparticipants');
+    $strheading = get_string('removetask', PARAM_TOOL_DATAPARTICIPANTS);
     $PAGE->navbar->add($strheading);
     $PAGE->set_title($strheading);
     $PAGE->set_heading($COURSE->fullname);
@@ -69,12 +69,12 @@ if ($delete and isset($task->id)) {
     $params = array(
         'id' => $task->id,
         PARAM_DELETE => 1,
-        'confirm' => 1,
+        PARAM_CONFIRM => 1,
         'sesskey' => sesskey(),
         'page' => $page
     );
     $yesurl = new moodle_url('dataparticipants_task.php', $params);
-    $message = get_string('confirmremovetask', 'tool_dataparticipants');
+    $message = get_string('confirmremovetask', PARAM_TOOL_DATAPARTICIPANTS);
     echo $OUTPUT->confirm($message, $yesurl, $returnurl);
     echo $OUTPUT->footer();
     die;
@@ -84,7 +84,7 @@ $strheading = isset($task->id) ? get_string('edit') : get_string('add');
 
 $PAGE->set_title($strheading);
 $PAGE->set_heading($COURSE->fullname);
-$PAGE->navbar->add(get_string('pluginname', 'tool_dataparticipants'));
+$PAGE->navbar->add(get_string('pluginname', PARAM_TOOL_DATAPARTICIPANTS));
 $PAGE->navbar->add($strheading, new moodle_url('/admin/tool/dataparticipants/dataparticipants_task.php', $params));
 
 $mform = new dataparticipants_task_form('', $task);
@@ -93,12 +93,12 @@ if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
     if ($data->id) {
-        $DB->update_record('tool_dataparticipants', $data);
+        $DB->update_record(PARAM_TOOL_DATAPARTICIPANTS, $data);
     } else {
         $data->timecreated = time();
         $sendnow = (!empty($data->sendnow));
         unset($data->sendnow);
-        $newid = $DB->insert_record('tool_dataparticipants', $data);
+        $newid = $DB->insert_record(PARAM_TOOL_DATAPARTICIPANTS, $data);
         if ($sendnow) {
             $utils = new tool_dataparticipants_utils();
             $data->id = $newid;
