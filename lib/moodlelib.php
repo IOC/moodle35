@@ -187,7 +187,209 @@ define('PARAM_TOOL_SITEPERF_LOG',   'tool_siteperf_log');
 
 define('PARAM_TOOL_SITEPERF_STATS',   'tool_siteperf_stats');
 
+/**
+ * PARAM_JOB_QUEUE - constant to put job_queue in the suggested field
+ */
 
+define('PARAM_JOB_QUEUE',   'job_queue');
+
+/**
+ * PARAM_CATEGORY - constant to put category in the suggested field
+ */
+
+define('PARAM_CATEGORY',   'category');
+
+/**
+ * PARAM_LOCAL_BATCH - constant to put local_batch in the suggested field
+ */
+
+define('PARAM_LOCAL_BATCH',   'local_batch');
+
+/**
+ * PARAM_FILTER - constant to put filter in the suggested field
+ */
+
+define('PARAM_FILTER',   'filter');
+
+/**
+ * PARAM_SESSKEY - constant to put sesskey in the suggested field
+ */
+
+define('PARAM_SESSKEY',   'sesskey');
+
+/**
+ * PARAM_TITLE - constant to put title in the suggested field
+ */
+
+define('PARAM_TITLE',   'title');
+
+/**
+ * PARAM_BATCH_CREATE_COURSES - constant to put batch_create_courses in the suggested field
+ */
+
+define('PARAM_BATCH_CREATE_COURSES',   'batch_create_courses');
+
+/**
+ * PARAM_SECTION - constant to put section in the suggested field
+ */
+
+define('PARAM_SECTION',   'section');
+
+/**
+ * PARAM_BACKUP - constant to put backup in the suggested field
+ */
+
+define('PARAM_BACKUP',   'backup');
+
+/**
+ * PARAM_COURSE - constant to put course in the suggested field
+ */
+
+define('PARAM_COURSE',   'course');
+
+/**
+ * PARAM_SHORTNAME - constant to put shortname in the suggested field
+ */
+
+define('PARAM_SHORTNAME',   'shortname');
+
+/**
+ * PARAM_SHORTNAME - constant to put fullname in the suggested field
+ */
+
+define('PARAM_FULLNAME',   'fullname');
+
+/**
+ * PARAM_START_DATE - constant to put start_date in the suggested field
+ */
+
+define('PARAM_START_DATE',   'start_date');
+
+/**
+ * PARAM_STARTDATE - constant to put startdate in the suggested field
+ */
+
+define('PARAM_STARTDATE',   'startdate');
+
+/**
+ * PARAM_STARTDATE - constant to put startday in the suggested field
+ */
+
+define('PARAM_STARTDAY',   'startday');
+
+/**
+ * PARAM_STARTDATE - constant to put startmonth in the suggested field
+ */
+
+define('PARAM_STARTMONTH',   'startmonth');
+
+/**
+ * PARAM_STARTDATE - constant to put startyear in the suggested field
+ */
+
+define('PARAM_STARTYEAR',   'startyear');
+
+/**
+ * PARAM_BATCH_TOGGLE_DATEPICKER - constant to put batch_toggle_datepicker in the suggested field
+ */
+
+define('PARAM_BATCH_TOGGLE_DATEPICKER',   'batch_toggle_datepicker');
+
+/**
+ * PARAM_RESTART - constant to put restart in the suggested field
+ */
+
+define('PARAM_RESTART',   'restart');
+
+/**
+ * PARAM_ADD_JOBS - constant to put add_jobs in the suggested field
+ */
+
+define('PARAM_ADD_JOBS',   'add_jobs');
+
+/**
+ * PARAM_BATCH_PARAM - constant to put batch_param in the suggested field
+ */
+
+define('PARAM_BATCH_PARAM',   'batch_param');
+
+/**
+ * PARAM_BATCH_VALUE - constant to put batch_value in the suggested field
+ */
+
+define('PARAM_BATCH_VALUE',   'batch_value');
+
+/**
+ * PARAM_CREATOR - constant to put creator in the suggested field
+ */
+
+define('PARAM_CREATOR',   'creator');
+
+/**
+ * PARAM_ATTACH - constant to put attach in the suggested field
+ */
+
+define('PARAM_ATTACH',   'attach');
+
+/**
+ * PARAM_COURSEID - constant to put courseid in the suggested field
+ */
+
+define('PARAM_COURSEID',   'courseid');
+
+/**
+ * PARAM_COURSE_TREE - constant to put course-tree in the suggested field
+ */
+
+define('PARAM_COURSE_TREE',   'course-tree');
+
+/**
+ * PARAM_ROLEASSIGNMENTS - constant to put roleassignments in the suggested field
+ */
+
+define('PARAM_ROLEASSIGNMENTS',   'roleassignments');
+
+/**
+ * PARAM_CHECKBOX - constant to put checkbox in the suggested field
+ */
+
+define('PARAM_CHECKBOX',   'checkbox');
+
+/**
+ * PARAM_MATERIALS - constant to put materials in the suggested field
+ */
+
+define('PARAM_MATERIALS',   'materials');
+
+/**
+ * PARAM_COURSEDISPLAY - constant to put coursedisplay in the suggested field
+ */
+
+define('PARAM_COURSEDISPLAY',   'coursedisplay');
+
+/**
+ * PARAM_PREFIX - constant to put prefix in the suggested field
+ */
+
+define('PARAM_PREFIX',   'prefix');
+
+/**
+ * PARAM_REMOVE_PREFIX - constant to put remove_prefix in the suggested field
+ */
+
+define('PARAM_REMOVE_PREFIX',   'remove_prefix');
+
+/**
+ * PARAM_SUFFIX - constant to put suffix in the suggested field
+ */
+
+define('PARAM_SUFFIX',   'suffix');
+
+/**
+ * PARAM_VISIBLE - constant to put visible in the suggested field
+ */
+
+define('PARAM_VISIBLE',   'visible');
 
 /**
  * PARAM_FILE - safe file name, all dangerous chars are stripped, protects against XSS, SQL injections and directory traversals
@@ -297,6 +499,10 @@ define('PARAM_TEXT',  'text');
  */
 define('PARAM_THEME',  'theme');
 
+/**
+ * PARAM_DEFAULT_THEME - Checks to see if the string is a valid default_theme name in the current site
+ */
+define('PARAM_DEFAULT_THEME',  'default_theme');
 /**
  * PARAM_URL - expected properly formatted URL. Please note that domain part is required, http://localhost/ is not accepted but
  * http://localhost.localdomain/ is ok.
