@@ -392,6 +392,30 @@ define('PARAM_SUFFIX',   'suffix');
 define('PARAM_VISIBLE',   'visible');
 
 /**
+ * PARAM_INPUT - constant to put input in the suggested field
+ */
+
+define('PARAM_INPUT',   'input');
+
+/**
+ * PARAM_HIDDEN - constant to put hidden in the suggested field
+ */
+
+define('PARAM_HIDDEN',   'hidden');
+
+/**
+ * PARAM_VALUE - constant to put value in the suggested field
+ */
+
+define('PARAM_VALUE',   'value');
+
+/**
+ * PARAM_SUBMIT - constant to put submit in the suggested field
+ */
+
+define('PARAM_SUBMIT',   'submit');
+
+/**
  * PARAM_FILE - safe file name, all dangerous chars are stripped, protects against XSS, SQL injections and directory traversals
  */
 define('PARAM_FILE',   'file');

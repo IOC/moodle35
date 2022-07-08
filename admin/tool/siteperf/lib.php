@@ -468,7 +468,5 @@ function get_week_offset_timestamp($year, $week) {
     $daystosubtract = $dayoftheweek - 1;
 
     // Calculate the week's timestamp
-    $unixtimestamp = strtotime("-$daystosubtract day", $halfwaytheweek);
-
-    return $unixtimestamp;
+    return strtotime("-$daystosubtract day", $halfwaytheweek);
 }

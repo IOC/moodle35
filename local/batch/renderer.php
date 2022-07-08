@@ -73,7 +73,7 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= $this->output->render($pagingbar);
         $table = new html_table();
         $table->id = 'queue-table';
-        $table->attributes = array('class' => 'generaltable');
+        $table->attributes = array(PARAM_CLASS => 'generaltable');
         $table->head = array('timestarted' => get_string('column_timestarted', PARAM_LOCAL_BATCH),
                          'type' => get_string('column_type', PARAM_LOCAL_BATCH),
                          'params' => get_string('column_params', PARAM_LOCAL_BATCH),
@@ -98,8 +98,8 @@ class local_batch_renderer extends plugin_renderer_base {
                     $state = get_string('state_error', PARAM_LOCAL_BATCH, $job->error);
                 } else {
                     $state = html_writer::start_div('batch_error');
-                    $state .= html_writer::tag('span', '', array('class' => 'batch_error_switcher'));
-                    $state .= html_writer::start_tag('span', array('class' => 'batch_error_message'));
+                    $state .= html_writer::tag('span', '', array(PARAM_CLASS => 'batch_error_switcher'));
+                    $state .= html_writer::start_tag('span', array(PARAM_CLASS => 'batch_error_message'));
                     $state .= get_string('state_error', PARAM_LOCAL_BATCH, $job->error);
                     $state .= html_writer::end_tag('span');
                     $state .= html_writer::end_div();
@@ -131,7 +131,7 @@ class local_batch_renderer extends plugin_renderer_base {
                     $action .= html_writer::link($url, get_string($customaction, PARAM_LOCAL_BATCH), array(PARAM_TITLE => get_string($customaction, PARAM_LOCAL_BATCH)));
                 }
                 if ($job->priority) {
-                    $row->attributes = array('class' => 'priority');
+                    $row->attributes = array(PARAM_CLASS => 'priority');
                 }
             } else if ($job->timeended > 0 && $job->error) {
                 $url = $this->url(false, array('retry_job' => $job->id,
@@ -140,9 +140,9 @@ class local_batch_renderer extends plugin_renderer_base {
                                                     PARAM_SESSKEY => sesskey(),
                                                     PARAM_CATEGORY => $category));
                 $action = html_writer::link($url, get_string('retry', PARAM_LOCAL_BATCH), array(PARAM_TITLE => get_string('retry', PARAM_LOCAL_BATCH)));
-                $row->attributes = array('class' => 'ko');
+                $row->attributes = array(PARAM_CLASS => 'ko');
             } else {
-                $row->attributes = array('class' => 'ok');
+                $row->attributes = array(PARAM_CLASS => 'ok');
             }
             $row->cells = array($timestarted, $strtype, $strparams, $state, $action);
             $table->data[] = $row;
@@ -156,8 +156,7 @@ class local_batch_renderer extends plugin_renderer_base {
                                                 PARAM_CATEGORY => $category));
         $pagingbar = new paging_bar($count, $page, LOCAL_BATCH_PERPAGE, $url);
         $content .= $this->output->render($pagingbar);
-        $content .= html_writer::end_div();
-        return $content;
+        return $content .= html_writer::end_div();
     }
 
     public function print_job_queue($jobs, $count, $page, $filter, $category, $totalpending, $mypending) {
@@ -165,9 +164,9 @@ class local_batch_renderer extends plugin_renderer_base {
         $url = $this->url(PARAM_JOB_QUEUE)->out();
         $content = html_writer::start_tag('form', array('id' => 'queue-filter', 'action' => $url));
         $content .= $this->print_filter_select($filter);
-        $content .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => PARAM_CATEGORY, 'value' => $category));
+        $content .= html_writer::empty_tag(PARAM_INPUT, array('type' => PARAM_HIDDEN, 'name' => PARAM_CATEGORY, PARAM_VALUE => $category));
         if ($totalpending) {
-            $content .= html_writer::start_tag('span', array('class' => 'batch_pending alert alert-info'));
+            $content .= html_writer::start_tag('span', array(PARAM_CLASS => 'batch_pending alert alert-info'));
             $content .= get_string('total_pending', PARAM_LOCAL_BATCH, $totalpending) . ' ';
             if ($mypending) {
                 $content .= get_string('my_pending', PARAM_LOCAL_BATCH, $mypending);
@@ -179,17 +178,16 @@ class local_batch_renderer extends plugin_renderer_base {
         $starthour = isset($CFG->local_batch_start_hour) ? (int) $CFG->local_batch_start_hour : 0;
         $stophour = isset($CFG->local_batch_stop_hour) ? (int) $CFG->local_batch_stop_hour : 0;
         if ($starthour != $stophour) {
-            $content .= html_writer::tag('span', get_string('start_hour', PARAM_LOCAL_BATCH, $starthour), array('class' => 'batch_starthour alert alert-info'));
+            $content .= html_writer::tag('span', get_string('start_hour', PARAM_LOCAL_BATCH, $starthour), array(PARAM_CLASS => 'batch_starthour alert alert-info'));
         }
         $content .= html_writer::start_tag('noscript');
-        $content .= html_writer::empty_tag('input', array(
-                'type' => 'submit',
-                'value' => get_string('show'),
+        $content .= html_writer::empty_tag(PARAM_INPUT, array(
+                'type' => PARAM_SUBMIT,
+                PARAM_VALUE => get_string('show'),
         ));
         $content .= html_writer::end_tag('noscript');
         $content .= html_writer::end_tag('form');
-        $content .= $this->print_table($jobs, $count, $page, $filter, $category);
-        return $content;
+        return $content .= $this->print_table($jobs, $count, $page, $filter, $category);
     }
 
     public function config_courses($info, $type_job) {
@@ -201,32 +199,32 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
         $params = array(
             'id' => PARAM_SESSKEY,
-            'type' => 'hidden',
+            'type' => PARAM_HIDDEN,
             'name' => PARAM_SESSKEY,
-            'value' => sesskey()
+            PARAM_VALUE => sesskey()
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         
         
         if ($type_job != 'batch_config_courses'){
             $params = array(
                 'id' => PARAM_CATEGORY,
-                'type' => 'hidden',
+                'type' => PARAM_HIDDEN,
                 'name' => PARAM_CATEGORY,
-                'value' => $info[PARAM_CATEGORY]
+                PARAM_VALUE => $info[PARAM_CATEGORY]
             );
-            $content .= html_writer::empty_tag('input', $params);
+            $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         }        
 
         if($type_job == PARAM_BATCH_CREATE_COURSES){        
             $content .= $this->output->container_start(PARAM_SECTION);
             $content .= $this->output->heading(get_string(PARAM_BACKUP), 3);
             $params = array(
-                'type' => 'hidden',
+                'type' => PARAM_HIDDEN,
                 'name' => PARAM_COURSE,
-                'value' => $SITE->id
+                PARAM_VALUE => $SITE->id
             );
-            $content .= html_writer::empty_tag('input', $params);
+            $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         }
                 
         return $content;
@@ -249,11 +247,11 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= $this->output->container_start(PARAM_SECTION);
         $content .= $this->output->heading(get_string(PARAM_COURSE.'s'), 3);
         $params = array(
-            'type' => 'hidden',
+            'type' => PARAM_HIDDEN,
             'name' => 'lastindex',
-            'value' => $info['lastindex']
+            PARAM_VALUE => $info['lastindex']
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $table = new html_table();
         $table->id = 'course-list';
         $table->head = array(
@@ -267,18 +265,18 @@ class local_batch_renderer extends plugin_renderer_base {
                 'type' => 'text',
                 'size' => '16',
                 'name' => 'shortname-' . $i,
-                'value' => s($course->shortname)
+                PARAM_VALUE => s($course->shortname)
             );
-            $cella = html_writer::empty_tag('input', $params);
+            $cella = html_writer::empty_tag(PARAM_INPUT, $params);
             $params = array(
                 'type' => 'text',
                 'size' => '48',
                 'name' => 'fullname-' . $i,
-                'value' => s($course->fullname)
+                PARAM_VALUE => s($course->fullname)
             );
-            $cellb = html_writer::empty_tag('input', $params);
+            $cellb = html_writer::empty_tag(PARAM_INPUT, $params);
             $cellc = $this->print_category_menu('category-' . $i, $info[PARAM_CATEGORY], $course->category);
-            $celld = html_writer::link('#', get_string('delete'), array('class' => 'js-only delete-course'));
+            $celld = html_writer::link('#', get_string('delete'), array(PARAM_CLASS => 'js-only delete-course'));
             $table->data[] = array($cella, $cellb, $cellc, $celld);
         }
         $content .= html_writer::table($table);
@@ -303,75 +301,71 @@ class local_batch_renderer extends plugin_renderer_base {
             'id' => PARAM_STARTDATE,
             'type' => 'text',
             'name' => PARAM_STARTDATE,
-            'value' => $info[PARAM_STARTDAY] . '/' . $info[PARAM_STARTMONTH] . '/' . $info[PARAM_STARTYEAR]
+            PARAM_VALUE => $info[PARAM_STARTDAY] . '/' . $info[PARAM_STARTMONTH] . '/' . $info[PARAM_STARTYEAR]
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $url = $this->output->image_url('i/calendar', 'core');
-        $datepicker = html_writer::empty_tag('img', array('id' => PARAM_BATCH_TOGGLE_DATEPICKER, 'class' => PARAM_BATCH_TOGGLE_DATEPICKER, 'src' => $url, 'alt' => 'calendar'));
+        $datepicker = html_writer::empty_tag('img', array('id' => PARAM_BATCH_TOGGLE_DATEPICKER, PARAM_CLASS => PARAM_BATCH_TOGGLE_DATEPICKER, 'src' => $url, 'alt' => 'calendar'));
         $content .= html_writer::link('#', $datepicker);
         $content .= $this->output->container_end(PARAM_SECTION);
         $params = array(
-            'type' => 'submit',
+            'type' => PARAM_SUBMIT,
             'name' => PARAM_RESTART,
-            'value' => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
+            PARAM_VALUE => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
         );
         $content .= $this->output->container_start(PARAM_SECTION);
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end(PARAM_SECTION);
         $content .= html_writer::end_tag('form');
-        $content .= $this->output->container_end(PARAM_BATCH_CREATE_COURSES);
-
-        return $content;
+        return $content .= $this->output->container_end(PARAM_BATCH_CREATE_COURSES);
     }
 
     public function data_info_courses($info, $value, $params, $data_course) {        
         
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string($data_course, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string($data_course, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', fullname($params['user']), array('class' => PARAM_BATCH_VALUE))
+        return $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', fullname($params['user']), array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
-            
-        return $info;
     }
 
     public function print_info_create_courses($params) {
         $info = '';
         if (!is_null($params[PARAM_ATTACH])) {
             $iconimage = $this->output->pix_icon(file_file_icon($params[PARAM_ATTACH]), get_mimetype_description($params[PARAM_ATTACH]),
-                                        'moodle', array('class' => 'icon'));
+                                        'moodle', array(PARAM_CLASS => 'icon'));
             $info .= html_writer::start_tag('div')
-                . html_writer::tag('span', get_string(PARAM_BACKUP), array('class' => PARAM_BATCH_PARAM))
-                . html_writer::start_tag('span', array('class' => PARAM_BATCH_VALUE))
+                . html_writer::tag('span', get_string(PARAM_BACKUP), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+                . html_writer::start_tag('span', array(PARAM_CLASS => PARAM_BATCH_VALUE))
                 . html_writer::link($params['fileurl'], $iconimage) . html_writer::link($params['fileurl'], $params['filename'])
                 . html_writer::end_tag('span')
                 . html_writer::end_tag('div');
         }
         if (is_int($params[PARAM_COURSEID])) {
             $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_SHORTNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_SHORTNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
             $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_FULLNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_FULLNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_FULLNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_FULLNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         } else {
             $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $params[PARAM_SHORTNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $params[PARAM_SHORTNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
             $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_FULLNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $params[PARAM_FULLNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_FULLNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $params[PARAM_FULLNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         }
         
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_CATEGORY), array('class' => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', get_string(PARAM_CATEGORY), array(PARAM_CLASS => PARAM_BATCH_PARAM))
             . html_writer::link($params['url'], $params['categoryname'])
             . html_writer::end_tag('div');
         $value = $params[PARAM_STARTDAY] . '/'. $params[PARAM_STARTMONTH] . '/' . $params[PARAM_STARTYEAR];
@@ -384,18 +378,18 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::start_tag('form', array('id' => 'form', 'method' => 'post'));
         $params = array(
             'id' => PARAM_SESSKEY,
-            'type' => 'hidden',
+            'type' => PARAM_HIDDEN,
             'name' => PARAM_SESSKEY,
-            'value' => sesskey()
+            PARAM_VALUE => sesskey()
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $params = array(
             'id' => PARAM_CATEGORY,
-            'type' => 'hidden',
+            'type' => PARAM_HIDDEN,
             'name' => PARAM_CATEGORY,
-            'value' => $category
+            PARAM_VALUE => $category
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_start(PARAM_SECTION);
         $content .= $this->output->heading(get_string(PARAM_COURSE.'s'), 3);
         $content .= $this->output->container_start('', PARAM_COURSE_TREE);
@@ -403,29 +397,26 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= $this->output->container_end();// close course-tree
         $content .= $this->output->container_end();// close section
         $params = array(
-            'type' => 'submit',
+            'type' => PARAM_SUBMIT,
             'name' => PARAM_RESTART,
-            'value' => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
+            PARAM_VALUE => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
         );
         $content .= $this->output->container_start(PARAM_SECTION);
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close section
         $content .= html_writer::end_tag('form');
-        $content .= $this->output->container_end();// close batch_delete_courses
-
-        return $content;
+        return $content .= $this->output->container_end();// close batch_delete_courses
     }
 
     public function print_info_delete_courses($params) {
         $info = html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_SHORTNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_SHORTNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_SHORTNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', fullname($params['user']), array('class' => PARAM_BATCH_VALUE))
+        return $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', fullname($params['user']), array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
-        return $info;
     }
 
 
@@ -440,19 +431,17 @@ class local_batch_renderer extends plugin_renderer_base {
             'type' => 'text',
             'name' => PARAM_STARTDATE,
             'size' => '10',
-            'value' => $info[PARAM_STARTDAY] . '/' . $info[PARAM_STARTMONTH] . '/' . $info[PARAM_STARTYEAR]
+            PARAM_VALUE => $info[PARAM_STARTDAY] . '/' . $info[PARAM_STARTMONTH] . '/' . $info[PARAM_STARTYEAR]
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $url = $this->output->image_url('i/calendar', 'core');
-        $datepicker = html_writer::empty_tag('img', array('id' => PARAM_BATCH_TOGGLE_DATEPICKER, 'class' => PARAM_BATCH_TOGGLE_DATEPICKER, 'src' => $url, 'alt' => 'calendar'));
+        $datepicker = html_writer::empty_tag('img', array('id' => PARAM_BATCH_TOGGLE_DATEPICKER, PARAM_CLASS => PARAM_BATCH_TOGGLE_DATEPICKER, 'src' => $url, 'alt' => 'calendar'));
         $content .= html_writer::link('#', $datepicker);
         $content .= $this->output->container_end();// close startdate
         $content .= $this->output->container_start('batch_category', PARAM_CATEGORY);
         $content .= html_writer::label(get_string('backup_category', PARAM_LOCAL_BATCH), PARAM_CATEGORY);
         $content .= $this->print_category_menu('categorydest', $info[PARAM_CATEGORY]);
-        $content .= $this->output->container_end();// close category
-
-        return $content;
+        return $content .= $this->output->container_end();// close category
     }
 
     public function print_restart_courses($courses, $info) {
@@ -472,14 +461,14 @@ class local_batch_renderer extends plugin_renderer_base {
         $content .= html_writer::label(get_string(PARAM_ROLEASSIGNMENTS, 'role'), PARAM_ROLEASSIGNMENTS);
         $context = context_system::instance();
         $roles = role_get_names($context);
-        $content .= html_writer::start_tag('ul', array('class' => 'batch_assign_roles'));
+        $content .= html_writer::start_tag('ul', array(PARAM_CLASS => 'batch_assign_roles'));
         foreach ($roles as $role) {
             $content .= html_writer::start_tag('li');
-            $content .= html_writer::empty_tag('input', array(
+            $content .= html_writer::empty_tag(PARAM_INPUT, array(
                                     'id' => 'role['.$role->id.']',
                                     'type' => PARAM_CHECKBOX,
                                     'name' => 'role[]',
-                                    'value' => $role->id
+                                    PARAM_VALUE => $role->id
                                     )
                         );
             $content .= html_writer::label($role->localname, 'role['.$role->id.']');
@@ -495,7 +484,7 @@ class local_batch_renderer extends plugin_renderer_base {
             'name' => FEATURE_GROUPS,
             'checked' => 'checked'
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close groups
         $content .= $this->output->container_start(PARAM_MATERIALS);
         $content .= html_writer::label(get_string(PARAM_MATERIALS, PARAM_LOCAL_BATCH), PARAM_MATERIALS);
@@ -504,61 +493,58 @@ class local_batch_renderer extends plugin_renderer_base {
             'type' => PARAM_CHECKBOX,
             'name' => PARAM_MATERIALS,
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close materials configuration
         $content .= $this->output->container_end();// close section
 
         $params = array(
-            'type' => 'submit',
+            'type' => PARAM_SUBMIT,
             'name' => PARAM_RESTART,
-            'value' => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
+            PARAM_VALUE => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
         );
         $content .= $this->output->container_start(PARAM_SECTION);
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close section
         $content .= html_writer::end_tag('form');
-        $content .= $this->output->container_end();// close batch_restart_courses
-
-        return $content;
+        return $content .= $this->output->container_end();// close batch_restart_courses
     }
 
     public function print_info_restart_courses($params) {
         $info = html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_COURSE), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $params[PARAM_SHORTNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_COURSE), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $params[PARAM_SHORTNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = $params[PARAM_STARTDAY] . '/'. $params[PARAM_STARTMONTH] . '/' . $params[PARAM_STARTYEAR];
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_START_DATE, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_START_DATE, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         if (is_int($params[PARAM_COURSEID])) {
             $info .= html_writer::start_tag('div')
-                . html_writer::tag('span', get_string('course_reset', PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
+                . html_writer::tag('span', get_string('course_reset', PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
                 . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_FULLNAME])
                 . html_writer::end_tag('div');
         }
         $value = ($params[PARAM_ROLEASSIGNMENTS] ? $params[PARAM_ROLEASSIGNMENTS] : get_string('no'));
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('roles'), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string('roles'), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = ($params[FEATURE_GROUPS] ? get_string('yes') : get_string('no'));
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(FEATURE_GROUPS), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(FEATURE_GROUPS), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = ($params[PARAM_MATERIALS] ? get_string('yes') : get_string('no'));
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string('materials_short', PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string('materials_short', PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = fullname($params['user']);
-        $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+        return $info .= html_writer::start_tag('div')
+            . html_writer::tag('span', get_string(PARAM_CREATOR, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
-        return $info;
     }
 
     public function print_import_courses($info) {
@@ -570,21 +556,21 @@ class local_batch_renderer extends plugin_renderer_base {
             $files = get_directory_list($CFG->dataroot . '/' . $CFG->local_batch_path_backups);
 
             $filter = function($value) {
-                return preg_match('/\.mbz$/', $value);
+                return preg_match('/\.zip$/', $value);
             };
 
             $files = array_filter($files, $filter);
 
-            $content .= html_writer::start_tag('ul', array('class' => 'batch_assign_roles'));
+            $content .= html_writer::start_tag('ul', array(PARAM_CLASS => 'batch_assign_roles'));
             foreach ($files as $key => $file) {
                 $params = array(
                     'id' => 'choose-backup[' . $key .']',
                     'name' => 'choose-backup[]',
                     'type' => PARAM_CHECKBOX,
-                    'value' => $file
+                    PARAM_VALUE => $file
                 );
                 $content .= html_writer::start_tag('li');
-                $content .= html_writer::empty_tag('input', $params);
+                $content .= html_writer::empty_tag(PARAM_INPUT, $params);
                 $content .= html_writer::label(basename($file), 'choose-backup[' . $key . ']');
                 $content .= html_writer::end_tag('li');
             }
@@ -604,44 +590,42 @@ class local_batch_renderer extends plugin_renderer_base {
             'type' => PARAM_CHECKBOX,
             'name' => PARAM_COURSEDISPLAY
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();
         $content .= $this->output->container_end(PARAM_SECTION);// close parameters
         $params = array(
-            'type' => 'submit',
+            'type' => PARAM_SUBMIT,
             'name' => PARAM_RESTART,
-            'value' => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
+            PARAM_VALUE => get_string(PARAM_ADD_JOBS, PARAM_LOCAL_BATCH)
         );
         $content .= $this->output->container_start(PARAM_SECTION);
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close section
 
         $content .= html_writer::end_tag('form');
-        $content .= $this->output->container_end();// close batch_restore_courses
-
-        return $content;
+        return $content .= $this->output->container_end();// close batch_restore_courses
     }
 
     public function print_info_import_courses($params) {
         $info = '';
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_BACKUP), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $params['filename'], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_BACKUP), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $params['filename'], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         if (is_int($params[PARAM_COURSEID])) {
             $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_FULLNAME), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_FULLNAME], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_FULLNAME), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::link(new moodle_url(PARAM_URL_COURSE_VIEW, array('id' => $params[PARAM_COURSEID])), $params[PARAM_FULLNAME], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         }
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_CATEGORY), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::link($params['url'], $params['categoryname'], array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_CATEGORY), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::link($params['url'], $params['categoryname'], array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = $params[PARAM_STARTDAY] . '/'. $params[PARAM_STARTMONTH] . '/' . $params[PARAM_STARTYEAR];
         $info .= html_writer::start_tag('div')
-            . html_writer::tag('span', get_string(PARAM_START_DATE, PARAM_LOCAL_BATCH), array('class' => PARAM_BATCH_PARAM))
-            . html_writer::tag('span', $value, array('class' => PARAM_BATCH_VALUE))
+            . html_writer::tag('span', get_string(PARAM_START_DATE, PARAM_LOCAL_BATCH), array(PARAM_CLASS => PARAM_BATCH_PARAM))
+            . html_writer::tag('span', $value, array(PARAM_CLASS => PARAM_BATCH_VALUE))
             . html_writer::end_tag('div');
         $value = ($params[PARAM_COURSEDISPLAY] ? get_string('yes') : get_string('no'));
 
@@ -669,15 +653,15 @@ class local_batch_renderer extends plugin_renderer_base {
             'type' => 'text',
             'name' => PARAM_PREFIX
         );
-        $content .= html_writer::tag('span', '[', array('class' => 'batch_delimiter'));
-        $content .= html_writer::empty_tag('input', $params);
-        $content .= html_writer::tag('span', ']', array('class' => 'batch_delimiter'));
+        $content .= html_writer::tag('span', '[', array(PARAM_CLASS => 'batch_delimiter'));
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
+        $content .= html_writer::tag('span', ']', array(PARAM_CLASS => 'batch_delimiter'));
         $params = array(
             'id'   => PARAM_REMOVE_PREFIX,
             'type' => PARAM_CHECKBOX,
             'name' => PARAM_REMOVE_PREFIX
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= html_writer::label(get_string('remove', PARAM_LOCAL_BATCH), PARAM_REMOVE_PREFIX);
         $content .= $this->output->container_end();// close course-prefix
         $content .= $this->output->container_start('course-suffix');
@@ -700,28 +684,27 @@ class local_batch_renderer extends plugin_renderer_base {
         if (!empty($CFG->allowcoursethemes)) {
             $content .= $this->output->container_start('course-theme');
             $content .= html_writer::label(get_string(PARAM_THEME), PARAM_VISIBLE);
-            $content .= html_writer::select($themes, PARAM_THEME, '', array('' => ''), array('id' => PARAM_THEME, 'class' => 'batch_theme'));
+            $content .= html_writer::select($themes, PARAM_THEME, '', array('' => ''), array('id' => PARAM_THEME, PARAM_CLASS => 'batch_theme'));
             $params = array(
                 'id'   => PARAM_DEFAULT_THEME,
                 'type' => PARAM_CHECKBOX,
                 'name' => PARAM_DEFAULT_THEME
             );
-            $content .= html_writer::empty_tag('input', $params);
+            $content .= html_writer::empty_tag(PARAM_INPUT, $params);
             $content .= html_writer::label(get_string(PARAM_DEFAULT_THEME, PARAM_LOCAL_BATCH), PARAM_DEFAULT_THEME);
             $content .= $this->output->container_end();// close course-theme
         }
         $content .= $this->output->container_start(PARAM_SECTION);
         $params = array(
-            'type' => 'submit',
+            'type' => PARAM_SUBMIT,
             'name' => 'config',
-            'value' => get_string('configure', PARAM_LOCAL_BATCH)
+            PARAM_VALUE => get_string('configure', PARAM_LOCAL_BATCH)
         );
-        $content .= html_writer::empty_tag('input', $params);
+        $content .= html_writer::empty_tag(PARAM_INPUT, $params);
         $content .= $this->output->container_end();// close section
         $content .= $this->output->container_end();// close parameters
         $content .= html_writer::end_tag('form');
-        $content .= $this->output->container_end();// close section
-        return $content;
+        return $content .= $this->output->container_end();// close section
     }
 
     public function print_category_menu($name="categorydest", $category=0, $selected=0) {
@@ -740,21 +723,18 @@ class local_batch_renderer extends plugin_renderer_base {
         $id = html_writer::random_id('course_category_tree');
 
         // Start content generation
-        $content = html_writer::start_tag('div', array('class' => 'course_category_tree', 'id' => $id));
-        $content .= html_writer::start_tag('ul', array('class' => 'categories'));
+        $content = html_writer::start_tag('div', array(PARAM_CLASS => 'course_category_tree', 'id' => $id));
+        $content .= html_writer::start_tag('ul', array(PARAM_CLASS => 'categories'));
         $categories = core_course_category::make_categories_list('moodle/category:manage');
         foreach ($structure as $category) {
             $content .= $this->make_tree_categories($category, $categories);
         }
         $content .= html_writer::end_tag('ul');
-        $content .= html_writer::start_tag('div', array('class' => 'controls'));
-        $content .= html_writer::tag('div', get_string('collapseall'), array('class' => 'addtoall expandall'));
-        $content .= html_writer::tag('div', get_string('expandall'), array('class' => 'removefromall collapseall'));
+        $content .= html_writer::start_tag('div', array(PARAM_CLASS => 'controls'));
+        $content .= html_writer::tag('div', get_string('collapseall'), array(PARAM_CLASS => 'addtoall expandall'));
+        $content .= html_writer::tag('div', get_string('expandall'), array(PARAM_CLASS => 'removefromall collapseall'));
         $content .= html_writer::end_tag('div');
-        $content .= html_writer::end_tag('div');
-
-        // Return the course category tree HTML
-        return $content;
+        return $content .= html_writer::end_tag('div');
     }
 
     protected function make_tree_categories($category, $categories) {
@@ -768,10 +748,10 @@ class local_batch_renderer extends plugin_renderer_base {
         if ($hassubcategories || $hascourses) {
             $classes[] = 'category_group';
         }
-        $content = html_writer::start_tag('li', array('class' => join(' ', $classes)));
+        $content = html_writer::start_tag('li', array(PARAM_CLASS => join(' ', $classes)));
         $content .= html_writer::tag('span', $category->name);
         if ($hassubcategories) {
-            $content .= html_writer::start_tag('ul', array('class' => 'subcategories'));
+            $content .= html_writer::start_tag('ul', array(PARAM_CLASS => 'subcategories'));
             foreach ($category->categories as $cat) {
                 $content .= $this->make_tree_categories($cat, $categories);
             }
@@ -781,27 +761,26 @@ class local_batch_renderer extends plugin_renderer_base {
             $url = $this->output->image_url('t/unblock', 'core');
             $params = array (
                 'id' => 'batch_toggle_category_' . $category->id,
-                'class' => 'batch_toggle_category batch_hidden_toggle',
+                PARAM_CLASS => 'batch_toggle_category batch_hidden_toggle',
                 'src' => $url, 'alt' => 'toggle',
             );
             $content .= html_writer::empty_tag('img', $params);
-            $content .= html_writer::start_tag('ul', array('class' => PARAM_COURSE.'s'));
+            $content .= html_writer::start_tag('ul', array(PARAM_CLASS => PARAM_COURSE.'s'));
             foreach ($category->courses as $course) {
-                $content .= html_writer::start_tag('li', array('class' => PARAM_COURSE));
+                $content .= html_writer::start_tag('li', array(PARAM_CLASS => PARAM_COURSE));
                 $course_param='course-';
                 $params = array(
                     'id' => $course_param . $course->id,
                     'name' => $course_param . $course->id,
                     'type' => PARAM_CHECKBOX,
-                    'value' => $course->shortname
+                    PARAM_VALUE => $course->shortname
                 );
-                $content .= html_writer::empty_tag('input', $params);
+                $content .= html_writer::empty_tag(PARAM_INPUT, $params);
                 $content .= html_writer::label($course->fullname, $course_param . $course->id);
                 $content .= html_writer::end_tag('li');
             }
             $content .= html_writer::end_tag('ul');
         }
-        $content .= html_writer::end_tag('li');
-        return $content;
+        return $content .= html_writer::end_tag('li');
     }
 }
