@@ -414,6 +414,9 @@
         top: 6px;
         left: -6px;
       }
+      .plantilla-tasca .termini-de-lliurament::after {
+        content: '';
+      }
       .plantilla-tasca .termini-de-lliurament .dia,
       .plantilla-tasca .termini-de-lliurament span {
         font-size: 12px;
