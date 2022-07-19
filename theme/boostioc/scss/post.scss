@@ -216,9 +216,13 @@ table#permissions tbody tr:hover {
 }
 .dropdown-item:active,
 .dropdown-item:hover,
-.dropdown-item:focus,
+.dropdown-item:focus {
+    color: #16181b!important;
+    background-color: #e3ebf3 !important;
+}
 .dropdown-item:focus-within {
-    background-color: #212529;
+    color: #16181b;
+    background-color: transparent;
 }
 .dropdown-item:active a,
 .dropdown-item:hover a,
@@ -537,8 +541,8 @@ a.dimmed_text:visited,
     padding: 3px 5px;
     border-radius: 20px;
     font-size: 10.5px;
-    top: 4px;
-    right: -11px;
+    top: 7px;
+    right: -3px;
     font-weight: 700;
 }
 .navbar .usermenu .caret,
@@ -1439,6 +1443,13 @@ div.editor_atto_toolbar button + button {
 .path-mod-assign [data-region="grade-panel"] .gradingform_rubric .criterion .description {
     font-weight: 700;
 }
+.path-mod-assign [data-region="grade-panel"] .fitem.has-popout {
+    left: 3%;
+    right: 3%;
+    top: 10%;
+    bottom: 10%;
+    overflow: auto;
+}
 .path-mod-assign [data-region="review-panel"] {
     right: 40%;
 }
@@ -1609,6 +1620,9 @@ div.editor_atto_toolbar button + button {
 #page-mod-quiz-attempt .submitbtns,
 #page-mod-quiz-review .submitbtns {
     height: 54px;
+}
+#page-mod-quiz-review .questionflag span {
+    font-size: 0;
 }
 #page-question-preview #page {
     max-width: 1120px;
@@ -2222,6 +2236,7 @@ h3.discussionname {
     margin-right: 0 !important;
     width: 12px;
 }
+.table.discussion-list tbody {word-break: break-all; }
 #page-mod-forum-view.path-mod-forum .author-info .line-height-3 {
     text-align: right;
 }
@@ -2612,7 +2627,7 @@ div.atto_snippet_buttons {
 #intro ul {
     list-style: none;
 }
-#intro ul li::before {
+#intro ul:not(.llista-display)>li:not(.flex-item):not(.nav-item)::before {
     content: "•";
     color: #616d8e;
     font-weight: 700;
@@ -2620,6 +2635,7 @@ div.atto_snippet_buttons {
     width: 1em;
     margin-left: -1em;
 }
+#intro ul li p:first-of-type { display:inline; }
 .course-content ul.gridicons li .image_holder {
     width: 210px;
     height: 140px;
@@ -2720,4 +2736,20 @@ ul.oublog-accordion li {
 .oublog_statsview_content h3 {
     margin-top: 12px;
     font-size: 18px;
+}
+.mform.mod-fpdquadern-form {
+    margin-bottom: 2em;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .mod-fpdquadern-form .fitem .col-md-3.col-form-label {
+    @media screen and (max-width: 768px) {
+        padding-left: 0 !important;
+    }  
+}
+.mediaplugin, .mediaplugin video {min-width: 250px;}
+#page-grade-report-grader-index nav.pagination.pagination-centered.justify-content-center {
+    display: inline-flex;
 }
