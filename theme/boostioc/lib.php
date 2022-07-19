@@ -34,6 +34,7 @@ function theme_boostioc_get_main_scss_content($theme)
     $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-ges.scss');
     $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-components-eoi.scss');
     $scss .= file_get_contents($CFG->dirroot . '/theme/boostioc/scss/plantilles-components-fp.scss');
+    
 
     return $scss;
 }
