@@ -1,5 +1,14 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+### IOC_CAMPUS_V5.1.2 (25/07/2022)
+  * Upgraded campus version 3.11.8+
+  * Upgraded theme boostioc
+  * Added module Board
+  * Changed 'from' email address
+  * Fixed filter Wiris
+  * Tool migratehvp2h5p: Added patch to import the author of the activity
+  * Forced value of loglifetime to 1000 days
+
 ### IOC_CAMPUS_V5.1.1 (14/07/2022)
   * Upgrade campus version 3.11.8
   * Adapt filter vocaroo for new version
