@@ -4448,7 +4448,8 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
     $timedposts = ' AND (d.timestart < ? AND (d.timeend = 0 OR d.timeend > ?))';
     $params[] = $now;
     $params[] = $now;
-    // Fi.                  
+    $groupsel .= ' ' . $timedposts;
+    // Fi.
 
     $sql = "SELECT p.id
               FROM {forum_posts} p
@@ -4456,13 +4457,7 @@ function forum_tp_mark_forum_read($user, $forumid, $groupid=false) {
                    LEFT JOIN {forum_read} r        ON (r.postid = p.id AND r.userid = ?)
              WHERE d.forum = ?
                    AND p.modified >= ? AND r.id is NULL
-                   // @PATCH IOC048: Parches Mod Forum.
-                   $groupsel $timedposts";
-                   // Original.
-                   /*
                    $groupsel";
-                   */
-                   // Fi.
 
     if ($posts = $DB->get_records_sql($sql, $params)) {
         $postids = array_keys($posts);
