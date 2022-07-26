@@ -1,5 +1,8 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+### IOC_CAMPUS_V5.1.3 (01/08/2022)
+  * Fixed patch IOC048: Could not mark as read all the posts in a forum 
+
 ### IOC_CAMPUS_V5.1.2 (25/07/2022)
   * Upgraded campus version 3.11.8+
   * Upgraded theme boostioc
