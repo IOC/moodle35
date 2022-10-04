@@ -55,8 +55,8 @@ $params = array(
 );
 $PAGE->set_url('/admin/tool/dataparticipants/dataparticipants_task.php', $params);
 
-if ($delete and isset($task->id)) {
-    if ($confirm and confirm_sesskey()) {
+if ($delete && isset($task->id)) {
+    if ($confirm && confirm_sesskey()) {
         $DB->delete_records(PARAM_TOOL_DATAPARTICIPANTS, array('id' => $task->id));
         redirect($returnurl);
     }
