@@ -26,6 +26,10 @@
 require_once($CFG->dirroot . '/lib/dmllib.php');
 require_once($CFG->libdir . '/csvlib.class.php');
 
+
+define('PARAM_TOOL_SITEPERF_LOG',   'tool_siteperf_log');
+define('PARAM_TOOL_SITEPERF_STATS',   'tool_siteperf_stats');
+
 class tool_siteperf {
 
     private $timestamp;

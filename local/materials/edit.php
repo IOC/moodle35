@@ -28,7 +28,6 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require($CFG->dirroot.'/local/materials/edit_form.php');
 require_once('lib.php');
 
-CONST LOCAL_MATERIALS = 'local_materials';
 
 require_login();
 

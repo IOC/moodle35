@@ -24,8 +24,6 @@
 
 define("PAGENUM", "20");
 
-define("URL_MATERIALS", '/local/materials/index.php');
-
 
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once('lib.php');

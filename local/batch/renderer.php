@@ -23,7 +23,6 @@
 
 require_once($CFG->libdir . '/form/filepicker.php');
 require_once($CFG->libdir . '/form/filemanager.php');
-define('PARAM_URL_COURSE_VIEW',   '/course/view.php');
 
 class local_batch_renderer extends plugin_renderer_base {
 

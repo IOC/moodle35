@@ -35,8 +35,6 @@ $view              = optional_param('view', PARAM_JOB_QUEUE, PARAM_ALPHAEXT);
 $prioritizejob     = optional_param('prioritize_job', 0, PARAM_INT);
 $desprioritizejob  = optional_param('desprioritize_job', 0, PARAM_INT);
 
-define('PARAM_URL_BATCH',   '/local/batch/index.php');
-
 
 $context = context_system::instance();
 

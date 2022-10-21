@@ -22,6 +22,18 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+define('LOCAL_MATERIALS',   'local_materials');
+define('PARAM_DELETE',   'delete');
+define('PARAM_CONFIRM',   'confirm');
+define('PARAM_ATTACHMENT',   'attachment');
+define('PARAM_CATEGORYID',   'categoryid');
+define('PARAM_COURSEID',   'courseid');
+define("URL_MATERIALS", '/local/materials/index.php');
+define('PARAM_RECORDS',   'records');
+define('PARAM_TOTAL',   'total');
+define('PARAM_CLASS',   'class');
+
+
 function search_courses($searchquery = '') {
     if (!empty($searchquery)) {
         $searchcoursesparams = array();

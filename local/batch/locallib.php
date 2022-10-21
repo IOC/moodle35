@@ -32,9 +32,6 @@ require_once($CFG->dirroot . '/group/lib.php');
 define('BATCH_CRON_TIME', 600);
 define('BATCH_TODELETE_AGE', 365 * 86400);
 
-define('PARAM_CATEGORY_MOODLE', 'moodle/category:manage');
-
-
 class batch_job {
     public $id;
     public $user;

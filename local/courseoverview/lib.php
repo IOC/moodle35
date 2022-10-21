@@ -49,6 +49,10 @@ const MODULE_QUIZ_NAME = 'quiz';
  * @package     local_courseoverview
  * @author      Toni Ginard <toni.ginard@ticxcat.cat>
  */
+
+define('PARAM_TOTALUNREAD',   'totalunread');
+define('PARAM_COUNT',   'count');
+
 function local_courseoverview_before_footer() {
 
     global $PAGE, $USER, $CFG, $OUTPUT;

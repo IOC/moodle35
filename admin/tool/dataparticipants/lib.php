@@ -24,3 +24,14 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/admin/tool/dataparticipants/locallib.php');
+
+
+define('PARAM_DELETE',   'delete');
+define('PARAM_TOOL_DATAPARTICIPANTS',   'tool_dataparticipants');
+define('PARAM_COURSES',   'courses');
+define('PARAM_MOODLE',   'moodle');
+define('PARAM_REQUIRED',   'required');
+define('PARAM_CLIENT',   'client');
+define('PARAM_ROLES',   'roles');
+define('PARAM_CLASS',   'class');
+define('PARAM_CONFIRM',   'confirm');

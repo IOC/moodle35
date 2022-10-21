@@ -25,6 +25,61 @@ require_once($CFG->dirroot . '/local/batch/locallib.php');
 
 const LOCAL_BATCH_PERPAGE = 20;
 
+define('PARAM_JOB_QUEUE',   'job_queue');
+define('PARAM_URL_COURSE_VIEW',   '/course/view.php');
+define('PARAM_CATEGORY',   'category');
+define('PARAM_LOCAL_BATCH',   'local_batch');
+define('PARAM_FILTER',   'filter');
+define('PARAM_SESSKEY',   'sesskey');
+define('PARAM_TITLE',   'title');
+define('PARAM_BATCH_CREATE_COURSES',   'batch_create_courses');
+define('PARAM_SECTION',   'section');
+define('PARAM_BACKUP',   'backup');
+define('PARAM_COURSE',   'course');
+define('PARAM_SHORTNAME',   'shortname');
+define('PARAM_FULLNAME',   'fullname');
+define('PARAM_START_DATE',   'start_date');
+define('PARAM_STARTDATE',   'startdate');
+define('PARAM_BATCH_TOGGLE_DATEPICKER',   'batch_toggle_datepicker');
+define('PARAM_RESTART',   'restart');
+define('PARAM_ADD_JOBS',   'add_jobs');
+define('PARAM_BATCH_PARAM',   'batch_param');
+define('PARAM_BATCH_VALUE',   'batch_value');
+define('PARAM_CREATOR',   'creator');
+define('PARAM_ATTACH',   'attach');
+define('PARAM_COURSEID',   'courseid');
+define('PARAM_STARTDAY',   'startday');
+define('PARAM_STARTMONTH',   'startmonth');
+define('PARAM_STARTYEAR',   'startyear');
+define('PARAM_COURSE_TREE',   'course-tree');
+define('PARAM_ROLEASSIGNMENTS',   'roleassignments');
+define('PARAM_CHECKBOX',   'checkbox');
+define('PARAM_MATERIALS',   'materials');
+define('PARAM_COURSEDISPLAY',   'coursedisplay');
+define('PARAM_PREFIX',   'prefix');
+define('PARAM_REMOVE_PREFIX',   'remove_prefix');
+define('PARAM_SUFFIX',   'suffix');
+define('PARAM_VISIBLE',   'visible');
+define('PARAM_DEFAULT_THEME',  'default_theme');
+define('PARAM_INPUT',   'input');
+define('PARAM_HIDDEN',   'hidden');
+define('PARAM_VALUE',   'value');
+define('PARAM_SUBMIT',   'submit');
+define('PARAM_URL_BATCH',   '/local/batch/index.php');
+define('PARAM_PLUGINNAME',   'pluginname');
+define('PARAM_CHOOSE_BACKUP',   'choose-backup');
+define('PARAM_COURSES',   'courses');
+define('PARAM_CATEGORYDEST',   'categorydest');
+define('PARAM_TIMESTARTED',   'timestarted');
+define('PARAM_TIMEENDED',   'timeended');
+define('PARAM_ERROR',   'error');
+define('PARAM_LOCAL_BATCH_JOBS',   'local_batch_jobs');
+define('PARAM_PRIORITY',   'priority');
+define('PARAM_CATEGORY_MOODLE', 'moodle/category:manage');
+define('PARAM_LASTINDEX',   'lastindex');
+define('PARAM_FILENAME',   'filename');
+
+
 function local_batch_extend_settings_navigation($nav, $context) {
     if (has_capability('moodle/site:config', context_system::instance())) {
         $node = navigation_node::create(get_string('pluginname', PARAM_LOCAL_BATCH),
