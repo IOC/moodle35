@@ -2841,6 +2841,14 @@ class assign {
 
         if ($grade->grade && $grade->grade != -1) {
             if ($this->get_instance()->grade > 0) {
+
+                // @PATCH IOC: This doble cast fixes a weird error in comparison ($grade->grade > $this->get_instance()->grade)
+                //             The error causes the comparison to be true when $grade->grade is a float of value 10 and
+                //             $this->get_instance()->grade is string of value "10". This happens when there is a rubrick
+                //             for the grading. It seems to happen only in IOC Moodle.
+                $grade->grade = (float)(string)$grade->grade;
+                // Fi.
+
                 if (!is_numeric($grade->grade)) {
                     return false;
                 } else if ($grade->grade > $this->get_instance()->grade) {
