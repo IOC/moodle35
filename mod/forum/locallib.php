@@ -654,8 +654,8 @@ class forum_full_portfolio_caller extends forum_portfolio_caller {
         $content = (!$writingleap ? $this->html_header($this->forum->name) : '');
         $ids = array(); // if we're writing leap2a, keep track of all entryids so we can add a selection element
         if (!$writingleap) {
-            if (file_exists($CFG->dirroot . '/theme/ioc_clean/style/' . $this->cssfile)) {
-                $csscontent = file_get_contents($CFG->dirroot . '/theme/ioc_clean/style/' . $this->cssfile);
+            if (file_exists($CFG->dirroot . '/mod/forum/' . $this->cssfile)) {
+                $csscontent = file_get_contents($CFG->dirroot . '/mod/forum/' . $this->cssfile);
                 $this->get('exporter')->write_new_file($csscontent, $this->cssfile);
             }
             $content .= $this->create_index();
