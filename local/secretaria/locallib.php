@@ -59,7 +59,7 @@ class local_secretaria_moodle_2x implements local_secretaria_moodle {
 
         // questionnaire_add_instance
         $cm = new stdClass;
-        $qobject = new questionnaire(0, $qrecord, $course, $cm);
+        $qobject = new questionnaire($course, $cm, 0, $qrecord);
         $qobject->add_survey($templateid);
         $qobject->add_questions($templateid);
         $qrecord->sid = $qobject->survey_copy($course->id);
