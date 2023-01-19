@@ -1,7 +1,19 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+
+### IOC_CAMPUS_V5.1.6 (24/01/2023)
+  * Upgraded campus version 3.11.11
+  * mod_forum: Added css file to format forum export
+
+### IOC_CAMPUS_V5.1.5 (20/12/2022)
+  * local_secretaria: Fixed call to create new questionnaire
+
+#### IOC_CAMPUS_V5.1.4 (02/11/2022)
+  * Fixed patch IOC016: New action expert CSV
+  * Fix for weird error in the grader using a rubric
+
 ### IOC_CAMPUS_V5.1.3 (01/08/2022)
-  * Fixed patch IOC048: Could not mark as read all the posts in a forum 
+  * Fixed patch IOC048: Could not mark as read all the posts in a forum
 
 ### IOC_CAMPUS_V5.1.2 (25/07/2022)
   * Upgraded campus version 3.11.8+
