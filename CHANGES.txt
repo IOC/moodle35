@@ -1,5 +1,7 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+### IOC_CAMPUS_V5.1.7 (06/02/2023)
+  * block_completion_progress: New version 2022112800
 
 ### IOC_CAMPUS_V5.1.6 (24/01/2023)
   * Upgraded campus version 3.11.11
