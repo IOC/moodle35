@@ -69,7 +69,7 @@ function local_mail_format_content($message) {
     $context = context_course::instance($message->course()->id);
     $content = file_rewrite_pluginfile_urls($message->content(), 'pluginfile.php', $context->id,
                                             'local_mail', 'message', $message->id());
-    return format_text($content, $message->format());
+    return format_text($content, $message->format(), ['trusted' => true]);
 }
 
 function local_mail_setup_page($course, $url) {
