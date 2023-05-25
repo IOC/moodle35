@@ -1,5 +1,8 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+### IOC_CAMPUS_V5.1.9 (25/05/2023)
+  * mod/isardvdi: Delete plugin (1148-2023-0257)
+
 ### IOC_CAMPUS_V5.1.8 (18/05/2023)
   * mod/isardvdi: New pluggin added (1148-2023-0212)
 
