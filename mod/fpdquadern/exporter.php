@@ -149,7 +149,7 @@ class exporter {
         global $CFG;
 
         if ($validat) {
-            $path = "file://{$CFG->dirroot}/pix/t/check.svg";
+            $path = "{$CFG->dirroot}/pix/t/check.svg";
             // &nbsp; perquè no s'afegeixi un espai vertical (?!)
             return '&nbsp;<img src="'. $path .'" height="9"/>&nbsp;';
         }
