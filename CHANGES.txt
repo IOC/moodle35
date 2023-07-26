@@ -1,4 +1,8 @@
 # Modificacions en els desplegaments del campus de l'IOC
+
+### IOC_CAMPUS_V5.1.11 (26/07/2023)
+  * mod/cloze-editor: New pluggin added (1148-2023-0315)
+
 ### IOC_CAMPUS_V5_1_10 (27/06/2023)
   * fix problems with fpdquadern (1148-2023-0286)
 
