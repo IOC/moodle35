@@ -1,5 +1,8 @@
 # Modificacions en els desplegaments del campus de l'IOC
 
+### IOC_CAMPUS_V5.1.12 (26/07/2023)
+  * NEW PATCH IOC051: Esborra preguntes aleatòries òrfenes en finalitzar un restore
+
 ### IOC_CAMPUS_V5.1.11 (26/07/2023)
   * mod/cloze-editor: New pluggin added (1148-2023-0315)
 
